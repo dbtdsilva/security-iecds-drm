@@ -146,7 +146,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
     //cfpLoadingBarProvider.parentSelector = '.wrapper > section';
 }]).config(['$httpProvider', function($httpProvider) {
   // register the interceptor via an anonymous factory
-  $httpProvider.interceptors.push(function($q, $location, $injector) {
+  /*$httpProvider.interceptors.push(function($q, $location, $injector) {
     return {
       'responseError': function(response) {
         console.error('http interceptor', response.status, response.data.detail);
@@ -171,6 +171,6 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         return $q.reject(response);
       }
     };
-  });
+  });*/
 }])
 .controller('NullController', function() {});

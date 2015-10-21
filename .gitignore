@@ -78,10 +78,7 @@ npm-debug.log
 bower_components/
 
 # Vendor files
-static/vendor/
-
-# Staticfiles
-staticfiles/
+src/server/static/vendor/
 
 # Migration files
 */migrations/*auto*.py
@@ -105,6 +102,5 @@ angle-*
 Angle-v*
 
 # Test, error and log files
-test/error.html
-static/app/js/base.js
-static/app/js/app.js
+src/server/static/app/js/base.js
+src/server/static/app/js/app.js

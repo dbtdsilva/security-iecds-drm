@@ -1,8 +1,25 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" data-ng-app="dashboard">
+
 <head>
-	<title>:DD</title>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+   <meta name="description" content="{{app.description}}">
+   <meta name="keywords" content="app, responsive, angular, bootstrap, dashboard, admin">
+   <title data-ng-bind="pageTitle()">SCoT - Universidade de Aveiro</title>
+   <link rel="stylesheet" href="app/css/app.css">
+   <!--<link rel="stylesheet" href="app/css/app.css" data-ng-if="!app.layout.isRTL">-->
+   <!--<link rel="stylesheet" href="app/css/app-rtl.css" data-ng-if="app.layout.isRTL">-->
 </head>
-<body>
-	<a href="test/xpto.html">:DDDDD</a>
+
+<body data-ng-class="{ 'layout-fixed' : app.layout.isFixed, 'aside-collapsed' : app.layout.isCollapsed, 'layout-boxed' : app.layout.isBoxed }">
+   <div data-ui-view="" data-autoscroll="false" data-ng-class="mainViewAnimation" class="wrapper"></div>
+   <script src="app/js/base.js"></script>
+   <script src="app/js/app.js"></script>
 </body>
+<script type="text/javascript">
+  var WEBSOCKET_URI = '{{ WEBSOCKET_URI }}';
+  var WS4REDIS_HEARTBEAT = '{{ WS4REDIS_HEARTBEAT }}';
+</script>
 </html>
+
