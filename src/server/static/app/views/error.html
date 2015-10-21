@@ -1,0 +1,30 @@
+<div class="row">
+  <div class="col-lg-12">
+    <!-- START panel-->
+    <div class="text-center mb-xl">
+      <div ng-switch="$stateParams.error">
+        <div ng-switch-when="unauthorized">
+          <div class="text-lg mb-lg">{{"app.error.ERROR" | translate}}</div>
+          <p class="text-danger">{{"app.error.NOTAUTH" | translate}}</p>
+        </div>
+        <div ng-switch-when="401">
+          <div class="text-lg mb-lg">{{"app.error.ERROR" | translate}}</div>
+          <p class="text-danger">{{"app.error.NOTAUTH" | translate}}</p>
+        </div>
+        <div ng-switch-when="404">
+          <div class="text-lg mb-lg">404</div>
+          <p class="lead m0">{{"app.error.PAGE404" | translate}}</p>
+          <p class="text-danger">{{"app.error.PAGE404DESC" | translate}}</p>
+        </div>
+        <div ng-switch-default>
+          <div class="text-lg mb-lg">{{"app.error.ERROR" | translate}}</div>
+          <p class="text-danger">{{"app.error.UNKERROR" | translate}}</p>
+        </div>
+      </div>
+    </div>
+    <ul class="list-inline text-center text-sm mb-xl">
+      <li><a href="" ui-sref="app.home" class="text-muted">{{"app.error.GOHOME" | translate}}</a>
+      </li>
+    </ul>
+  </div>
+</div>

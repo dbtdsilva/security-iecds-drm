@@ -1,0 +1,220 @@
+{
+  "dashboard": {
+    "WELCOME": "Welcome to {{appName}}"
+  },
+  "topbar": {
+    "search": {
+      "PLACEHOLDER": "Type and hit enter..",
+      "SUBMITSEARCH": "Search"
+    }
+  },
+  "offsidebar": {
+    "setting": {
+      "SETTINGS": "Settings",
+      "THEMES": "Themes",
+      "layout": {
+        "FIXED": "Fixed",
+        "COLLAPSED": "Collapsed",
+        "BOXED": "Boxed",
+        "RTL": "RTL"
+      }
+    }
+  },
+  "sidebar": {
+    "WELCOME": "Welcome",
+    "heading": {
+      "HEADER": "Main Navigation"
+    },
+    "nav": {
+      "HOME": "Home",
+      "SINGLEVIEW": "Single View",
+      "menu": {
+        "MENU": "Menu",
+        "SUBMENU": "Sub Menu"
+      },
+      "ADMIN": "Administration",
+      "admin": {
+        "USERS": "Users",
+        "GROUPS": "Groups",
+        "DEVICES": "Devices"
+      },
+      "DEVICES": "Devices",
+      "devices": {
+        "OVERVIEW": "Overview",
+        "DETAILS": "Details",
+        "SENSORS": "Sensors"
+      },
+      "GROUPS": "Groups"
+    }
+  },
+  "pages": {
+    "login": {
+      "TOPMESSAGE": "Login to continue",
+      "REMEMBERME": "Remember me",
+      "USERNAME": "Insert username",
+      "PASSWORD": "Insert password",
+      "LOGIN": "Login",
+      "INCORRECT": "Invalid credentials",
+      "SERVERREQUEST": "Server request failed"
+    }
+  },
+  "app": {
+    "home": {
+      "TITLE": "Home",
+      "DESCRIPTION": "Home",
+      "carousel": {
+        "DEVICES": "Devices status",
+        "MAP": "Devices localization",
+        "SENSORS": "Visualization of the sensors",
+        "EXPORT": "Data export",
+        "LANGUAGE": "Multi-language support platform",
+        "NOTIFICATIONS": "Notifications about the devices",
+        "LIVE": "Real time notifications"
+      }
+    },
+    "admin": {
+      "TITLE": "Adminstration",
+      "DESCRIPTION": "Adminstration Panel - This panel allows you to change/view data on the platform.",
+      "devices": {
+        "PANELTITLE": "Devices Adminstration",
+        "NEW": "New device",
+        "RELOAD": "Reload",
+        "CLEARSORT": "Clear sort",
+        "CLEARSEARCH": "Clear search",
+        "SEARCHCOLUMNS": "Search in all columns",
+        "SEARCH": "Search",
+        "GO": "Go",
+        "ACTION": "Action",
+        "DELETE": "Delete",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "EDIT": "Edit",
+        "SHOWINFO": "Showing {{from}} to {{to}} of {{total}} entries",
+        "NAME": "Name",
+        "DESCRIPTION": "Description",
+        "GROUPS": "Groups",
+        "USERS": "Users",
+        "REQFIELD": "Required fields",
+        "OWNER": "Owner"
+      },
+      "users": {
+        "PANELTITLE": "Users Adminstration",
+        "NEW": "New user",
+        "RELOAD": "Reload",
+        "CLEARSORT": "Clear sort",
+        "CLEARSEARCH": "Clear search",
+        "SEARCHCOLUMNS": "Search in all fields",
+        "SEARCH": "Search",
+        "GO": "Go",
+        "ACTION": "Action",
+        "DELETE": "Delete",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "EDIT": "Edit",
+        "SELECTED": "Selecting {{ min }} of {{ max }}",
+        "SHOWINFO": "Showing {{from}} to {{to}} of {{total}} entries",
+        "NAME": "Name",
+        "DESCRIPTION": "Description",
+        "EMAIL": "Email address",
+        "PASS": "Password",
+        "CPASS": "Confirm password",
+        "REQFIELD": "Required fields",
+        "OWNER": "Owner"
+      },
+      "groups": {
+        "PANELTITLE": "Groups Adminstration",
+        "NEW": "New group",
+        "RELOAD": "Reload",
+        "CLEARSORT": "Clear sort",
+        "CLEARSEARCH": "Clear search",
+        "SEARCHCOLUMNS": "Search in all fields",
+        "SEARCH": "Search",
+        "GO": "Go",
+        "ACTION": "Action",
+        "DELETE": "Delete",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "EDIT": "Edit",
+        "SELECTED": "Selecting {{ min }} of {{ max }}",
+        "SHOWINFO": "Showing {{from}} to {{to}} of {{total}} entries",
+        "NAME": "Name",
+        "REQFIELD": "Required fields"
+      }
+    },
+    "devices": {
+      "TITLE": "Devices",
+      "DESCRIPTION": "In this panel you can view devices information (location, sensors, status and battery),",
+      "overview": {
+        "PANELTITLE_LEFT": "Devices list",
+        "PANELTITLE_RIGHT": "View of the location of all devices",
+        "STATUS": "Status",
+        "BAT": "Battery",
+        "NOBAT": "No battery information",
+        "NOSTATUS": "No status information",
+        "NODEVICES": "No devices were found!",
+        "NODEVICES_DETAIL": "These devices may be inserted using the adminstration panel (however, the correct identifier is needed, otherwise platform won't be able read any sensors)."
+      },
+      "details": {
+        "PANELTITLE": "Devices list",
+        "LATITUDE": "Latitude",
+        "LONGITUDE": "Longitude",
+        "DESCRIPTION": "Description",
+        "LAST_ACTIVITY": "Last activity",
+        "CREATED_AT": "Created at",
+        "NODEVICES": "No devices were found!",
+        "NODEVICES_DETAIL": "These devices may be inserted using the adminstration panel (however, the correct identifier is needed, otherwise platform won't be able read any sensors)."
+      },
+      "individual": {
+        "PANELTITLE_LEFT": "Sensors list",
+        "PANELTITLE_RIGHT": "",
+        "DEVICE": "Device",
+        "NOSELECT": "There is no selected sensor.",
+        "NOSELECT_DETAIL": "To view the sensor data you need to select the sensor first using the panel on the left (which shows all sensors of the selected device).",
+        "SERVERERROR": "Unexpected problem!",
+        "SERVERERROR_DETAIL": "There was an error loading the available sensors. Please try again later.",
+        "NOSENSORS": "No available sensors!",
+        "NOSENSORS_DETAIL": "Check that the device was inserted correctly and that his ID is correct."
+      },
+      "sensors": {
+        "PANELTITLE_LEFT": "Sensor list",
+        "PANELTITLE_RIGHT": "Timeline of the selected device",
+        "MODAL_SELECT_TITLE": "File export",
+        "MODAL_EXPLAIN": "Select the device that you want to export the data related with the current sensor.",
+        "CANCEL": "Cancel",
+        "CONFIRM": "Export",
+        "NO_SELECTED_DEVICE": "There is no selected device!",
+        "NO_SELECTED_EXPLAIN": "To select a device you must select the sensor that you want to view and then you may select the devices that you want to see.",
+        "SERVERERROR": "Unexpected problem!",
+        "SERVERERROR_DETAIL": "There was an error loading the available sensors.",
+        "TRYLATER": "Please try again later.",
+        "NOSENSORS": "No available sensors!",
+        "NOSENSORS_DETAIL": "Check that the device was inserted correctly and that his ID is correct"
+      }
+    },
+    "error": {
+      "ERROR": "Error",
+      "NOTAUTH": "Not authorized",
+      "PAGE404": "Page not found",
+      "PAGE404DESC": "Page that you're trying to load doesn't exist",
+      "UNKERROR": "Error",
+      "GOHOME": "Back to the main page"
+    },
+    "groups": {
+      "TITLE": "Groups",
+      "DESCRIPTION": "Groups page",
+      "PANELTITLE": "Groups",
+      "NOGROUPS": "No available groups!",
+      "NOGROUPS_DETAIL": "To add groups is necessary to ask an adminstrator to define them."
+    },
+    "notifications": {
+      "TITLE": "Notifications",
+      "DESCRIPTION": "This page contains all the notifications that have been received (including those that have been read)",
+      "PANELTITLE": "Notifications",
+      "HEADER_DESCRIPTION": "Notification description",
+      "HEADER_READ": "Read",
+      "MARK_AS_READ": "Mark as read",
+      "PAGE_OF": "Page {{from}} of {{total}}"
+    }
+  }
+}
+

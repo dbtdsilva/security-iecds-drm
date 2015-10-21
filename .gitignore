@@ -55,3 +55,56 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Python compiled byte code
+*.pyc
+
+# Virtual env folder
+env/
+venv/
+vvenv/
+
+# SQLite3 database
+*.sqlite3
+
+# VIM auto-save files
+*.swp
+
+# Node modules
+node_modules/
+npm-debug.log
+
+# Bower components
+bower_components/
+
+# Vendor files
+static/vendor/
+
+# Staticfiles
+staticfiles/
+
+# Migration files
+*/migrations/*auto*.py
+*/migrations/000*_initial.py
+
+# Idea project folder
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Static Theme App
+Angle
+angle-*
+Angle-v*
+
+# Test, error and log files
+test/error.html
+static/app/js/base.js
+static/app/js/app.js

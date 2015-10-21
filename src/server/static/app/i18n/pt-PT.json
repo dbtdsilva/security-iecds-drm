@@ -1,0 +1,219 @@
+{
+  "dashboard": {
+    "WELCOME": "Bem-vindo à {{appName}}"
+  },
+  "topbar": {
+    "search": {
+      "PLACEHOLDER": "Escreva o que pretende pesquisar e prima a tecla Enter..",
+      "SUBMITSEARCH": "Pesquisar"
+    }
+  },
+  "offsidebar": {
+    "setting": {
+      "SETTINGS": "Definições",
+      "THEMES": "Temas",
+      "layout": {
+        "FIXED": "Fixo",
+        "COLLAPSED": "Colapso",
+        "BOXED": "Boxed",
+        "RTL": "RTL"
+      }
+    }
+  },
+  "sidebar": {
+    "WELCOME": "Bem-vindo",
+    "heading": {
+      "HEADER": "Menu Principal"
+    },
+    "nav": {
+      "HOME": "Página Principal",
+      "SINGLEVIEW": "Vista única",
+      "menu": {
+        "MENU": "Menu",
+        "SUBMENU": "Sub Menu"
+      },
+      "ADMIN": "Adminstração",
+      "admin": {
+        "USERS": "Utilizadores",
+        "GROUPS": "Grupos",
+        "DEVICES": "Dispositivos"
+      },
+      "DEVICES": "Dispositivos",
+      "devices": {
+        "OVERVIEW": "Vista geral",
+        "DETAILS": "Detalhes",
+        "SENSORS": "Sensores"
+      },
+      "GROUPS": "Grupos"
+    }
+  },
+  "pages": {
+    "login": {
+      "TOPMESSAGE": "Faça login para continuar",
+      "REMEMBERME": "Lembrar-me",
+      "USERNAME": "Introduza o nome de utilizador",
+      "PASSWORD": "Introduza a password",
+      "LOGIN": "Entrar",
+      "INCORRECT": "Credenciais erradas",
+      "SERVERREQUEST": "Pedido ao servidor falhou"
+    }
+  },
+  "app": {
+    "home": {
+      "TITLE": "Página principal",
+      "DESCRIPTION": "Página principal",
+      "carousel": {
+        "DEVICES": "Estado dos dispositivos",
+        "MAP": "Localização dos dispositivos",
+        "SENSORS": "Visualização dos sensores",
+        "EXPORT": "Exportação de dados",
+        "LANGUAGE": "Suporte para vários idiomas",
+        "NOTIFICATIONS": "Notificações sobre os dispositivos",
+        "LIVE": "Notificações em tempo real"
+      }
+    },
+    "admin": {
+      "TITLE": "Adminstração",
+      "DESCRIPTION": "Painel de adminstração - Este painel permite alterar/visualizar dados relativos à plataforma.",
+      "devices": {
+        "PANELTITLE": "Adminstração dos dispositivos",
+        "NEW": "Novo dispositivo",
+        "RELOAD": "Recarregar",
+        "CLEARSORT": "Limpar ordenação",
+        "CLEARSEARCH": "Limpar pesquisa",
+        "SEARCHCOLUMNS": "Procurar em todas as colunas",
+        "SEARCH": "Procurar",
+        "GO": "Avançar",
+        "ACTION": "Acção",
+        "DELETE": "Eliminar",
+        "SAVE": "Guardar",
+        "CANCEL": "Cancelar",
+        "EDIT": "Editar",
+        "SHOWINFO": "Mostrando {{from}} até {{to}} de {{total}} entradas",
+        "NAME": "Nome",
+        "DESCRIPTION": "Descrição",
+        "GROUPS": "Grupos",
+        "USERS": "Utilizadores",
+        "REQFIELD": "Campos necessários",
+        "OWNER": "Dono"
+      },
+      "users": {
+        "PANELTITLE": "Adminstração dos utilizadores",
+        "NEW": "Novo utilizador",
+        "RELOAD": "Recarregar",
+        "CLEARSORT": "Limpar ordenação",
+        "CLEARSEARCH": "Limpar pesquisa",
+        "SEARCHCOLUMNS": "Procurar em todas as colunas",
+        "SEARCH": "Procurar",
+        "GO": "Avançar",
+        "ACTION": "Acção",
+        "DELETE": "Eliminar",
+        "SAVE": "Guardar",
+        "CANCEL": "Cancelar",
+        "EDIT": "Editar",
+        "SELECTED": "Seleccionado {{ min }} de {{ max }}",
+        "SHOWINFO": "Mostrando {{from}} até {{to}} de {{total}} entradas",
+        "NAME": "Nome",
+        "DESCRIPTION": "Descrição",
+        "EMAIL": "Endereço de email",
+        "PASS": "Palavra-passe",
+        "CPASS": "Corfirme palavra-passe",
+        "REQFIELD": "Campos necessários",
+        "OWNER": "Dono"
+      },
+      "groups": {
+        "PANELTITLE": "Adminstração dos grupos",
+        "NEW": "Novo grupo",
+        "RELOAD": "Recarregar",
+        "CLEARSORT": "Limpar ordenação",
+        "CLEARSEARCH": "Limpar pesquisa",
+        "SEARCHCOLUMNS": "Procurar em todas as colunas",
+        "SEARCH": "Procurar",
+        "GO": "Avançar",
+        "ACTION": "Acção",
+        "DELETE": "Eliminar",
+        "SAVE": "Guardar",
+        "CANCEL": "Cancelar",
+        "EDIT": "Editar",
+        "SELECTED": "Seleccionado {{ min }} de {{ max }}",
+        "SHOWINFO": "Mostrando {{from}} até {{to}} de {{total}} entries",
+        "NAME": "Nome",
+        "REQFIELD": "Campos necessários"
+      }
+    },
+    "devices": {
+      "TITLE": "Dispositivos",
+      "DESCRIPTION": "Neste painel é possível visualizar todas as informações relativas aos dispositovs (desde localização, valores dos sensores, estado e bateria)",
+      "overview": {
+        "PANELTITLE_LEFT": "Lista de dispositivos",
+        "PANELTITLE_RIGHT": "Visualização da localização de todos os dispositivos",
+        "STATUS": "Estado",
+        "BAT": "Bateria",
+        "NOBAT": "Sem informação de bateria",
+        "NOSTATUS": "Sem informação do estado",
+        "NODEVICES": "Não foram encontrados dispositivos!",
+        "NODEVICES_DETAIL": "Estes dispositivos podem ser inseridos usando o painel de adminstração (no entanto, precisam do identificador correcto para lerem os devidos sensores)."
+      },
+      "details": {
+        "PANELTITLE": "Lista de dispositivos",
+        "LATITUDE": "Latitude",
+        "LONGITUDE": "Longitude",
+        "DESCRIPTION": "Descrição",
+        "LAST_ACTIVITY": "Última actividade",
+        "CREATED_AT": "Criado em",
+        "NODEVICES": "Não foram encontrados dispositivos!",
+        "NODEVICES_DETAIL": "Estes dispositivos podem ser inseridos usando o painel de adminstração (no entanto, precisam do identificador correcto para lerem os devidos sensores)."
+      },
+      "individual": {
+        "PANELTITLE_LEFT": "Lista de sensores",
+        "PANELTITLE_RIGHT": "",
+        "DEVICE": "Dispositivo",
+        "NOSELECT": "Não se encontra seleccionado nenhum sensor.",
+        "NOSELECT_DETAIL": "Para visualizar os dados relativos ao sensor primeiro terá de seleccionar o sensor usando o painel do lado esquerdo (que mostra todos os sensores do dispositivo seleccionado).",
+        "SERVERERROR": "Problema inesperado!",
+        "SERVERERROR_DETAIL": "Ocorreu um erro ao carregar os sensores disponíveis. Por favor tente mais tarde.",
+        "NOSENSORS": "Não foram encontrados sensores disponíveis!",
+        "NOSENSORS_DETAIL": "Verifique que o dispositivo foi inserido correctamente e que o seu identificador se encontra correcto."
+      },
+      "sensors": {
+        "PANELTITLE_LEFT": "Lista de sensores",
+        "PANELTITLE_RIGHT": "Visualização ao longo do tempo do sensor seleccionado",
+        "MODAL_SELECT_TITLE": "Exportação para um ficheiro",
+        "MODAL_EXPLAIN": "Seleccione o dispositivo para o qual pretender exportar os dados do sensor actual.",
+        "CANCEL": "Cancelar",
+        "CONFIRM": "Exportar",
+        "NO_SELECTED_DEVICE": "Não existe nenhum dispositivo seleccionado!",
+        "NO_SELECTED_EXPLAIN": "Para seleccionar um dispositivo primeiro terá de seleccionar o sensor que pretende visualizar e depois poderá seleccionar o(s) dispositivo(s) que pretende visualizar.",
+        "SERVERERROR": "Problema inesperado!",
+        "SERVERERROR_DETAIL": "Ocorreu um erro ao carregar os sensores disponíveis.",
+        "TRYLATER": "Por favor tente mais tarde.",
+        "NOSENSORS": "Não foram encontrados sensores disponíves!",
+        "NOSENSORS_DETAIL": "Verifique que os dispositivos foram todos inseridos correctamente e que o seu identificador se encontra correcto."
+      }
+    },
+    "error": {
+      "ERROR": "Erro",
+      "NOTAUTH": "Não estás autorizado",
+      "PAGE404": "Não foi possível encontrar esta página.",
+      "PAGE404DESC": "A página que está a tentar encontrar não existe",
+      "UNKERROR": "Ocorreu um erro",
+      "GOHOME": "Voltar à página principal"
+    },
+    "groups": {
+      "TITLE": "Grupos",
+      "DESCRIPTION": "Página de grupos",
+      "PANELTITLE": "Grupos",
+      "NOGROUPS": "Não foram encontrados grupos!",
+      "NOGROUPS_DETAIL": "Para adicionar grupos é preciso recorrer a um adminstrador da plataforma que define esses mesmos grupos."
+    },
+    "notifications": {
+      "TITLE": "Notificações",
+      "DESCRIPTION": "Esta página contém todas as notificações que já foram recebidos (inclusive as que já foram lidas)",
+      "PANELTITLE": "Notificações",
+      "HEADER_DESCRIPTION": "Descrição da notificação",
+      "HEADER_READ": "Lida",
+      "MARK_AS_READ": "Marcar como lida",
+      "PAGE_OF": "Pagina {{from}} de {{total}}"
+    }
+  }
+}

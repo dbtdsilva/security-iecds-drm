@@ -1,0 +1,51 @@
+<div ng-controller="LoginFormController" class="block-center mt-xl wd-xl">
+    <!-- START panel-->
+    <div class="panel panel-dark panel-flat">
+        <div class="panel-heading text-center">
+            <a href="#">
+                <img src="app/img/logo.png" alt="Image" class="block-center img-rounded"/>
+            </a>
+        </div>
+        <div class="panel-body">
+            <p class="text-center pv" ng-class="{'text-danger': $stateParams.status === 401}">{{$stateParams.status}} {{
+                ($stateParams.detail || 'pages.login.TOPMESSAGE' | translate) | uppercase }}</p>
+
+            <form role="form" ng-submit="login()" validate-form="" novalidate="" class="mb-lg">
+                <div class="form-group has-feedback">
+                    <input id="inputUsername" type="text" placeholder="{{ 'pages.login.USERNAME' | translate }}"
+                           autocomplete="off" ng-model="account.username" required="required" class="form-control"/>
+                    <span class="fa fa-user form-control-feedback text-muted"></span>
+                </div>
+                <div class="form-group has-feedback">
+                    <input id="inputPassword" type="password" placeholder="{{ 'pages.login.PASSWORD' | translate }}"
+                           ng-model="account.password" required="required" class="form-control"/>
+                    <span class="fa fa-lock form-control-feedback text-muted"></span>
+                </div>
+                <div class="clearfix">
+                    <div class="checkbox c-checkbox pull-left mt0">
+                        <label>
+                            <input type="checkbox" value="" name="remember" ng-model="account.remember"/>
+                            <span class="fa fa-check"></span>{{ 'pages.login.REMEMBERME' | translate }}</label>
+                    </div>
+                    <!-- <div class="pull-right">
+                      <a ui-sref="page.recover" class="text-muted">Forgot your password?</a>
+                    </div> -->
+                </div>
+                <button type="submit" class="btn btn-block btn-primary mt-lg">{{ 'pages.login.LOGIN' | translate }}
+                </button>
+            </form>
+            <div ng-show="authMsg" class="alert alert-danger text-center">{{authMsg | translate}}</div>
+            <!-- <p class="pt-lg text-center">Need to Signup?</p>
+            <a ui-sref="page.register" class="btn btn-block btn-default">Register Now</a> -->
+        </div>
+    </div>
+    <!-- END panel-->
+    <div class="p-lg text-center">
+        <span>&copy;</span>
+        <span ng-bind="app.year"></span>
+        <span>-</span>
+        <span ng-bind="app.name"></span>
+        <br/>
+        <span ng-bind="app.description"></span>
+    </div>
+</div>

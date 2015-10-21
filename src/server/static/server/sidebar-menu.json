@@ -1,0 +1,13 @@
+
+  {
+    "text": "Menu Heading",
+    "heading": "true",
+    "translate": "sidebar.heading.HEADER"
+  },
+  {
+    "text": "Home",
+    "sref": "app.home",
+    "icon": "icon-home",
+    "translate": "sidebar.nav.HOME"
+  }
+]
