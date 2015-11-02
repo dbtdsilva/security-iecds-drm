@@ -12,14 +12,10 @@
    <!--<link rel="stylesheet" href="app/css/app-rtl.css" data-ng-if="app.layout.isRTL">-->
 </head>
 
-<body data-ng-class="{ 'layout-fixed' : app.layout.isFixed, 'aside-collapsed' : app.layout.isCollapsed, 'layout-boxed' : app.layout.isBoxed }">
+<body>
    <div data-ui-view="" data-autoscroll="false" data-ng-class="mainViewAnimation" class="wrapper"></div>
    <script src="app/js/base.js"></script>
    <script src="app/js/app.js"></script>
 </body>
-<script type="text/javascript">
-  var WEBSOCKET_URI = '{{ WEBSOCKET_URI }}';
-  var WS4REDIS_HEARTBEAT = '{{ WS4REDIS_HEARTBEAT }}';
-</script>
 </html>
 

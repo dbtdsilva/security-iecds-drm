@@ -17,7 +17,7 @@ if (typeof $ === 'undefined') {
 // ----------------------------------- 
 
 var App = angular.module('dashboard', ['ngRoute', 'ngAnimate', 'ngStorage', 'ngCookies', 'pascalprecht.translate', 'ui.bootstrap', 'ui.router', 'oc.lazyLoad', 'cfp.loadingBar', 'ngSanitize', 'ngResource', 'ui.utils'])
-    .run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', '$filter', 'AuthService', function ($rootScope, $state, $stateParams, $window, $templateCache, $filter, AuthService) {
+    .run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', '$filter', function ($rootScope, $state, $stateParams, $window, $templateCache, $filter) {
         // Set reference to access them from any scope
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
@@ -59,9 +59,9 @@ var App = angular.module('dashboard', ['ngRoute', 'ngAnimate', 'ngStorage', 'ngC
         //  job: 'ng-Dev',
         //  picture: 'app/img/user/02.jpg'
         //};
-        $rootScope.user = {};
-        $rootScope.AuthService = AuthService;
-        AuthService.init();
+        //$rootScope.user = {};
+        // $rootScope.AuthService = AuthService;
+        //AuthService.init();
 
         $rootScope.toPrettyJSON = function (object, spacing) {
             return $filter('json')(object, spacing);

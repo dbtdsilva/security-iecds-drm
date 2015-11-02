@@ -1,7 +1,4 @@
 /**
- * Created by pmec on 29/12/14.
- */
-/**
  * Directly from fnakstad
  * https://github.com/fnakstad/angular-client-side-auth/blob/master/client/js/routingConfig.js
  */
