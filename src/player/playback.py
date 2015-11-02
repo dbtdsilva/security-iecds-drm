@@ -10,9 +10,9 @@ class Playback:
     pipeline = None
     loop = None
 
-  def cb_message(bus, msg, data):
+  def cb_message(self, bus, msg, data):
     def error():
-      print >> sys.stderr, ("Error: {0}".format(err.message))
+      #print >> sys.stderr, ("Error: {0}".format(err.message))
       data.pipeline.set_state(gst.STATE_READY)
       data.loop.quit()
     def eos():

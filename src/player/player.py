@@ -70,7 +70,7 @@ class Login(tk.Frame):
 
     usernameTextbox = tk.Entry(self)
     usernameTextbox.grid(row=1, column=1, columnspan=3, padx=10)
-    passwordTextbox = tk.Entry(self)
+    passwordTextbox = tk.Entry(self, show="*")
     passwordTextbox.grid(row=4, column=1, columnspan=3)
 
     button = tk.Button(self, text="Login!",
