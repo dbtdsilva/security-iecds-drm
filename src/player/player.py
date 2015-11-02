@@ -1,87 +1,134 @@
 import Tkinter as tk
-
+import tkMessageBox
+import os
+from playback import Playback
 
 LARGE_FONT= ("Verdana", 12)
 
+class MainWindow(tk.Tk):
+  def __init__(self, *args, **kwargs):
+    tk.Tk.__init__(self, *args, **kwargs)
+    container = tk.Frame(self)
 
-class SeaofBTCapp(tk.Tk):
+    container.pack(side="top", fill="both", expand = True)
 
-    def __init__(self, *args, **kwargs):
+    container.grid_rowconfigure(0, weight=1)
+    container.grid_columnconfigure(0, weight=1)
+
+    self.frames = {}
+    self.minsize(310, 310)
+
+    for F in (Login, List):
+      frame = F(container, self)
+
+      self.frames[F] = frame
+
+      frame.grid(row=0, column=0, sticky="nsew")
+
+    loginFrame = self.frames[Login]
+    loginFrame.l = self.frames[List]
+    self.show_frame(Login)
+
+  def show_frame(self, cont):
+    frame = self.frames[cont]
+    frame.tkraise()
         
-        tk.Tk.__init__(self, *args, **kwargs)
-        container = tk.Frame(self)
+class Login(tk.Frame):
+  l = None
 
-        container.pack(side="top", fill="both", expand = True)
+  # ----- Change content for server interaction  -----
+  def checkCredentials(self, username, password):
+    if username == "tania" and password == "abc":
+      return True
+    else:
+      return False
+  # ----- ----- ----- ----- ----- ----- ----- ----- --
+  def login(self, usernameTextbox, passwordTextbox, controller):
+    username = usernameTextbox.get()
+    password = passwordTextbox.get()
 
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
-        self.frames = {}
-
-        for F in (StartPage, PageOne, PageTwo):
-
-            frame = F(container, self)
-
-            self.frames[F] = frame
-
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        self.show_frame(StartPage)
-
-    def show_frame(self, cont):
-
-        frame = self.frames[cont]
-        frame.tkraise()
-
-        
-class StartPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self,parent)
-        label = tk.Label(self, text="Start Page", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
-
-        button = tk.Button(self, text="Visit Page 1",
-                            command=lambda: controller.show_frame(PageOne))
-        button.pack()
-
-        button2 = tk.Button(self, text="Visit Page 2",
-                            command=lambda: controller.show_frame(PageTwo))
-        button2.pack()
+    if self.checkCredentials(username, password):
+      self.l.username = username
+      controller.show_frame(List)
+    else:
+      tkMessageBox.showwarning("ERROR!", "Login credentials are wrong!" )
+      
+    usernameTextbox.delete(0, "end")
+    passwordTextbox.delete(0, "end")
 
 
-class PageOne(tk.Frame):
+  def __init__(self, parent, controller):
+    tk.Frame.__init__(self,parent)
 
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
+    label = tk.Label(self, text="Login to continue...", font=LARGE_FONT)
+    label.grid(row=0, column=0, pady=10, padx=10, columnspan=5)
 
-        button1 = tk.Button(self, text="Back to Home",
-                            command=lambda: controller.show_frame(StartPage))
-        button1.pack()
+    usernameLabel = tk.Label(self, text="Username: ", font=LARGE_FONT)
+    usernameLabel.grid(row=1, column=0, pady=5)
+    passwordLabel = tk.Label(self, text="Password: ", font=LARGE_FONT)
+    passwordLabel.grid(row=4, column=0, pady=5)
 
-        button2 = tk.Button(self, text="Page Two",
-                            command=lambda: controller.show_frame(PageTwo))
-        button2.pack()
+    usernameTextbox = tk.Entry(self)
+    usernameTextbox.grid(row=1, column=1, columnspan=3, padx=10)
+    passwordTextbox = tk.Entry(self)
+    passwordTextbox.grid(row=4, column=1, columnspan=3)
+
+    button = tk.Button(self, text="Login!",
+    command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
+    button.grid(row=6, column=2, pady=10, padx=10)
+
+class List(tk.Frame):
+  username = ""
+  fileListBox = None
+  path = ""
+
+  # ----- Change content for server interaction  -----
+  def getFileList(self):    
+    self.path = "/run/media/guesswho/188165B769E14099/University/Security/security-iecds-drm/src/player/videos/"
+    return os.listdir(self.path)
+  # ----- ----- ----- ----- ----- ----- ----- ----- --
+
+  def startPlayback(self):
+    if self.fileListBox.curselection()[0] != None:
+      playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
+
+  def logout(self, controller):
+    self.username = ""
+    controller.show_frame(Login)
+
+  def listContents(self, label, button1):
+    listFiles = self.getFileList()
+
+    button1.grid_remove()
+    label.grid_remove()
+
+    labelHint = tk.Label(self, text="Please select the file to open and click 'Open'")
+    labelHint.grid(row=1, column=0, columnspan=5, padx=20, pady=15)
+
+    self.fileListBox = tk.Listbox(self, selectmode="single")
+
+    for f in listFiles:
+      self.fileListBox.insert("end", f)
+
+    self.fileListBox.grid(row=3, column=1, columnspan=3, rowspan=5, padx=10, pady=10)
+
+    selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
+    selectBtn.grid(row=8, column=1, padx=10, pady=10)
+
+  def __init__(self, parent, controller):
+    tk.Frame.__init__(self, parent)
+    self.grid_columnconfigure(0, weight=1)
+
+    label = tk.Label(self, text="Login successful!", font=LARGE_FONT)
+    label.grid(row=1, column=0, pady=15, padx=20, columnspan=5)
+
+    button1 = tk.Button(self, text="Continue",
+    command=lambda: self.listContents(label, button1))
+    button1.grid(row=3, column=2, padx=10, pady=10)
+    
+    logoutBtn = tk.Button(self, text="Logout", command=lambda: self.logout(controller))
+    logoutBtn.grid(row=0, column=4, pady=10, padx=10)
 
 
-class PageTwo(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Page Two!!!", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
-
-        button1 = tk.Button(self, text="Back to Home",
-                            command=lambda: controller.show_frame(StartPage))
-        button1.pack()
-
-        button2 = tk.Button(self, text="Page One",
-                            command=lambda: controller.show_frame(PageOne))
-        button2.pack()
-        
-
-
-app = SeaofBTCapp()
+app = MainWindow()
 app.mainloop()

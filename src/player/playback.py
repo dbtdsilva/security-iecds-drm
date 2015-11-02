@@ -73,5 +73,5 @@ class Playback:
 
 
 
-app = Playback('/run/media/guesswho/188165B769E14099/University/Security/security-iecds-drm/src/player/videos/FTWD1.mp4')
+#app = Playback('/run/media/guesswho/188165B769E14099/University/Security/security-iecds-drm/src/player/videos/FTWD1.mp4')
 
