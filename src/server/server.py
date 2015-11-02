@@ -8,6 +8,13 @@ from cherrypy.lib import jsontools as json
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+class User(object):
+	exposed = True
+
+	@cherrypy.tools.json_out()
+	def GET(self, dsid=None):
+		return []
+
 class Titles(object):
 	exposed = True
 
@@ -25,7 +32,7 @@ class Title(object):
 	def GET(self, *vpath):
 		item = vpath[0]
 		#IV = Random.new().read(BLOCK_SIZE)
-		CryptoHeader = Random.new().read(BLOCK_SIZE)
+		CryptoHeader = '12345678901234567890123456789012'	#Random.new().read(BLOCK_SIZE)
 
 		UserKey = '12345678901234567890123456789012'
 		DeviceKey = '12345678901234567890123456789012'
@@ -40,14 +47,14 @@ class Title(object):
 
 		aes = AES.new(FileKey, AES.MODE_ECB)
 		
-		
+		print FileKey
 		f = open('media/news_interview.wmv', 'r')
 
 		dataEncrypted = ""
 		data = f.read(BLOCK_SIZE)
 		while data:
 			if len(data) < BLOCK_SIZE:
-				pass
+				dataEncrypted += data
 			else:
 				dataEncrypted += aes.encrypt(data)
 			data = f.read(BLOCK_SIZE)
