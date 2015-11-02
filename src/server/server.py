@@ -8,6 +8,13 @@ from cherrypy.lib import jsontools as json
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+class User(object):
+	exposed = True
+
+	@cherrypy.tools.json_out()
+	def GET(self, dsid=None):
+		return []
+
 class Titles(object):
 	exposed = True
 
@@ -41,7 +48,7 @@ class Title(object):
 
 		aes = AES.new(FileKey, AES.MODE_ECB)
 		
-		
+		print FileKey
 		f = open('media/news_interview.wmv', 'r')
 
 		dataEncrypted = ""
