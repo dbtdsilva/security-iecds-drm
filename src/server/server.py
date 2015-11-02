@@ -25,7 +25,8 @@ class Title(object):
 	def GET(self, *vpath):
 		item = vpath[0]
 		#IV = Random.new().read(BLOCK_SIZE)
-		CryptoHeader = Random.new().read(BLOCK_SIZE)
+		CryptoHeader = '12345678901234567890123456789012'
+                #Random.new().read(BLOCK_SIZE)
 
 		UserKey = '12345678901234567890123456789012'
 		DeviceKey = '12345678901234567890123456789012'
@@ -47,7 +48,7 @@ class Title(object):
 		data = f.read(BLOCK_SIZE)
 		while data:
 			if len(data) < BLOCK_SIZE:
-				pass
+				dataEncrypted += data
 			else:
 				dataEncrypted += aes.encrypt(data)
 			data = f.read(BLOCK_SIZE)

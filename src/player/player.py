@@ -2,6 +2,8 @@ import Tkinter as tk
 import tkMessageBox
 import os
 from playback import Playback
+import requests
+from Crypto.Cipher import AES
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -86,11 +88,48 @@ class List(tk.Frame):
   def getFileList(self):    
     self.path = "/run/media/guesswho/188165B769E14099/University/Security/security-iecds-drm/src/player/videos/"
     return os.listdir(self.path)
-  # ----- ----- ----- ----- ----- ----- ----- ----- --
 
   def startPlayback(self):
-    if self.fileListBox.curselection()[0] != None:
-      playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
+
+    req = requests.get('http://localhost:8080/api/title/214')
+    encryptedFile = req.content
+
+    cryptoHeader = '12345678901234567890123456789012'
+    UserKey = '12345678901234567890123456789012'
+    DeviceKey = '12345678901234567890123456789012'
+    PlayerKey = '12345678901234567890123456789012'
+
+    aes = AES.new(cryptoHeader, AES.MODE_ECB)
+    cryptoDevKey = aes.encrypt(DeviceKey)
+    aes = AES.new(cryptoDevKey, AES.MODE_ECB)
+    cryptoDevUserKey = aes.encrypt(UserKey)
+    aes = AES.new(cryptoDevKey, AES.MODE_ECB)
+    FileKey = aes.encrypt(PlayerKey)
+    aes = AES.new(FileKey, AES.MODE_ECB)
+    print FileKey
+    i = 0
+    data = encryptedFile[i : i + 32]
+
+    f = open("./videos/xpto.wmv", 'w')
+
+    while len(data) != 0:
+      #decrypt data
+      if len(data) < 32:
+        decryptedData = data
+      else:
+        decryptedData = aes.decrypt(data)
+      
+      #write file
+      f.write(decryptedData)
+
+      i += 32
+      data = encryptedFile[i : i + 32]
+
+    f.close()
+    #playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
+    #if self.fileListBox.curselection()[0] != None:
+     # playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
+  # ----- ----- ----- ----- ----- ----- ----- ----- --
 
   def logout(self, controller):
     self.username = ""
