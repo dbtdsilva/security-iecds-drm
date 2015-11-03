@@ -46,7 +46,7 @@ class Title(object):
 		FileKey = aes.encrypt(PlayerKey)
 
 		aes = AES.new(FileKey, AES.MODE_ECB)
-		
+
 		print FileKey
 		f = open('media/news_interview.wmv', 'r')
 

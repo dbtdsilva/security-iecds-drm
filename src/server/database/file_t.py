@@ -12,9 +12,10 @@ class File(Base):
 
     id = Column(Integer, primary_key=True)
     author = Column(String)
+    path = Column(String)
     title = Column(String)
     category = Column(String)
-    production_date = Column(Date)    
+    production_date = Column(Date)
 
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)
@@ -23,6 +24,7 @@ class File(Base):
         rv = dict()
         rv['id'] = self.id
         rv['author'] = self.author
+        rv['path'] = self.path
         rv['title'] = self.title
         rv['category'] = self.category
         rv['production_date'] = self.production_date
@@ -32,6 +34,7 @@ class File(Base):
     def from_dict(cls, data):
         return cls(id=data['id'],
                    author=data['author'],
+                   path=path['path']
                    title=data['title'],
                    category=data['category'],
                    production_date=data['production_date'])
