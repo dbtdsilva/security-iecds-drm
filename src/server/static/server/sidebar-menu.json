@@ -1,0 +1,12 @@
+[
+  {
+    "text": "Home",
+    "sref": "app.home",
+    "icon": "fa fa-home"
+  },
+  {
+    "text": "About",
+    "sref": "app.about",
+    "icon": "fa fa-user"
+  }
+]

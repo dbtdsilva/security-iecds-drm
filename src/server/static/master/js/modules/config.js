@@ -34,7 +34,15 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         controller: 'HomeController',
         resolve: helper.resolveFor('chart', 'paho-mqtt', 'localytics.directives', 'chart.js', 'angular-carousel'),
         accessLevel: 'public'
-    })    
+    })
+    .state('app.about', {
+        url: '/about',
+        title: 'About',
+        templateUrl: helper.basepath('partials/about.html'),
+        //controller: 'HomeController',
+        //resolve: helper.resolveFor('chart', 'paho-mqtt', 'localytics.directives', 'chart.js', 'angular-carousel'),
+        accessLevel: 'public'
+    }) 
     .state('app.error', {
         url: '/error/:error',
         title: 'Error',
