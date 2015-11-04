@@ -1,20 +1,6 @@
-/*!
- *
- * Angle - Bootstrap Admin App + AngularJS
- *
- * Author: @themicon_co
- * Website: http://themicon.co
- * License: http://support.wrapbootstrap.com/knowledge_base/topics/usage-licenses
- *
- */
-
 if (typeof $ === 'undefined') {
     throw new Error('This application\'s JavaScript requires jQuery');
 }
-
-
-// APP START
-// ----------------------------------- 
 
 var App = angular.module('dashboard', ['ngRoute', 'ngAnimate', 'ngStorage', 'ngCookies', 'pascalprecht.translate', 'ui.bootstrap', 'ui.router', 'oc.lazyLoad', 'cfp.loadingBar', 'ngSanitize', 'ngResource', 'ui.utils'])
     .run(["$rootScope", "$state", "$stateParams", '$window', '$templateCache', '$filter', function ($rootScope, $state, $stateParams, $window, $templateCache, $filter) {
@@ -38,8 +24,8 @@ var App = angular.module('dashboard', ['ngRoute', 'ngAnimate', 'ngStorage', 'ngC
         // Scope Globals
         // -----------------------------------
         $rootScope.app = {
-            name: 'Dashboard',
-            description: 'Dashboard Web Application',
+            name: 'IEDCS',
+            description: 'Identity Enabled Distribution Control System',
             year: ((new Date()).getFullYear()),
             layout: {
                 isFixed: true,

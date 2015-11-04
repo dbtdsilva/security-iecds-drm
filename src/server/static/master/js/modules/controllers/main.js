@@ -15,7 +15,7 @@ App.controller('AppController',
              ***************** APPLICATION ********************
              **************************************************/
                 // Setup the layout mode
-            $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
+            //$rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
 
             $rootScope.cfpLoadingBar = cfpLoadingBar;
             // Loading bar transition
@@ -110,27 +110,6 @@ App.controller('AppController',
                 return title;
             };
 
-            // iPad may presents ghost click issues
-            // if( ! browser.ipad )
-            // FastClick.attach(document.body);
-
-            // Close submenu when sidebar change from collapsed to normal
-            $rootScope.$watch('app.layout.isCollapsed', function (newValue, oldValue) {
-                if (newValue === false)
-                    $rootScope.$broadcast('closeSidebarMenu');
-            });
-
-            // Restore layout settings
-            if (angular.isDefined($localStorage.layout))
-                $scope.app.layout = $localStorage.layout;
-            else
-                $localStorage.layout = $scope.app.layout;
-
-            $rootScope.$watch("app.layout", function () {
-                $localStorage.layout = $scope.app.layout;
-            }, true);
-
-
             // Allows to use branding color with interpolation
             // {{ colorByName('primary') }}
             $scope.colorByName = colors.byName;
@@ -143,7 +122,7 @@ App.controller('AppController',
             // Internationalization
             // ----------------------
 
-            $scope.language = {
+            /*$scope.language = {
                 // list of available languages
                 available: {
                     'en-GB': {name: 'English', iconid: "gb"},
@@ -167,7 +146,7 @@ App.controller('AppController',
             };
 
             $scope.language.init();
-
+            */
             // Restore application classes state
             toggle.restoreState($(document.body));
 

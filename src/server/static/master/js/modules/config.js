@@ -129,7 +129,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
 
 }]).config(['$translateProvider', function ($translateProvider) {
 
-    $translateProvider.useStaticFilesLoader({
+    /*$translateProvider.useStaticFilesLoader({
         prefix : 'app/i18n/',
         suffix : '.json'
     });
@@ -138,7 +138,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
     //$translateProvider.rememberLanguage(true);
     $translateProvider.useLocalStorage();
     $translateProvider.usePostCompiling(true);
-
+    */
 }]).config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
     cfpLoadingBarProvider.includeBar = true;
     cfpLoadingBarProvider.includeSpinner = false;
