@@ -24,7 +24,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         abstract: true,
         templateUrl: helper.basepath('app.html'),
         controller: 'AppController',
-        resolve: helper.resolveFor('paho-mqtt', 'localytics.directives', 'modernizr', 'slimscroll', 'icons',
+        resolve: helper.resolveFor('localytics.directives', 'modernizr', 'slimscroll', 'icons',
                                     'ui.gravatar', 'hljs', 'toaster')
     })
     .state('app.home', {
@@ -32,7 +32,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         title: 'Home',
         templateUrl: helper.basepath('home.html'),
         controller: 'HomeController',
-        resolve: helper.resolveFor('chart', 'paho-mqtt', 'localytics.directives', 'chart.js', 'angular-carousel'),
+        resolve: helper.resolveFor('chart', 'localytics.directives', 'chart.js', 'angular-carousel'),
         accessLevel: 'public'
     })
     .state('app.about', {
@@ -41,6 +41,14 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         templateUrl: helper.basepath('partials/about.html'),
         //controller: 'HomeController',
         //resolve: helper.resolveFor('chart', 'paho-mqtt', 'localytics.directives', 'chart.js', 'angular-carousel'),
+        accessLevel: 'public'
+    })
+    .state('app.titles', {
+        url: '/titles',
+        title: 'Titles',
+        templateUrl: helper.basepath('partials/titles.html'),
+        controller: 'TitlesController',
+        resolve: helper.resolveFor('localytics.directives', 'angular-carousel'),
         accessLevel: 'public'
     }) 
     .state('app.error', {

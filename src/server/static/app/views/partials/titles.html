@@ -1,0 +1,12 @@
+<div ng-controller="TitlesController">
+	<h2>Titles</h2>
+	<div class="row">
+		<div class="col-md-4" ng-repeat="title in titles">
+			<span>Title: {{ title.title }}</span><br/>
+			<span>Author: {{ title.author }}</span><br/>
+			<span>Category: {{ title.category }}</span><br/>
+			<span>Production Date: {{ title.production_date }}</span><br/>
+			<button class="btn btn-danger btn-sm" ng-click="buy(title.id)">Buy title</button><br/><br/>
+		</div>
+	</div>
+</div>

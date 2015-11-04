@@ -27,14 +27,14 @@ class File(Base):
         rv['path'] = self.path
         rv['title'] = self.title
         rv['category'] = self.category
-        rv['production_date'] = self.production_date
+        rv['production_date'] = str(self.production_date)
         return rv
 
     @classmethod
     def from_dict(cls, data):
         return cls(id=data['id'],
                    author=data['author'],
-                   path=path['path']
+                   path=data['path'],
                    title=data['title'],
                    category=data['category'],
                    production_date=data['production_date'])

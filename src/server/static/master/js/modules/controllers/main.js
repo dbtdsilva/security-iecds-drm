@@ -6,11 +6,6 @@ App.controller('AppController',
     ['$rootScope', '$scope', '$state', '$translate', '$window', '$localStorage', '$timeout', '$location', '$http', 'toggleStateService', 'colors', 'browser', 'cfpLoadingBar', 'toaster',
         function ($rootScope, $scope, $state, $translate, $window, $localStorage, $timeout, $location, $http, toggle, colors, browser, cfpLoadingBar, toaster) {
             "use strict";
-
-
-                
-
-
             /**************************************************
              ***************** APPLICATION ********************
              **************************************************/

@@ -5,7 +5,12 @@
     "icon": "fa fa-home"
   },
   {
-    "text": "About",
+    "text": "Titles",
+    "sref": "app.titles",
+    "icon": "fa fa-shopping-cart "
+  },
+  {
+    "text": "About us",
     "sref": "app.about",
     "icon": "fa fa-user"
   }
