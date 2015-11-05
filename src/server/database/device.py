@@ -10,8 +10,8 @@ class Device(Base):
     __tablename__ = 'device'
 
     id = Column(Integer, primary_key=True)
-    deviceid = Column(LargeBinary(32))
-    devicekey = Column(LargeBinary(32))    
+    deviceid = Column(LargeBinary(32), nullable=False)
+    devicekey = Column(LargeBinary(32), nullable=False)    
 
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)

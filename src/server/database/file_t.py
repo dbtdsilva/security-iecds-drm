@@ -11,9 +11,9 @@ class File(Base):
     __tablename__ = 'file'
 
     id = Column(Integer, primary_key=True)
-    author = Column(String)
-    path = Column(String)
-    title = Column(String)
+    author = Column(String, nullable=False)
+    path = Column(String, nullable=False)
+    title = Column(String, nullable=False)
     category = Column(String)
     production_date = Column(Date)
 
