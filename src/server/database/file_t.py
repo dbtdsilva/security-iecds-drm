@@ -11,9 +11,9 @@ class File(Base):
     __tablename__ = 'file'
 
     id = Column(Integer, primary_key=True)
-    author = Column(String)
-    path = Column(String)
-    title = Column(String)
+    author = Column(String, nullable=False)
+    path = Column(String, nullable=False)
+    title = Column(String, nullable=False)
     category = Column(String)
     production_date = Column(Date)
 
@@ -27,14 +27,14 @@ class File(Base):
         rv['path'] = self.path
         rv['title'] = self.title
         rv['category'] = self.category
-        rv['production_date'] = self.production_date
+        rv['production_date'] = str(self.production_date)
         return rv
 
     @classmethod
     def from_dict(cls, data):
         return cls(id=data['id'],
                    author=data['author'],
-                   path=path['path']
+                   path=data['path'],
                    title=data['title'],
                    category=data['category'],
                    production_date=data['production_date'])

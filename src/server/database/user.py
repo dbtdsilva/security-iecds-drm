@@ -11,8 +11,8 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
-    username = Column(String)
-    userkey = Column(LargeBinary(32))
+    username = Column(String, nullable=False)
+    userkey = Column(LargeBinary(32), nullable=False)
     
 
     def __repr__(self):

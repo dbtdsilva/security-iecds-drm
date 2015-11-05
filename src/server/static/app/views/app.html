@@ -1,12 +1,9 @@
 <!-- top navbar-->
 <header ng-include="'app/views/partials/top-navbar.html'" class="topnavbar-wrapper"></header>
-<!-- sidebar-->
-<aside ng-include="'app/views/partials/sidebar.html'" ng-controller="SidebarController" class="aside"></aside>
 <!-- Main section-->
-<section>
-   <!-- Page content-->
-   <div ui-view="" autoscroll="false" ng-class="app.viewAnimation" class="content-wrapper"></div>
+<section class="container">
+   	<!-- Page content-->
+   	<div ui-view="" autoscroll="false" ng-class="app.viewAnimation"></div>
+ 	<footer class="footer text-center" ng-include="'app/views/partials/footer.html'"></footer>
 </section>
-<!-- Page footer-->
 <toaster-container toaster-options="{'position-class': 'toast-bottom-right', 'close-button':true}"></toaster-container>
-<footer ng-include="'app/views/partials/footer.html'"></footer>

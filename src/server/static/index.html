@@ -6,16 +6,17 @@
    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
    <meta name="description" content="{{app.description}}">
    <meta name="keywords" content="app, responsive, angular, bootstrap, dashboard, admin">
-   <title data-ng-bind="pageTitle()">SCoT - Universidade de Aveiro</title>
-   <link rel="stylesheet" href="app/css/app.css">
-   <!--<link rel="stylesheet" href="app/css/app.css" data-ng-if="!app.layout.isRTL">-->
-   <!--<link rel="stylesheet" href="app/css/app-rtl.css" data-ng-if="app.layout.isRTL">-->
+   <title data-ng-bind="pageTitle()">{{ app.name }} - {{ app.description }}</title>
+   <link rel="stylesheet" href="app/css/bootstrap.min.css">
+   <link rel="stylesheet" href="app/css/bootstrap-theme.min.css">
+   <link rel="stylesheet" href="app/css/theme-style.css">
 </head>
 
 <body>
    <div data-ui-view="" data-autoscroll="false" data-ng-class="mainViewAnimation" class="wrapper"></div>
    <script src="app/js/base.js"></script>
    <script src="app/js/app.js"></script>
+   <script src="app/js/bootstrap.min.js"></script>
 </body>
 </html>
 

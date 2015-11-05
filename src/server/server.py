@@ -3,7 +3,9 @@ from Crypto import Random
 from Crypto.Cipher import AES
 import os.path
 import cherrypy
-from cherrypy.lib import jsontools as json
+import json
+from cherrypy.lib import jsontools
+from database.storage_api import storage
 
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +22,7 @@ class Titles(object):
 
 	@cherrypy.tools.json_out()
 	def GET(self, dsid=None):
-		return []
+		return [ a.to_dict() for a in storage.get_file_list() ]
 
 	@cherrypy.tools.json_in()
 	def POST(self, login=False):
@@ -75,8 +77,8 @@ if __name__ == '__main__':
         #'tools.authenticate.on': True,
         #'tools.is_authorized.on': True,
         #'tools.authorize_admin.on': True,
-        'tools.json_out.handler': json.json_handler,
-        'tools.json_in.processor': json.json_processor,
+        'tools.json_out.handler': jsontools.json_handler,
+        'tools.json_in.processor': jsontools.json_processor,
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
