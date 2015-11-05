@@ -5,6 +5,7 @@ class Cipherops:
     userKey = ''
     deviceKey = ''
     playerKey = ''
+    fileKey = ''
     seed = ''
 
     def __init__(self, seed, UserKey, DeviceKey, PlayerKey):
