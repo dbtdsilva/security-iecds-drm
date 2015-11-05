@@ -21,8 +21,18 @@ class Titles(object):
 	exposed = True
 
 	@cherrypy.tools.json_out()
-	def GET(self, dsid=None):
-		return [ a.to_dict() for a in storage.get_file_list() ]
+	def GET(self, *vpath):
+		if len(vpath) == 0:
+			return [ a.to_dict() for a in storage.get_file_list() ]
+		userid = vpath[0]
+		lrelations = storage.get_user_file_list(userid)
+		print lrelations
+		flist = []
+		for (ufile, filet) in lrelations:
+			tmp = filet.to_dict()
+			tmp['boughtdate'] = str(ufile.boughtdate)
+			flist += [tmp]
+		return flist
 
 	@cherrypy.tools.json_in()
 	def POST(self, login=False):

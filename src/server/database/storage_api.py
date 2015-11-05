@@ -58,13 +58,15 @@ class Storage(object):
         self.session.commit()
 
     def buy_file(self, userid, fileid):
-        uf = UserFile(userid=userid, fileid=fileid, boughdate=time.strftime("%x %X"))
+        uf = UserFile(userid=userid, fileid=fileid, boughtdate=time.strftime("%x %X"))
         self.session.add(uf)
         self.session.commit()
 
-    def get_user_file_list(self, username):
-        userid = self.session.query(User).filter(username=username).all()[0].id
-        return self.session.query(UserFile).filter(UserFile.userid = userid)
+    def get_user_file_list(self, userid):
+        query = self.session.query(User).filter_by(id=userid).all()
+        if len(query) != 1:
+            return "ERROR"
+        return self.session.query(UserFile, File).filter_by(userid=query[0].id).join(File, UserFile.fileid==File.id).all()
 
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
@@ -94,8 +96,8 @@ if __name__ == "__main__":
     storage.buy_file(1, 2)
     storage.buy_file(1, 4)
     storage.buy_file(1, 6)
-    storage.buy_file(1, 2)
-    storage.buy_file(1, 3)
-    storage.buy_file(1, 7)
-    storage.buy_file(1, 6)
+    storage.buy_file(2, 2)
+    storage.buy_file(2, 3)
+    storage.buy_file(2, 7)
+    storage.buy_file(2, 6)
     
