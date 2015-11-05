@@ -2,16 +2,26 @@ import sys
 import os
 import logging
 import json
+
+# Base controls the current database
+from base import Base
+# Tables
 from device import Device
 from player import Player
 from file_t import File
 from user import User
+# Tables originated from relations N,M
 from userfile import UserFile
+from userdevice import UserDevice
+from userplayer import UserPlayer
+
+# SQLAlchemy dependencies
 from sqlalchemy import create_engine, Column, \
     Integer, String, LargeBinary, Date
-from base import Base
 from sqlalchemy_utils import database_exists, drop_database, create_database
 from sqlalchemy.orm import sessionmaker
+
+import time
 
 log = logging.getLogger('storage')
 
@@ -47,6 +57,15 @@ class Storage(object):
         self.session.add(player)
         self.session.commit()
 
+    def buy_file(self, userid, fileid):
+        uf = UserFile(userid=userid, fileid=fileid, boughdate=time.strftime("%x %X"))
+        self.session.add(uf)
+        self.session.commit()
+
+    def get_user_file_list(self, username):
+        userid = self.session.query(User).filter(username=username).all()[0].id
+        return self.session.query(UserFile).filter(UserFile.userid = userid)
+
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
 DATABASE_URI = 'postgresql://postgres:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'
@@ -59,6 +78,10 @@ if __name__ == "__main__":
 storage = Storage(DATABASE_URI)
 
 if __name__ == "__main__":
+    from Crypto import Random
+    storage.create_user('taniaalves', Random.new().read(32))
+    storage.create_user('diogosilva', Random.new().read(32))
+    storage.create_player('\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c')
     storage.create_file('John Lennon', 'TW News', 'Documentary', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Adamaris Doe', 'Warcraft', 'Fantasy', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Richard Damon', 'TW News', 'Action', '2015-04-07', 'news_interview.wmv')
@@ -67,3 +90,12 @@ if __name__ == "__main__":
     storage.create_file('Aiken Madison', 'TW News', 'Horror', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Robert Hit', 'TW News', 'Romance', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Alice TRE', 'TW News', 'Comedy', '2015-04-07', 'news_interview.wmv')
+    storage.buy_file(1, 1)
+    storage.buy_file(1, 2)
+    storage.buy_file(1, 4)
+    storage.buy_file(1, 6)
+    storage.buy_file(1, 2)
+    storage.buy_file(1, 3)
+    storage.buy_file(1, 7)
+    storage.buy_file(1, 6)
+    
