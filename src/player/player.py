@@ -6,12 +6,17 @@ import requests
 from Crypto.Cipher import AES
 
 LARGE_FONT= ("Verdana", 12)
+PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
+loggedusername = ""
+path = "./videos/"
+serial = "500099721328U"
 
 class MainWindow(tk.Tk):
   def __init__(self, *args, **kwargs):
     tk.Tk.__init__(self, *args, **kwargs)
+    self.title("IEDCS Player")
     container = tk.Frame(self)
-
+    
     container.pack(side="top", fill="both", expand = True)
 
     container.grid_rowconfigure(0, weight=1)
@@ -31,6 +36,7 @@ class MainWindow(tk.Tk):
     loginFrame.l = self.frames[List]
     self.show_frame(Login)
 
+
   def show_frame(self, cont):
     frame = self.frames[cont]
     frame.tkraise()
@@ -40,23 +46,34 @@ class Login(tk.Frame):
 
   # ----- Change content for server interaction  -----
   def checkCredentials(self, username, password):
-    if username == "tania" and password == "abc":
+    if username == "taniaalves" and password == "abc":
       return True
     else:
       return False
   # ----- ----- ----- ----- ----- ----- ----- ----- --
+  
   def login(self, usernameTextbox, passwordTextbox, controller):
     username = usernameTextbox.get()
     password = passwordTextbox.get()
 
     if self.checkCredentials(username, password):
-      self.l.username = username
-      controller.show_frame(List)
+        self.l.username = username
+        #Manage directories
+        # -- Check if videos directory exists
+        if not os.path.exists(path) or not os.path.isdir(path):
+            os.mkdir(path)
+        # -- Check if user videos directory exists
+        if not os.path.exists(path + username) or not os.path.isdir(path + username):
+            os.mkdir(path + username)
+
+        self.l.listContents()
+        controller.show_frame(List)
     else:
-      tkMessageBox.showwarning("ERROR!", "Login credentials are wrong!" )
+        tkMessageBox.showwarning("ERROR!", "Login credentials are wrong!" )
       
     usernameTextbox.delete(0, "end")
     passwordTextbox.delete(0, "end")
+
 
 
   def __init__(self, parent, controller):
@@ -78,26 +95,26 @@ class Login(tk.Frame):
     button = tk.Button(self, text="Login!",
     command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
     button.grid(row=6, column=2, pady=10, padx=10)
+    
 
 class List(tk.Frame):
   username = ""
   fileListBox = None
-  path = ""
 
   # ----- Change content for server interaction  -----
-  def getFileList(self):    
-    self.path = "/run/media/guesswho/188165B769E14099/University/Security/security-iecds-drm/src/player/videos/"
-    return os.listdir(self.path)
+  def getFileList(self):   
+    if os.path.exists(path + self.username):
+        return os.listdir(path+self.username)
+    else:
+        return os.listdir(path)
+
 
   def startPlayback(self):
-
-    req = requests.get('http://localhost:8080/api/title/214')
-    encryptedFile = req.content
-
+    #req = requests.get('http://localhost:8000/api/title/214')
+    #encryptedFile = req.content
     cryptoHeader = '12345678901234567890123456789012'
     UserKey = '12345678901234567890123456789012'
     DeviceKey = '12345678901234567890123456789012'
-    PlayerKey = '12345678901234567890123456789012'
 
     aes = AES.new(cryptoHeader, AES.MODE_ECB)
     cryptoDevKey = aes.encrypt(DeviceKey)
@@ -107,64 +124,37 @@ class List(tk.Frame):
     FileKey = aes.encrypt(PlayerKey)
     aes = AES.new(FileKey, AES.MODE_ECB)
     print FileKey
-    i = 0
-    data = encryptedFile[i : i + 32]
 
-    f = open("./videos/xpto.wmv", 'w')
+    if self.fileListBox.curselection()[0] != None:
+        playback = Playback(self.fileListBox.get(self.fileListBox.curselection()[0]), FileKey)
+    else:
+        tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play." )
 
-    while len(data) != 0:
-      #decrypt data
-      if len(data) < 32:
-        decryptedData = data
-      else:
-        decryptedData = aes.decrypt(data)
-      
-      #write file
-      f.write(decryptedData)
-
-      i += 32
-      data = encryptedFile[i : i + 32]
-
-    f.close()
-    #playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
-    #if self.fileListBox.curselection()[0] != None:
-     # playback = Playback(self.path + self.fileListBox.get(self.fileListBox.curselection()[0]))
   # ----- ----- ----- ----- ----- ----- ----- ----- --
 
   def logout(self, controller):
     self.username = ""
     controller.show_frame(Login)
 
-  def listContents(self, label, button1):
+  def listContents(self):
     listFiles = self.getFileList()
-
-    button1.grid_remove()
-    label.grid_remove()
-
-    labelHint = tk.Label(self, text="Please select the file to open and click 'Open'")
-    labelHint.grid(row=1, column=0, columnspan=5, padx=20, pady=15)
-
-    self.fileListBox = tk.Listbox(self, selectmode="single")
-
+    
     for f in listFiles:
       self.fileListBox.insert("end", f)
-
-    self.fileListBox.grid(row=3, column=1, columnspan=3, rowspan=5, padx=10, pady=10)
-
-    selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
-    selectBtn.grid(row=8, column=1, padx=10, pady=10)
 
   def __init__(self, parent, controller):
     tk.Frame.__init__(self, parent)
     self.grid_columnconfigure(0, weight=1)
 
-    label = tk.Label(self, text="Login successful!", font=LARGE_FONT)
-    label.grid(row=1, column=0, pady=15, padx=20, columnspan=5)
+    labelHint = tk.Label(self, text="Please select the file to open and click 'Open'")
+    labelHint.grid(row=1, column=0, columnspan=5, padx=20, pady=15)
 
-    button1 = tk.Button(self, text="Continue",
-    command=lambda: self.listContents(label, button1))
-    button1.grid(row=3, column=2, padx=10, pady=10)
-    
+    self.fileListBox = tk.Listbox(self, selectmode="single")
+    self.fileListBox.grid(row=3, column=1, columnspan=3, rowspan=5, padx=10, pady=10)
+
+    selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
+    selectBtn.grid(row=8, column=1, padx=10, pady=10)
+
     logoutBtn = tk.Button(self, text="Logout", command=lambda: self.logout(controller))
     logoutBtn.grid(row=0, column=4, pady=10, padx=10)
 
