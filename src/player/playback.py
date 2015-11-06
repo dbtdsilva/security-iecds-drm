@@ -3,8 +3,9 @@ from cipherops import Cipherops
 from Crypto.Cipher import AES
 
 class Playback:
-    def __init__(self, filename, FileKey):
-        encFile = open("./videos/" + filename, "r")
+    def __init__(self, path, FileKey):
+        print path
+        encFile = open(path, "r")
 
         try:
             #cmdline = ['vlc', '-'] #default demux is broken, use below instead

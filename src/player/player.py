@@ -7,9 +7,10 @@ from Crypto.Cipher import AES
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
-loggedusername = ""
-path = "./videos/"
+#PlayerKey = '12345678901234567890123456789012'
+path = "." + os.path.sep + "videos" + os.path.sep
 serial = "500099721328U"
+uid = 0
 
 class MainWindow(tk.Tk):
   def __init__(self, *args, **kwargs):
@@ -110,8 +111,6 @@ class List(tk.Frame):
 
 
   def startPlayback(self):
-    #req = requests.get('http://localhost:8000/api/title/214')
-    #encryptedFile = req.content
     cryptoHeader = '12345678901234567890123456789012'
     UserKey = '12345678901234567890123456789012'
     DeviceKey = '12345678901234567890123456789012'
@@ -125,8 +124,23 @@ class List(tk.Frame):
     aes = AES.new(FileKey, AES.MODE_ECB)
     print FileKey
 
-    if self.fileListBox.curselection()[0] != None:
-        playback = Playback(self.fileListBox.get(self.fileListBox.curselection()[0]), FileKey)
+
+    title = self.fileListBox.get(self.fileListBox.curselection()[0])
+
+    if title != None:
+        #Check if file exists
+        # -- If the file exists, if it doesn't, download it
+        if not os.path.exists(path + self.username + os.path.sep + title):
+            print "I think file does not exist. im stupid"
+            with open(path + self.username + os.path.sep + title, "w") as handle:
+                req = requests.get('http://localhost:8000/api/title/214', stream = True)
+                if not response.ok:
+                    tkMessageBox.showwarning("Oops!", "Download failed." )
+                else:
+                    for block in response.iter_request(1024):
+                        handle.write(block)
+        # -- Read file
+        playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
         tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play." )
 
