@@ -63,6 +63,11 @@ class UserLogin(object):
             return {"detail": "Provided bad credentials"}
         cherrypy.response.status = 200
         cherrypy.session[SESSION_KEY] = body['username']
+        if 'key' in body:
+            cherrypy.session[SESSION_DEVICE] = body['key']
+            username = cherrypy.session.get(SESSION_KEY)
+            user_id = storage.get_user_id(username)
+            storage.associate_device_to_user(user_id, body['key'])
         return {"detail": "Login successfully"}
         
 
@@ -104,7 +109,7 @@ class Title(object):
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
         device_key = cherrypy.session.get(SESSION_DEVICE)
-        player_key = 'UJK3x\x1e\xb1\xd9\xc3\xfc3\xce\xc0\x13t\x07\xab\xdb\xff\t\xbd\x8b\xe3\xfe\\#C@r\xc6v\x83'
+        player_key = '\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c'
 
         if file_key == None:
             # first time that a file was requested, must generate seed

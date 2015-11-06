@@ -10,7 +10,6 @@ class Device(Base):
     __tablename__ = 'device'
 
     id = Column(Integer, primary_key=True)
-    deviceid = Column(LargeBinary(32), nullable=False)
     devicekey = Column(LargeBinary(32), nullable=False)    
 
     def __repr__(self):
@@ -19,12 +18,10 @@ class Device(Base):
     def to_dict(self):
         rv = dict()
         rv['id'] = self.id
-        rv['deviceid'] = self.deviceid
         rv['devicekey'] = self.devicekey
         return rv
 
     @classmethod
     def from_dict(cls, data):
         return cls(id=data['id'],
-                   deviceid=data['deviceid'],
                    devicekey=data['devicekey'])
