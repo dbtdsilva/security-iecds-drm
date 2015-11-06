@@ -71,6 +71,12 @@ class Storage(object):
     def is_user_valid(self, username):
         return len(self.session.query(User).filter_by(username=username).all()) == 1
 
+    def get_user_id(self, username):
+        query = self.session.query(User).filter_by(username=username).all()
+        if len(query) != 1:
+            return "ERROR"
+        return query[0].id
+
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
 DATABASE_URI = 'postgresql://postgres:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'

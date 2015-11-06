@@ -12,10 +12,34 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 SESSION_KEY = 'username'
 
+# -> API DETAILS
+# POST /api/user/login username=user
+# Details: Creates a session
+
+# POST /api/user/logout
+# Details: Logout the current user
+
+# GET  /api/title/all
+# Details: Gets all titles available to be bought
+
+# GET  /api/title/user                              # Requires login
+# Details: Gets all titles that the user bought
+
+# POST  /api/title/<pk>                             # Requires login
+# Details: Buys a specific title
+
+# GET  /api/title/<pk>                              # Requires login
+# Details: Downloads a specific title encrypted (must have been bought
+# before)
+
+# POST /api/title/validate/<pk> key=current_result  # Requires login
+# Details: Sends the current cipher result key to the server to process
+# with user key
+
 class API(object):
     def __init__(self):
         self.user = User()
-        self.titles = Titles()
+        self.title = Title()
 
 class User(object):
     def __init__(self):
@@ -27,8 +51,8 @@ class UserLogin(object):
     @cherrypy.tools.json_out()
     def POST(self):
         content_length = cherrypy.request.headers['Content-Length']
-        rawbody = cherrypy.request.body.read(int(content_length))
-        body = json.loads(rawbody)
+        raw_body = cherrypy.request.body.read(int(content_length))
+        body = json.loads(raw_body)
 
         if 'username' in body and not storage.is_user_valid(body['username']):
             cherrypy.response.status = 400
@@ -49,37 +73,35 @@ class UserLogout(object):
         cherrypy.session[SESSION_KEY] = None
         return {"detail": "User logged out."}
 
-class Titles(object):
+class Title(object):
+    exposed = True
+    def __init__(self):
+        self.all = TitleAll()
+        self.user = TitleUser()
+        self.validate = TitleValidate()
+
+    @cherrypy.tools.json_out()
+    def GET(self, title):
+        pass
+
+    @cherrypy.tools.json_out()
+    def POST(self, title):
+        pass
+
+class TitleValidate(object):
     exposed = True
 
     @cherrypy.tools.json_out()
-    def GET(self, *vpath):
-        if len(vpath) == 0:
-            return [ a.to_dict() for a in storage.get_file_list() ]
-        userid = vpath[0]
-        lrelations = storage.get_user_file_list(userid)
-        print lrelations
-        flist = []
-        for (ufile, filet) in lrelations:
-            tmp = filet.to_dict()
-            tmp['boughtdate'] = str(ufile.boughtdate)
-            flist += [ tmp ] 
-        return flist
+    def GET(self, title):
+        if cherrypy.session.get(SESSION_KEY) == None:
+            cherrypy.response.status = 400
+            return {"detail": "Requires authentication"}
+        username = cherrypy.session.get(SESSION_KEY)
+        userid = storage.get_user_id(username)
 
-    @cherrypy.tools.json_in()
-    def POST(self, login=False):
-        pass
-
-    #def all(sel)f
-
-class Title(object):
-    exposed = True
-
-    def GET(self, *vpath):
-        item = vpath[0]
         #IV = Random.new().read(BLOCK_SIZE)
         CryptoHeader = '12345678901234567890123456789012'
-                #Random.new().read(BLOCK_SIZE)
+        #Random.new().read(BLOCK_SIZE)
 
         UserKey = '12345678901234567890123456789012'
         DeviceKey = '12345678901234567890123456789012'
@@ -106,6 +128,32 @@ class Title(object):
                 dataEncrypted += aes.encrypt(data)
             data = f.read(BLOCK_SIZE)
         return dataEncrypted
+
+class TitleUser(object):
+    exposed = True
+
+    @cherrypy.tools.json_out()
+    def GET(self):
+        if cherrypy.session.get(SESSION_KEY) == None:
+            cherrypy.response.status = 400
+            return {"detail": "Requires authentication"}
+        username = cherrypy.session.get(SESSION_KEY)
+        userid = storage.get_user_id(username)
+        lrelations = storage.get_user_file_list(userid)
+        print lrelations
+        flist = []
+        for (ufile, filet) in lrelations:
+            tmp = filet.to_dict()
+            tmp['boughtdate'] = str(ufile.boughtdate)
+            flist += [ tmp ]
+        return flist
+
+class TitleAll(object):
+    exposed = True
+
+    @cherrypy.tools.json_out()
+    def GET(self):
+        return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
     pass
