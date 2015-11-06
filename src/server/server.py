@@ -141,7 +141,14 @@ class Title(object):
     # Details: Buys a specific title
     @cherrypy.tools.json_out()
     def POST(self, title):
-        pass
+        if cherrypy.session.get(SESSION_KEY) == None:
+            cherrypy.response.status = 400
+            return {"detail": "Requires authentication"}
+        username = cherrypy.session.get(SESSION_KEY)
+        user_id = storage.get_user_id(username)
+
+        storage.buy_file(user_id, title)
+        return {"detail": "Title was successfully purchased"}
 
 class TitleValidate(object):
     exposed = True
