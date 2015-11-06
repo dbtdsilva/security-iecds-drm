@@ -11,6 +11,7 @@ BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 SESSION_KEY = 'username'
+SESSION_DEVICE = 'device_key'
 
 # -> API DETAILS
 # POST /api/user/login username=user
@@ -48,6 +49,9 @@ class User(object):
 
 class UserLogin(object):
     exposed = True
+
+    # POST /api/user/login username=user
+    # Details: Creates a session
     @cherrypy.tools.json_out()
     def POST(self):
         content_length = cherrypy.request.headers['Content-Length']
@@ -64,6 +68,9 @@ class UserLogin(object):
 
 class UserLogout(object):
     exposed = True
+
+    # POST /api/user/logout
+    # Details: Logout the current user
     @cherrypy.tools.json_out()
     def POST(self):
         if cherrypy.session.get(SESSION_KEY) == None:
@@ -80,10 +87,58 @@ class Title(object):
         self.user = TitleUser()
         self.validate = TitleValidate()
 
+    # GET  /api/title/<pk>                              
+    # Requires login
+    # Details: Downloads a specific title encrypted (must have been bought
+    # before)
     @cherrypy.tools.json_out()
     def GET(self, title):
-        pass
+        if cherrypy.session.get(SESSION_KEY) == None:
+            cherrypy.response.status = 400
+            return {"detail": "Requires authentication"}
+        username = cherrypy.session.get(SESSION_KEY)
+        user_id = storage.get_user_id(username)
+        if not storage.user_has_title(user_id, title):
+            cherrypy.response.status = 400
+            return {"detail": "Current user didn't buy this title"}
+        file_key = storage.get_file_key(user_id, title)
+        user_key = storage.get_user_details(user_id).userkey
+        device_key = cherrypy.session.get(SESSION_DEVICE)
+        player_key = 'UJK3x\x1e\xb1\xd9\xc3\xfc3\xce\xc0\x13t\x07\xab\xdb\xff\t\xbd\x8b\xe3\xfe\\#C@r\xc6v\x83'
 
+        if file_key == None:
+            # first time that a file was requested, must generate seed
+            seed = Random.new().read(BLOCK_SIZE)
+
+            if device_key == None:
+                cherrypy.response.status = 400
+                return {"detail": "Player used to download didn't report the device."}
+            seed_dev_key = AES.new(device_key, AES.MODE_ECB).encrypt(seed)
+            seed_dev_user_key = AES.new(user_key, AES.MODE_ECB).encrypt(seed_dev_key)
+            # Player key is hardcoded for now, but we want to share it using the certificate
+            file_key = AES.new(player_key, AES.MODE_ECB).encrypt(seed_dev_user_key)
+            file_key = storage.update_file_key(file_key)
+        else:
+            seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
+            seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
+            seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
+        f = open(storage.get_tile_details(title), 'r')
+        aes = AES.new(file_key, AES.MODE_ECB)
+
+        dataEncrypted = ""
+        data = f.read(BLOCK_SIZE)
+        while data:
+            if len(data) < BLOCK_SIZE:
+                # TODO with PCKS#7
+                dataEncrypted += data
+            else:
+                dataEncrypted += aes.encrypt(data)
+            data = f.read(BLOCK_SIZE)
+        return {'seed': seed, 'data': dataEncrypted}
+
+    # POST  /api/title/<pk>                             
+    # Requires login
+    # Details: Buys a specific title
     @cherrypy.tools.json_out()
     def POST(self, title):
         pass
@@ -91,6 +146,10 @@ class Title(object):
 class TitleValidate(object):
     exposed = True
 
+    # POST /api/title/validate/<pk> key=current_result  
+    # Requires login
+    # Details: Sends the current cipher result key to the server to process
+    # with user key
     @cherrypy.tools.json_out()
     def GET(self, title):
         if cherrypy.session.get(SESSION_KEY) == None:
@@ -132,6 +191,9 @@ class TitleValidate(object):
 class TitleUser(object):
     exposed = True
 
+    # GET  /api/title/user                              
+    # Requires login
+    # Details: Gets all titles that the user bought
     @cherrypy.tools.json_out()
     def GET(self):
         if cherrypy.session.get(SESSION_KEY) == None:
@@ -151,6 +213,8 @@ class TitleUser(object):
 class TitleAll(object):
     exposed = True
 
+    # GET  /api/title/all
+    # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
         return [ a.to_dict() for a in storage.get_file_list() ]
@@ -175,6 +239,6 @@ if __name__ == '__main__':
     cherrypy.server.socket_port = 8080
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
-    #cherrypy.tree.mount(Root(), "/", "app.config")
+    cherrypy.tree.mount(Root(), "/", "app.config")
     cherrypy.engine.start()
     cherrypy.engine.block()
