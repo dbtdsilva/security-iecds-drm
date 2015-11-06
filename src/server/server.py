@@ -156,37 +156,21 @@ class TitleValidate(object):
             cherrypy.response.status = 400
             return {"detail": "Requires authentication"}
         username = cherrypy.session.get(SESSION_KEY)
-        userid = storage.get_user_id(username)
+        user_id = storage.get_user_id(username)
+        if not storage.user_has_title(user_id, title):
+            cherrypy.response.status = 400
+            return {"detail": "Current user didn't buy this title"}
 
-        #IV = Random.new().read(BLOCK_SIZE)
-        CryptoHeader = '12345678901234567890123456789012'
-        #Random.new().read(BLOCK_SIZE)
+        content_length = cherrypy.request.headers['Content-Length']
+        raw_body = cherrypy.request.body.read(int(content_length))
+        body = json.loads(raw_body)
+        if 'key' not in body:
+            cherrypy.response.status = 400
+            return {"detail": "You must provide your current key"}
 
-        UserKey = '12345678901234567890123456789012'
-        DeviceKey = '12345678901234567890123456789012'
-        PlayerKey = '12345678901234567890123456789012'
-
-        aes = AES.new(CryptoHeader, AES.MODE_ECB)
-        CrypDevKey = aes.encrypt(DeviceKey)
-        aes = AES.new(CrypDevKey, AES.MODE_ECB)
-        CrypDevUserKey = aes.encrypt(UserKey)
-        aes = AES.new(CrypDevUserKey, AES.MODE_ECB)
-        FileKey = aes.encrypt(PlayerKey)
-
-        aes = AES.new(FileKey, AES.MODE_ECB)
-
-        print FileKey
-        f = open('media/news_interview.wmv', 'r')
-
-        dataEncrypted = ""
-        data = f.read(BLOCK_SIZE)
-        while data:
-            if len(data) < BLOCK_SIZE:
-                dataEncrypted += data
-            else:
-                dataEncrypted += aes.encrypt(data)
-            data = f.read(BLOCK_SIZE)
-        return dataEncrypted
+        user_key = storage.get_user_details(user_id).userkey
+        next_key = AES.new(user_key, AES.MODE_ECB).encrypt(body['key'])
+        return {"key": next_key}
 
 class TitleUser(object):
     exposed = True
