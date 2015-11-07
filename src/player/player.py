@@ -5,6 +5,7 @@ from playback import Playback
 import requests
 from Crypto.Cipher import AES
 import hashlib
+import binascii
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
@@ -49,8 +50,9 @@ class Login(tk.Frame):
   # ----- Change content for server interaction  -----
   def checkCredentials(self, username, password, DeviceKey):
 
-    payload = {"username":username, "key":DeviceKey}
-    req = requests.post('http://localhost:8000/api/user/login/', data = payload)    
+    payload = {"username":username, "key":binascii.hexlify(DeviceKey)}
+    req = requests.post('http://localhost:8000/api/user/login/', json = payload)
+    print req.text
 
     if username == "taniaalves" and password == "abc":
       return True
@@ -64,10 +66,10 @@ class Login(tk.Frame):
         
     # ----- Calculate deviceKey -----------
     f = open(modalias, "r")
-    self.l.DeviceKey = hashlib.sha256(f.read()).digest()#.hexdigest()
+    self.l.DeviceKey = hashlib.sha256(f.read()).digest()
     #---------------------------------------
 
-    if self.checkCredentials(username, password, DeviceKey):
+    if self.checkCredentials(username, password, self.l.DeviceKey):
         self.l.username = username
         #Manage directories
         # -- Check if videos directory exists
