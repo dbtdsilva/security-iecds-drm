@@ -126,7 +126,7 @@ class Title(object):
             seed_dev_user_key = AES.new(user_key, AES.MODE_ECB).encrypt(seed_dev_key)
             # Player key is hardcoded for now, but we want to share it using the certificate
             file_key = AES.new(player_key, AES.MODE_ECB).encrypt(seed_dev_user_key)
-            file_key = storage.update_file_key(file_key)
+            file_key = storage.update_file_key(file_key, title, user_id)
         else:
             seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
@@ -238,6 +238,9 @@ if __name__ == '__main__':
 
     cherrypy.server.socket_port = 8000
     cherrypy.server.socket_host = "0.0.0.0"
+    #cherrypy.server.ssl_module = 'pyopenssl'
+    #cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
+    #cherrypy.server.ssl_private_key = 'certificates/Security_P3G1_SSL_key.pem'
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
     cherrypy.engine.start()
