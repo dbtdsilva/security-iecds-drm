@@ -100,7 +100,6 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @cherrypy.tools.json_out()
     def GET(self, title):
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
@@ -131,10 +130,10 @@ class Title(object):
             seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
-        f = open(storage.get_tile_details(title), 'r')
+        f = open("media/" + storage.get_tile_details(title).path, 'r')
         aes = AES.new(file_key, AES.MODE_ECB)
 
-        dataEncrypted = ""
+        dataEncrypted = seed
         data = f.read(BLOCK_SIZE)
         while data:
             if len(data) < BLOCK_SIZE:
@@ -143,7 +142,7 @@ class Title(object):
             else:
                 dataEncrypted += aes.encrypt(data)
             data = f.read(BLOCK_SIZE)
-        return {'seed': seed, 'data': dataEncrypted}
+        return dataEncrypted
 
     # POST  /api/title/<pk>                             
     # Requires login

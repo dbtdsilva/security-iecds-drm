@@ -114,7 +114,7 @@ class Storage(object):
         query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(fileid=title_id)
         if len(query.all()) != 1:
             return "ERROR"
-        if query.all()[0] != None:
+        if query.all()[0].filekey != None:
             return query.all()[0].filekey
         query.update({UserFile.filekey: file_key})
         return file_key
