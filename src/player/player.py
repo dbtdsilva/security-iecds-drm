@@ -6,6 +6,7 @@ import requests
 from Crypto.Cipher import AES
 import hashlib
 import binascii
+import json
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
@@ -51,10 +52,10 @@ class Login(tk.Frame):
   def checkCredentials(self, username, password, DeviceKey):
 
     payload = {"username":username, "key":binascii.hexlify(DeviceKey)}
-    req = requests.post('http://localhost:8000/api/user/login/', json = payload)
-    print req.text
+    self.l.session = requests.Session()
+    req = self.l.session.post('http://localhost:8000/api/user/login/', json = payload)
 
-    if username == "taniaalves" and password == "abc":
+    if req.status_code == 200:
       return True
     else:
       return False
@@ -98,12 +99,12 @@ class Login(tk.Frame):
     usernameLabel = tk.Label(self, text="Username: ", font=LARGE_FONT)
     usernameLabel.grid(row=1, column=0, pady=5)
     passwordLabel = tk.Label(self, text="Password: ", font=LARGE_FONT)
-    passwordLabel.grid(row=4, column=0, pady=5)
+    #passwordLabel.grid(row=4, column=0, pady=5)
 
     usernameTextbox = tk.Entry(self)
     usernameTextbox.grid(row=1, column=1, columnspan=3, padx=10)
     passwordTextbox = tk.Entry(self, show="*")
-    passwordTextbox.grid(row=4, column=1, columnspan=3)
+    #passwordTextbox.grid(row=4, column=1, columnspan=3)
 
     button = tk.Button(self, text="Login!",
     command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
@@ -114,14 +115,20 @@ class List(tk.Frame):
   username = ""
   fileListBox = None
   DeviceKey = None
+  session = None
+  titleids = []
 
   # ----- Change content for server interaction  -----
   def getFileList(self):   
-    if os.path.exists(path + self.username):
-        return os.listdir(path+self.username)
-    else:
-        return os.listdir(path)
+    req = self.session.get('http://localhost:8000/api/title/user')
 
+    j = json.loads(req.text)
+    l = []
+    for a in j:
+        l.append(a['title'] + " - " + a['author'])
+        self.titleids.append(a)
+
+    return l
 
   def startPlayback(self):
     cryptoHeader = '12345678901234567890123456789012'
@@ -137,21 +144,25 @@ class List(tk.Frame):
     aes = AES.new(FileKey, AES.MODE_ECB)
 
     title = self.fileListBox.get(self.fileListBox.curselection()[0])
+    pos = self.titleids[self.fileListBox.curselection()[0]]
 
     if title != None:
         #Check if file exists
         # -- If the file exists, if it doesn't, download it
         if not os.path.exists(path + self.username + os.path.sep + title):
-            print "I think file does not exist. im stupid"
+            print "I think file does not exist"
             with open(path + self.username + os.path.sep + title, "w") as handle:
-                req = requests.get('http://localhost:8000/api/title/214', stream = True)
-                if not response.ok:
+                print pos["id"]
+                req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]), stream = True)
+                if req.status_code != 200:
                     tkMessageBox.showwarning("Oops!", "Download failed." )
                 else:
-                    for block in response.iter_request(1024):
+                    print "Downing file"
+                    for block in req.iter_request(1024):
                         handle.write(block)
+                        print block
         # -- Read file
-        playback = Playback(path + self.username + os.path.sep + title, FileKey)
+        #playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
         tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play." )
 
@@ -172,13 +183,13 @@ class List(tk.Frame):
     self.grid_columnconfigure(0, weight=1)
 
     labelHint = tk.Label(self, text="Please select the file to open and click 'Open'")
-    labelHint.grid(row=1, column=0, columnspan=5, padx=20, pady=15)
+    labelHint.grid(row=1, column=1, columnspan=5, padx=20, pady=15)
 
     self.fileListBox = tk.Listbox(self, selectmode="single")
-    self.fileListBox.grid(row=3, column=1, columnspan=3, rowspan=5, padx=10, pady=10)
+    self.fileListBox.grid(row=3, column=1, columnspan=5, rowspan=10)
 
     selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
-    selectBtn.grid(row=8, column=1, padx=10, pady=10)
+    selectBtn.grid(row=13, column=1, padx=10, pady=10)
 
     logoutBtn = tk.Button(self, text="Logout", command=lambda: self.logout(controller))
     logoutBtn.grid(row=0, column=4, pady=10, padx=10)
