@@ -48,7 +48,6 @@ class Storage(object):
         return self.session.query(File).all()
 
     def create_device(self, devicekey):
-        self.session.query(User).filter_by(id=userid).all()
         dev = Device(devicekey=devicekey)
         self.session.add(dev)
         self.session.commit()
