@@ -48,7 +48,6 @@ class Storage(object):
         return self.session.query(File).all()
 
     def create_device(self, devicekey):
-        self.session.query(User).filter_by(id=userid).all()
         dev = Device(devicekey=devicekey)
         self.session.add(dev)
         self.session.commit()
@@ -69,9 +68,11 @@ class Storage(object):
             self.create_device(devicekey)
             query = self.session.query(Device).filter_by(devicekey=devicekey).all()
         device_id = query[0].id
-        ud = UserDevice(userid=user_id, deviceid=device_id)
-        self.session.add(ud)
-        self.session.commit()
+        query = self.session.query(UserDevice).filter_by(userid=user_id).filter_by(deviceid=device_id).all()
+        if len(query) != 0:
+            ud = UserDevice(userid=user_id, deviceid=device_id)
+            self.session.add(ud)
+            self.session.commit()
 
     def get_user_file_list(self, userid):
         query = self.session.query(User).filter_by(id=userid).all()

@@ -6,6 +6,7 @@ import cherrypy
 import json
 from cherrypy.lib import jsontools
 from database.storage_api import storage
+import binascii
 
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -64,10 +65,13 @@ class UserLogin(object):
         cherrypy.response.status = 200
         cherrypy.session[SESSION_KEY] = body['username']
         if 'key' in body:
-            cherrypy.session[SESSION_DEVICE] = body['key']
+            if len(body['key']) != BLOCK_SIZE * 2:
+                cherrypy.response.status = 400
+                return {"detail": "Key is not valid"}
+            cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
             username = cherrypy.session.get(SESSION_KEY)
             user_id = storage.get_user_id(username)
-            storage.associate_device_to_user(user_id, body['key'])
+            storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
         return {"detail": "Login successfully"}
         
 
@@ -232,7 +236,7 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    cherrypy.server.socket_port = 8080
+    cherrypy.server.socket_port = 8000
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
