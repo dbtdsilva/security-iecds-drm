@@ -4,12 +4,13 @@ import os
 from playback import Playback
 import requests
 from Crypto.Cipher import AES
+import hashlib
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
 #PlayerKey = '12345678901234567890123456789012'
 path = "." + os.path.sep + "videos" + os.path.sep
-serial = "500099721328U"
+modalias="/sys/devices/virtual/dmi/id/modalias"
 uid = 0
 
 class MainWindow(tk.Tk):
@@ -46,7 +47,11 @@ class Login(tk.Frame):
   l = None
 
   # ----- Change content for server interaction  -----
-  def checkCredentials(self, username, password):
+  def checkCredentials(self, username, password, DeviceKey):
+
+    payload = {"username":username, "key":DeviceKey}
+    req = requests.post('http://localhost:8000/api/user/login/', data = payload)    
+
     if username == "taniaalves" and password == "abc":
       return True
     else:
@@ -56,8 +61,13 @@ class Login(tk.Frame):
   def login(self, usernameTextbox, passwordTextbox, controller):
     username = usernameTextbox.get()
     password = passwordTextbox.get()
+        
+    # ----- Calculate deviceKey -----------
+    f = open(modalias, "r")
+    self.l.DeviceKey = hashlib.sha256(f.read()).digest()#.hexdigest()
+    #---------------------------------------
 
-    if self.checkCredentials(username, password):
+    if self.checkCredentials(username, password, DeviceKey):
         self.l.username = username
         #Manage directories
         # -- Check if videos directory exists
@@ -101,6 +111,7 @@ class Login(tk.Frame):
 class List(tk.Frame):
   username = ""
   fileListBox = None
+  DeviceKey = None
 
   # ----- Change content for server interaction  -----
   def getFileList(self):   
@@ -113,17 +124,15 @@ class List(tk.Frame):
   def startPlayback(self):
     cryptoHeader = '12345678901234567890123456789012'
     UserKey = '12345678901234567890123456789012'
-    DeviceKey = '12345678901234567890123456789012'
+    print self.DeviceKey
 
     aes = AES.new(cryptoHeader, AES.MODE_ECB)
-    cryptoDevKey = aes.encrypt(DeviceKey)
+    cryptoDevKey = aes.encrypt(self.DeviceKey)
     aes = AES.new(cryptoDevKey, AES.MODE_ECB)
     cryptoDevUserKey = aes.encrypt(UserKey)
     aes = AES.new(cryptoDevKey, AES.MODE_ECB)
     FileKey = aes.encrypt(PlayerKey)
     aes = AES.new(FileKey, AES.MODE_ECB)
-    print FileKey
-
 
     title = self.fileListBox.get(self.fileListBox.curselection()[0])
 
