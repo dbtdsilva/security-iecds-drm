@@ -68,7 +68,6 @@ class UserLogin(object):
             if len(body['key']) != BLOCK_SIZE * 2:
                 cherrypy.response.status = 400
                 return {"detail": "Key is not valid"}
-            print body['key']
             cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
             username = cherrypy.session.get(SESSION_KEY)
             user_id = storage.get_user_id(username)
