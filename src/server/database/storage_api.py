@@ -48,6 +48,7 @@ class Storage(object):
         return self.session.query(File).all()
 
     def create_device(self, devicekey):
+        self.session.query(User).filter_by(id=userid).all()
         dev = Device(devicekey=devicekey)
         self.session.add(dev)
         self.session.commit()
@@ -62,11 +63,61 @@ class Storage(object):
         self.session.add(uf)
         self.session.commit()
 
+    def associate_device_to_user(self, user_id, devicekey):
+        query = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        if len(query) == 0:
+            self.create_device(devicekey)
+            query = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        device_id = query[0].id
+        ud = UserDevice(userid=user_id, deviceid=device_id)
+        self.session.add(ud)
+        self.session.commit()
+
     def get_user_file_list(self, userid):
         query = self.session.query(User).filter_by(id=userid).all()
         if len(query) != 1:
             return "ERROR"
         return self.session.query(UserFile, File).filter_by(userid=query[0].id).join(File, UserFile.fileid==File.id).all()
+
+    def is_user_valid(self, username):
+        return len(self.session.query(User).filter_by(username=username).all()) == 1
+
+    def get_user_id(self, username):
+        query = self.session.query(User).filter_by(username=username).all()
+        if len(query) != 1:
+            return "ERROR"
+        return query[0].id
+
+    def user_has_title(self, user_id, title_id):
+        return len(self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id).all()) == 1
+
+    def get_file_key(self, user_id, title_id):
+        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id).all()
+        if len(query) != 1:
+            return "ERROR"
+        return query[0].filekey
+
+    def get_tile_details(self, title_id):
+        query = self.session.query(File).filter_by(titleid=title_id).all()
+        if len(query) != 1:
+            return "ERROR"
+        return query[0]
+
+    def get_user_details(self, user_id):
+        query = self.session.query(User).filter_by(id=user_id).all()
+        if len(query) != 1:
+            return "ERROR"
+        return query[0]
+
+    def update_file_key(self, file_key, title_id, user_id):
+        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id)
+        if len(query.all()) != 1:
+            return "ERROR"
+        if query.all()[0] != None:
+            return query.all()[0].filekey
+        query.update({UserFile.filekey: file_key})
+        return file_key
+
 
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
