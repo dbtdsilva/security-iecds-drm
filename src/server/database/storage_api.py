@@ -90,16 +90,16 @@ class Storage(object):
         return query[0].id
 
     def user_has_title(self, user_id, title_id):
-        return len(self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id).all()) == 1
+        return len(self.session.query(UserFile).filter_by(userid=user_id).filter_by(fileid=title_id).all()) == 1
 
     def get_file_key(self, user_id, title_id):
-        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id).all()
+        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(fileid=title_id).all()
         if len(query) != 1:
             return "ERROR"
         return query[0].filekey
 
     def get_tile_details(self, title_id):
-        query = self.session.query(File).filter_by(titleid=title_id).all()
+        query = self.session.query(File).filter_by(id=title_id).all()
         if len(query) != 1:
             return "ERROR"
         return query[0]
@@ -111,7 +111,7 @@ class Storage(object):
         return query[0]
 
     def update_file_key(self, file_key, title_id, user_id):
-        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(titleid=title_id)
+        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(fileid=title_id)
         if len(query.all()) != 1:
             return "ERROR"
         if query.all()[0] != None:
