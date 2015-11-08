@@ -243,7 +243,7 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    cherrypy.server.socket_port = 8000
+    cherrypy.server.socket_port = 443
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.ssl_module = 'pyopenssl'
     cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
