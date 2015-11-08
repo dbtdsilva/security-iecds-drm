@@ -197,7 +197,7 @@ class TitleValidate(object):
             return {"detail": "You must provide your current key"}
 
         user_key = storage.get_user_details(user_id).userkey
-        next_key = AES.new(user_key, AES.MODE_ECB).encrypt(body['key'])
+        next_key = AES.new(user_key, AES.MODE_ECB).encrypt(binascii.unhexlify(body['key']))
         return next_key
 
 class TitleUser(object):
