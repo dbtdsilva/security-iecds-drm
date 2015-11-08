@@ -149,7 +149,7 @@ class List(tk.Frame):
                 handle.write(req.content[32:])
         else:
             payload = {"title": str(pos["id"]), "seed_only":'1'}
-            req = self.session.get('https://localhost/api/title', json = payload, verify = False)
+            req = self.session.get('https://localhost/api/title', params = payload, verify = False)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed." )
             else:
@@ -160,12 +160,9 @@ class List(tk.Frame):
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
 
         payload = {"key" : binascii.hexlify(seed_dev_key)}
-        req = self.session.post('https://localhost/title/validate/' + str(pos["id"]), json = payload, verify = False)
-        print "cryptoheader: ", len(cryptoHeader) 
+        req = self.session.post('https://localhost/api/title/validate/' + str(pos["id"]), json = payload, verify = False)
         seed_dev_user_key = req.content
-        print "seed dev merda: ", len(seed_dev_user_key)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
-        print "filekey: ", len(FileKey)
 
         playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
