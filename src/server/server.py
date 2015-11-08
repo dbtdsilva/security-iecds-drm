@@ -100,7 +100,9 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    def GET(self, title):
+    def GET(self, title, seed_only = False):
+        if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
+            seed_only = True
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
             return {"detail": "Requires authentication"}
@@ -109,15 +111,6 @@ class Title(object):
         if not storage.user_has_title(user_id, title):
             cherrypy.response.status = 400
             return {"detail": "Current user didn't buy this title"}
-        content_length = cherrypy.request.headers['Content-Length']
-        raw_body = cherrypy.request.body.read(int(content_length))
-        body = json.loads(raw_body)
-
-        seed_only = False
-        if 'seed_only' in body and (body['seed_only'] == '1' or 
-                                    body['seed_only'] == 'true' or
-                                    body['seed_only'] == 'True'):
-            seed_only = True
 
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
@@ -229,7 +222,6 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
-        abc = cherrypy
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
