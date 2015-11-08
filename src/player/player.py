@@ -140,7 +140,6 @@ class List(tk.Frame):
         #Check if file exists
         # -- If the file exists, if it doesn't, download it
         if not os.path.exists(path + self.username + os.path.sep + title):
-            print "I think file does not exist"
             handle = open(path + self.username + os.path.sep + title, "w")
             req = self.session.get('https://localhost/api/title/' + str(pos["id"]), verify = False)
             if req.status_code != 200:
@@ -148,15 +147,13 @@ class List(tk.Frame):
             else:
                 cryptoHeader = req.content[:32]
                 handle.write(req.content[32:])
-                print cryptoHeader
         else:
-            payload = {"seed_only":'1'}
-            req = self.session.get('https://localhost/api/title/' + str(pos["id"]), json = payload, verify = False)
+            payload = {"title": str(pos["id"]), "seed_only":'1'}
+            req = self.session.get('https://localhost/api/title', json = payload, verify = False)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed." )
             else:
                 cryptoHeader = req.content
-                print cryptoHeader
             
         # -- Read file
         # -- Create file key
@@ -164,9 +161,11 @@ class List(tk.Frame):
 
         payload = {"key" : binascii.hexlify(seed_dev_key)}
         req = self.session.post('https://localhost/title/validate/' + str(pos["id"]), json = payload, verify = False)
-        
+        print "cryptoheader: ", len(cryptoHeader) 
         seed_dev_user_key = req.content
+        print "seed dev merda: ", len(seed_dev_user_key)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
+        print "filekey: ", len(FileKey)
 
         playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
