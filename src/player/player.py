@@ -53,7 +53,7 @@ class Login(tk.Frame):
 
     payload = {"username":username, "key":binascii.hexlify(DeviceKey)}
     self.l.session = requests.Session()
-    req = self.l.session.post('http://localhost:8000/api/user/login/', json = payload)
+    req = self.l.session.post('https://localhost/api/user/login/', json = payload, verify = False)
 
     if req.status_code == 200:
       return True
@@ -120,7 +120,7 @@ class List(tk.Frame):
 
   # ----- Change content for server interaction  -----
   def getFileList(self):   
-    req = self.session.get('http://localhost:8000/api/title/user')
+    req = self.session.get('https://localhost/api/title/user', verify = False)
 
     j = json.loads(req.content)
     l = []
@@ -142,7 +142,7 @@ class List(tk.Frame):
         if not os.path.exists(path + self.username + os.path.sep + title):
             print "I think file does not exist"
             handle = open(path + self.username + os.path.sep + title, "w")
-            req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]))
+            req = self.session.get('https://localhost/api/title/' + str(pos["id"]), verify = False)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed." )
             else:
@@ -151,7 +151,7 @@ class List(tk.Frame):
                 print cryptoHeader
         else:
             payload = {"seed_only":'1'}
-            req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]), json = payload)
+            req = self.session.get('https://localhost/api/title/' + str(pos["id"]), json = payload, verify = False)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed." )
             else:
@@ -162,8 +162,8 @@ class List(tk.Frame):
         # -- Create file key
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
 
-        payload = {"key" : seed_dev_key}
-        req = self.session.post('http://localhost:8000/title/validate/' + str(pos["id"]), json = payload)
+        payload = {"key" : binascii.hexlify(seed_dev_key)}
+        req = self.session.post('https://localhost/title/validate/' + str(pos["id"]), json = payload, verify = False)
         
         seed_dev_user_key = req.content
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
@@ -176,7 +176,7 @@ class List(tk.Frame):
 
   def logout(self, controller):
     self.username = ""
-    req = self.session.post('http://localhost:8000/api/user/logout')
+    req = self.session.post('https://localhost/api/user/logout', verify = False)
     controller.show_frame(Login)
 
   def listContents(self):
