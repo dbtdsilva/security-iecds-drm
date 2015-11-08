@@ -1,6 +1,6 @@
 App.controller('TitlesController', ['$scope', '$http', function($scope, $http) {
 	$scope.titles = [];
-    $http.get("http://localhost:8080/api/titles/", {}).then(
+    $http.get("api/title/all", {}).then(
     function(response) {
 		$scope.titles = response.data;
 	}, 

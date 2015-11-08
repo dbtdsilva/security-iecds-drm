@@ -109,6 +109,16 @@ class Title(object):
         if not storage.user_has_title(user_id, title):
             cherrypy.response.status = 400
             return {"detail": "Current user didn't buy this title"}
+        content_length = cherrypy.request.headers['Content-Length']
+        raw_body = cherrypy.request.body.read(int(content_length))
+        body = json.loads(raw_body)
+
+        seed_only = False
+        if 'seed_only' in body and (body['seed_only'] == '1' or 
+                                    body['seed_only'] == 'true' or
+                                    body['seed_only'] == 'True'):
+            seed_only = True
+
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
         device_key = cherrypy.session.get(SESSION_DEVICE)
@@ -130,6 +140,10 @@ class Title(object):
             seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
+        
+        if seed_only:
+            return seed
+            
         f = open("media/" + storage.get_tile_details(title).path, 'r')
         aes = AES.new(file_key, AES.MODE_ECB)
 
@@ -165,8 +179,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @cherrypy.tools.json_out()
-    def GET(self, title):
+    def POST(self, title):
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
             return {"detail": "Requires authentication"}
@@ -185,7 +198,7 @@ class TitleValidate(object):
 
         user_key = storage.get_user_details(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(body['key'])
-        return {"key": next_key}
+        return next_key
 
 class TitleUser(object):
     exposed = True
@@ -216,6 +229,7 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
+        abc = cherrypy
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
@@ -223,23 +237,17 @@ class Root(object):
 
 if __name__ == '__main__':
     RESTopts = {
-        #'tools.SASessionTool.on': True,
-        #'tools.SASessionTool.engine': model.engine,
-        #'tools.SASessionTool.scoped_session': model.DBSession,
-        #'tools.authenticate.on': True,
-        #'tools.is_authorized.on': True,
-        #'tools.authorize_admin.on': True,
         'tools.sessions.on': True,
         'tools.json_out.handler': jsontools.json_handler,
         'tools.json_in.processor': jsontools.json_processor,
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    cherrypy.server.socket_port = 8000
+    cherrypy.server.socket_port = 443
     cherrypy.server.socket_host = "0.0.0.0"
-    #cherrypy.server.ssl_module = 'pyopenssl'
-    #cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
-    #cherrypy.server.ssl_private_key = 'certificates/Security_P3G1_SSL_key.pem'
+    cherrypy.server.ssl_module = 'pyopenssl'
+    cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
+    cherrypy.server.ssl_private_key = 'certificates/Security_P3G1_SSL_key.pem'
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
     cherrypy.engine.start()
