@@ -144,7 +144,7 @@ class List(tk.Frame):
             handle = open(path + self.username + os.path.sep + title, "w")
             req = self.session.get('https://localhost/api/title/' + str(pos["id"]), verify = False)
             if req.status_code != 200:
-                tkMessageBox.showwarning("Oops!", "Download failed." )
+                tkMessageBox.showwarning("Oops!", "File download failed." )
             else:
                 cryptoHeader = req.content[:32]
                 handle.write(req.content[32:])
