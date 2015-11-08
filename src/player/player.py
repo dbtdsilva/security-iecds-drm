@@ -122,7 +122,7 @@ class List(tk.Frame):
   def getFileList(self):   
     req = self.session.get('http://localhost:8000/api/title/user')
 
-    j = json.loads(req.text)
+    j = json.loads(req.content)
     l = []
     for a in j:
         l.append(a['title'] + " - " + a['author'])
@@ -132,16 +132,6 @@ class List(tk.Frame):
 
   def startPlayback(self):
     cryptoHeader = '12345678901234567890123456789012'
-    UserKey = '12345678901234567890123456789012'
-    print self.DeviceKey
-
-    aes = AES.new(cryptoHeader, AES.MODE_ECB)
-    cryptoDevKey = aes.encrypt(self.DeviceKey)
-    aes = AES.new(cryptoDevKey, AES.MODE_ECB)
-    cryptoDevUserKey = aes.encrypt(UserKey)
-    aes = AES.new(cryptoDevKey, AES.MODE_ECB)
-    FileKey = aes.encrypt(PlayerKey)
-    aes = AES.new(FileKey, AES.MODE_ECB)
 
     title = self.fileListBox.get(self.fileListBox.curselection()[0])
     pos = self.titleids[self.fileListBox.curselection()[0]]
@@ -151,18 +141,34 @@ class List(tk.Frame):
         # -- If the file exists, if it doesn't, download it
         if not os.path.exists(path + self.username + os.path.sep + title):
             print "I think file does not exist"
-            with open(path + self.username + os.path.sep + title, "w") as handle:
-                print pos["id"]
-                req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]), stream = True)
-                if req.status_code != 200:
-                    tkMessageBox.showwarning("Oops!", "Download failed." )
-                else:
-                    print "Downing file"
-                    for block in req.iter_request(1024):
-                        handle.write(block)
-                        print block
+            handle = open(path + self.username + os.path.sep + title, "w")
+            req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]))
+            if req.status_code != 200:
+                tkMessageBox.showwarning("Oops!", "Download failed." )
+            else:
+                cryptoHeader = req.content[:32]
+                handle.write(req.content[32:])
+                print cryptoHeader
+        else:
+            payload = {"seed_only":'1'}
+            req = self.session.get('http://localhost:8000/api/title/' + str(pos["id"]), json = payload)
+            if req.status_code != 200:
+                tkMessageBox.showwarning("Oops!", "Download failed." )
+            else:
+                cryptoHeader = req.content
+                print cryptoHeader
+            
         # -- Read file
-        #playback = Playback(path + self.username + os.path.sep + title, FileKey)
+        # -- Create file key
+        seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
+
+        payload = {"key" : seed_dev_key}
+        req = self.session.post('http://localhost:8000/title/validate/' + str(pos["id"]), json = payload)
+        
+        seed_dev_user_key = req.content
+        FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
+
+        playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
         tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play." )
 
@@ -170,6 +176,7 @@ class List(tk.Frame):
 
   def logout(self, controller):
     self.username = ""
+    req = self.session.post('http://localhost:8000/api/user/logout')
     controller.show_frame(Login)
 
   def listContents(self):
