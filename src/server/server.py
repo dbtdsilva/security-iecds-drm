@@ -109,6 +109,16 @@ class Title(object):
         if not storage.user_has_title(user_id, title):
             cherrypy.response.status = 400
             return {"detail": "Current user didn't buy this title"}
+        content_length = cherrypy.request.headers['Content-Length']
+        raw_body = cherrypy.request.body.read(int(content_length))
+        body = json.loads(raw_body)
+
+        seed_only = False
+        if 'seed_only' in body and (body['seed_only'] == '1' or 
+                                    body['seed_only'] == 'true' or
+                                    body['seed_only'] == 'True'):
+            seed_only = True
+
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
         device_key = cherrypy.session.get(SESSION_DEVICE)
@@ -130,6 +140,10 @@ class Title(object):
             seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
+        
+        if seed_only:
+            return seed
+            
         f = open("media/" + storage.get_tile_details(title).path, 'r')
         aes = AES.new(file_key, AES.MODE_ECB)
 
@@ -223,12 +237,6 @@ class Root(object):
 
 if __name__ == '__main__':
     RESTopts = {
-        #'tools.SASessionTool.on': True,
-        #'tools.SASessionTool.engine': model.engine,
-        #'tools.SASessionTool.scoped_session': model.DBSession,
-        #'tools.authenticate.on': True,
-        #'tools.is_authorized.on': True,
-        #'tools.authorize_admin.on': True,
         'tools.sessions.on': True,
         'tools.json_out.handler': jsontools.json_handler,
         'tools.json_in.processor': jsontools.json_processor,
