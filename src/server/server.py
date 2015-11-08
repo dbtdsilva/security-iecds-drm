@@ -179,8 +179,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @cherrypy.tools.json_out()
-    def GET(self, title):
+    def POST(self, title):
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
             return {"detail": "Requires authentication"}
@@ -199,7 +198,7 @@ class TitleValidate(object):
 
         user_key = storage.get_user_details(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(body['key'])
-        return {"key": next_key}
+        return next_key
 
 class TitleUser(object):
     exposed = True
@@ -230,6 +229,7 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
+        abc = cherrypy
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
@@ -243,7 +243,7 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    cherrypy.server.socket_port = 443
+    cherrypy.server.socket_port = 8000
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.ssl_module = 'pyopenssl'
     cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
