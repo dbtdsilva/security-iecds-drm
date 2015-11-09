@@ -105,12 +105,14 @@ class Title(object):
             seed_only = True
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
-            return {"detail": "Requires authentication"}
+            cherrypy.response.headers['Content-Type'] = "application/json"
+            return json.dumps({"detail1": "Requires authentication"})
         username = cherrypy.session.get(SESSION_KEY)
         user_id = storage.get_user_id(username)
         if not storage.user_has_title(user_id, title):
             cherrypy.response.status = 400
-            return {"detail": "Current user didn't buy this title"}
+            cherrypy.response.headers['Content-Type'] = "application/json"
+            return json.dumps({"detail": "Current user didn't buy this title"})
 
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
@@ -123,7 +125,8 @@ class Title(object):
 
             if device_key == None:
                 cherrypy.response.status = 400
-                return {"detail": "Player used to download didn't report the device."}
+                cherrypy.response.headers['Content-Type'] = "application/json"
+                return json.dumps({"detail": "Player used to download didn't report the device."})
             seed_dev_key = AES.new(device_key, AES.MODE_ECB).encrypt(seed)
             seed_dev_user_key = AES.new(user_key, AES.MODE_ECB).encrypt(seed_dev_key)
             # Player key is hardcoded for now, but we want to share it using the certificate
@@ -175,19 +178,22 @@ class TitleValidate(object):
     def POST(self, title):
         if cherrypy.session.get(SESSION_KEY) == None:
             cherrypy.response.status = 400
-            return {"detail": "Requires authentication"}
+            cherrypy.response.headers['Content-Type'] = "application/json"
+            return json.dumps({"detail": "Requires authentication"})
         username = cherrypy.session.get(SESSION_KEY)
         user_id = storage.get_user_id(username)
         if not storage.user_has_title(user_id, title):
             cherrypy.response.status = 400
-            return {"detail": "Current user didn't buy this title"}
+            cherrypy.response.headers['Content-Type'] = "application/json"
+            return json.dumps({"detail": "Current user didn't buy this title"})
 
         content_length = cherrypy.request.headers['Content-Length']
         raw_body = cherrypy.request.body.read(int(content_length))
         body = json.loads(raw_body)
         if 'key' not in body:
             cherrypy.response.status = 400
-            return {"detail": "You must provide your current key"}
+            cherrypy.response.headers['Content-Type'] = "application/json"
+            return json.dumps({"detail": "You must provide your current key"})
 
         user_key = storage.get_user_details(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(binascii.unhexlify(body['key']))
@@ -228,6 +234,11 @@ class Root(object):
     pass
 
 if __name__ == '__main__':
+    import OpenSSL
+    from OpenSSL.SSL import *
+    import cherrypy.wsgiserver
+    from cherrypy.wsgiserver import ssl_builtin, ssl_pyopenssl
+
     RESTopts = {
         'tools.sessions.on': True,
         'tools.json_out.handler': jsontools.json_handler,
@@ -235,11 +246,26 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
+    def client_callback(conn, x509, error_num, error_depth, ret_code):
+        #print('client_callback({}, {}, {}, {}, {})'.format(conn, x509, error_num, error_depth, ret_code))
+        return ret_code
+
+    key = "certificates/Security_P3G1_SSL_key.pem"
+    cert = "certificates/Security_P3G1_SSL.crt"
+    root = "certificates/Security_P3G1_Root.crt"
+
+    #cherrypy.server.ssl_module = 'pyopenssl'
+    context = Context(TLSv1_2_METHOD)
+    context.set_options(OP_CIPHER_SERVER_PREFERENCE)
+    context.use_privatekey_file(key)
+    context.use_certificate_file(cert)
+    context.load_client_ca(root)
+    context.load_verify_locations(root, None)
+    context.set_verify(#VERIFY_FAIL_IF_NO_PEER_CERT | 
+        VERIFY_PEER, client_callback)
+    cherrypy.server.ssl_context = context
     cherrypy.server.socket_port = 443
     cherrypy.server.socket_host = "0.0.0.0"
-    cherrypy.server.ssl_module = 'pyopenssl'
-    cherrypy.server.ssl_certificate = 'certificates/Security_P3G1_SSL.crt'
-    cherrypy.server.ssl_private_key = 'certificates/Security_P3G1_SSL_key.pem'
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
     cherrypy.engine.start()
