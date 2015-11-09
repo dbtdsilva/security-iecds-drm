@@ -17,7 +17,10 @@ class Playback:
             encData = encFile.read(32)
     
             while len(encData) != 0:
-                data = aes.decrypt(encData)
+                if len(encData) < 32:
+                    data = encData
+                else:
+                    data = aes.decrypt(encData)
                 #data = op.decryptBlock(encData, FileKey)
                 player.stdin.write(data)
                 encData = encFile.read(32)

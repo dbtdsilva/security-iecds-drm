@@ -10,7 +10,6 @@ import json
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
-#PlayerKey = '12345678901234567890123456789012'
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias="/sys/devices/virtual/dmi/id/modalias"
 uid = 0
@@ -79,7 +78,8 @@ class Login(tk.Frame):
         # -- Check if user videos directory exists
         if not os.path.exists(path + username) or not os.path.isdir(path + username):
             os.mkdir(path + username)
-
+        
+        self.l.fileListBox.delete(0, "end")
         self.l.listContents()
         controller.show_frame(List)
     else:
@@ -131,7 +131,8 @@ class List(tk.Frame):
     return l
 
   def startPlayback(self):
-    cryptoHeader = '12345678901234567890123456789012'
+    cryptoHeader = ''
+    FileKey = ''
 
     title = self.fileListBox.get(self.fileListBox.curselection()[0])
     pos = self.titleids[self.fileListBox.curselection()[0]]
@@ -154,6 +155,8 @@ class List(tk.Frame):
                 tkMessageBox.showwarning("Oops!", "Download failed." )
             else:
                 cryptoHeader = req.content
+
+        print cryptoHeader
             
         # -- Read file
         # -- Create file key
@@ -162,8 +165,11 @@ class List(tk.Frame):
         payload = {"key" : binascii.hexlify(seed_dev_key)}
         req = self.session.post('https://localhost/api/title/validate/' + str(pos["id"]), json = payload, verify = False)
         seed_dev_user_key = req.content
+        print "RESPONSE: ", seed_dev_user_key
+        print "PLAYER KEY2: ", PlayerKey
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
 
+        print "file key: ", FileKey
         playback = Playback(path + self.username + os.path.sep + title, FileKey)
     else:
         tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play." )
