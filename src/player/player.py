@@ -7,12 +7,14 @@ from Crypto.Cipher import AES
 import hashlib
 import binascii
 import json
+from PIL import ImageTk, Image
 
 LARGE_FONT= ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias="/sys/devices/virtual/dmi/id/modalias"
-uid = 0
+logo = "./resources/images/logo.bmp"
+icon = "./resources/images/icon.bmp"
 
 class MainWindow(tk.Tk):
   def __init__(self, *args, **kwargs):
@@ -27,6 +29,7 @@ class MainWindow(tk.Tk):
 
     self.frames = {}
     self.minsize(310, 310)
+    self["bg"] = 'White'
 
     for F in (Login, List):
       frame = F(container, self)
@@ -92,23 +95,47 @@ class Login(tk.Frame):
 
   def __init__(self, parent, controller):
     tk.Frame.__init__(self,parent)
+    self["bg"] = 'White'
+    self.grid_columnconfigure(0, weight=1)
+    self.grid_columnconfigure(1, weight=1)
+    self.grid_columnconfigure(2, weight=1)
+    self.grid_columnconfigure(3, weight=1)
+    self.grid_columnconfigure(4, weight=1)
+    self.grid_columnconfigure(5, weight=1)
+    logoImg = ImageTk.PhotoImage(Image.open(logo))
+    panel = tk.Label(self, image = logoImg)
+    panel["bg"] = 'White'
+    panel.image = logoImg
+    panel.grid(row=0, column=0, pady=10, padx=10, columnspan=5, rowspan=5)
+    
+    wlabel = tk.Label(self, text="Welcome to the IEDCS Player!", font="Verdana 12 bold")
+    wlabel["bg"] = 'White'
+    wlabel.grid(row=6, column=0, pady=10, padx=10, columnspan=5, rowspan=2)
 
-    label = tk.Label(self, text="Login to continue...", font=LARGE_FONT)
-    label.grid(row=0, column=0, pady=10, padx=10, columnspan=5)
+    label = tk.Label(self, text="Please login to continue...", font=LARGE_FONT)
+    label["bg"] = 'White'
+    label["fg"] = 'Blue'
+    label.grid(row=8, column=0, pady=10, padx=10, columnspan=5)
 
     usernameLabel = tk.Label(self, text="Username: ", font=LARGE_FONT)
-    usernameLabel.grid(row=1, column=0, pady=5)
+    usernameLabel["bg"] = 'White'
+    usernameLabel["fg"] = 'Blue'
+    usernameLabel.grid(row=9, column=0, pady=10, padx = 10)
     passwordLabel = tk.Label(self, text="Password: ", font=LARGE_FONT)
-    #passwordLabel.grid(row=4, column=0, pady=5)
+    passwordLabel["bg"] = 'White'
+    passwordLabel["fg"] = 'Blue'
+    #passwordLabel.grid(row=10, column=0, pady=10, padx = 10)
 
     usernameTextbox = tk.Entry(self)
-    usernameTextbox.grid(row=1, column=1, columnspan=3, padx=10)
+    usernameTextbox.grid(row=9, column=1, columnspan=3)
     passwordTextbox = tk.Entry(self, show="*")
-    #passwordTextbox.grid(row=4, column=1, columnspan=3)
+    #passwordTextbox.grid(row=10, column=1, columnspan=3)
 
     button = tk.Button(self, text="Login!",
     command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
-    button.grid(row=6, column=2, pady=10, padx=10)
+    button.grid(row=12, column=1, pady=10, padx=10, columnspan=2)
+    button["fg"] = "Blue"
+    button["bg"] = "White"
     
 
 class List(tk.Frame):
@@ -189,18 +216,29 @@ class List(tk.Frame):
 
   def __init__(self, parent, controller):
     tk.Frame.__init__(self, parent)
+    self["bg"] = 'White'
     self.grid_columnconfigure(0, weight=1)
+    self.grid_columnconfigure(1, weight=1)
+    self.grid_columnconfigure(2, weight=1)
+    self.grid_columnconfigure(3, weight=1)
+    self.grid_columnconfigure(4, weight=1)
 
     labelHint = tk.Label(self, text="Please select the file to open and click 'Open'")
+    labelHint["bg"] = 'White'
+    labelHint["fg"] = 'Blue'
     labelHint.grid(row=1, column=1, columnspan=5, padx=20, pady=15)
 
     self.fileListBox = tk.Listbox(self, selectmode="single")
     self.fileListBox.grid(row=3, column=1, columnspan=5, rowspan=10)
 
     selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
+    selectBtn["bg"] = 'White'
+    selectBtn["fg"] = 'Blue'
     selectBtn.grid(row=13, column=1, padx=10, pady=10)
 
     logoutBtn = tk.Button(self, text="Logout", command=lambda: self.logout(controller))
+    logoutBtn["bg"] = 'White'
+    logoutBtn["fg"] = 'Blue'
     logoutBtn.grid(row=0, column=4, pady=10, padx=10)
 
 
