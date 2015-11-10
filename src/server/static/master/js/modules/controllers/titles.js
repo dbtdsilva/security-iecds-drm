@@ -25,4 +25,14 @@ App.controller('TitlesController', ['$route', '$rootScope', '$scope', '$http', f
 				console.log("Failed to load titles");
 		});
 	}
+
+	$scope.buy = function(title_id) {
+		$http.post("api/title/"+title_id, {}).then(
+			function(response) {
+				console.log(response.data);
+			},
+			function(data, status, headers, config) {
+                    alert("Failed to login");
+		});
+	}
 }]);

@@ -17,7 +17,7 @@ from userplayer import UserPlayer
 from sqlalchemy import create_engine, Column, \
     Integer, String, LargeBinary, Date
 from sqlalchemy_utils import database_exists, drop_database, create_database
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, aliased
 import time
 
 log = logging.getLogger('storage')
@@ -79,12 +79,20 @@ class Storage(object):
         if len(query) != 1:
             return None
         if include_non_bought:
-            return self.session.query(UserFile, File).\
-                filter_by(userid=query[0].id).\
-                outerjoin(File).all()[:2]
-        return self.session.query(UserFile, File).\
-            filter_by(userid=query[0].id).\
-            join(File, UserFile.fileid==File.id).all()
+            q = storage.session.query(UserFile).filter_by(userid=2).subquery('q')
+            lrelations = storage.session.query(File, aliased(UserFile,q)).outerjoin(q, q.c.fileid==File.id).all()
+        else:
+            lrelations = storage.session.query(File, UserFile).\
+                filter(UserFile.userid==query[0].id).\
+                join(UserFile, UserFile.fileid==File.id).all()
+
+        flist = []
+        for (filet, ufile) in lrelations:
+            tmp = filet.to_dict()
+            if ufile != None:
+                tmp['boughtdate'] = str(ufile.boughtdate)
+            flist += [ tmp ]
+        return flist
 
     def is_user_valid(self, username):
         return len(self.session.query(User).filter_by(username=username).all()) == 1

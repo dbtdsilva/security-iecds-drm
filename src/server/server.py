@@ -215,14 +215,7 @@ class TitleUser(object):
             return {"detail": "Requires authentication"}
         username = cherrypy.session.get(SESSION_KEY)
         userid = storage.get_user_id(username)
-        lrelations = storage.get_user_file_list(userid)
-        print lrelations
-        flist = []
-        for (ufile, filet) in lrelations:
-            tmp = filet.to_dict()
-            tmp['boughtdate'] = str(ufile.boughtdate)
-            flist += [ tmp ]
-        return flist
+        return storage.get_user_file_list(userid)
 
 class TitleUserAll(object):
     exposed = True
@@ -237,14 +230,7 @@ class TitleUserAll(object):
             return {"detail": "Requires authentication"}
         username = cherrypy.session.get(SESSION_KEY)
         userid = storage.get_user_id(username)
-        lrelations = storage.get_user_file_list(userid, True)
-        print lrelations
-        flist = []
-        for (ufile, filet) in lrelations:
-            tmp = filet.to_dict()
-            tmp['boughtdate'] = str(ufile.boughtdate)
-            flist += [ tmp ]
-        return flist
+        return storage.get_user_file_list(userid, True)
 
 class TitleAll(object):
     exposed = True

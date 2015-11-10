@@ -5,8 +5,16 @@
 			<span>Title: {{ title.title }}</span><br/>
 			<span>Author: {{ title.author }}</span><br/>
 			<span>Category: {{ title.category }}</span><br/>
-			<span>Production Date: {{ title.production_date }}</span><br/>
-			<button class="btn btn-danger btn-sm" ng-click="buy(title.id)">Buy title</button><br/><br/>
+			<span>Production Date: {{ title.production_date }}</span><br/><br/>
+			<div ng-if="user.loggedIn">
+				<button class="btn btn-primary btn-sm" disabled="disabled" ng-if="title.boughtdate != undefined">
+					Already bought!
+				</button>
+				<button class="btn btn-primary btn-sm" ng-if="title.boughtdate == undefined" ng-click="buy(title.id)">
+					Buy title!
+				</button>
+			</div>
+			<br/><br/>
 		</div>
 	</div>
 </div>
