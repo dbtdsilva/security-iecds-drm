@@ -14,7 +14,9 @@ class UserFile(Base):
     boughtdate = Column(DateTime, nullable=False)
 
     def __repr__(self):
-        return json.dumps(self.to_dict(), indent=2)
+        dic = self.to_dict()
+        dic['filekey'] = '__fkey__'
+        return json.dumps(dic, indent=2)
 
     def to_dict(self):
         rv = dict()

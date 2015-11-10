@@ -13,7 +13,9 @@ class Player(Base):
     playerkey = Column(LargeBinary(Cipher.BLOCK_SIZE), nullable=False)
 
     def __repr__(self):
-        return json.dumps(self.to_dict(), indent=2)
+        dic = self.to_dict()
+        dic['playerkey'] = '__pkey__'
+        return json.dumps(dic, indent=2)
 
     def to_dict(self):
         rv = dict()

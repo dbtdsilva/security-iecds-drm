@@ -200,6 +200,9 @@ class TitleValidate(object):
         return next_key
 
 class TitleUser(object):
+    def __init__(self):
+        self.all = TitleUserAll()
+
     exposed = True
 
     # GET  /api/title/user                              
@@ -213,6 +216,28 @@ class TitleUser(object):
         username = cherrypy.session.get(SESSION_KEY)
         userid = storage.get_user_id(username)
         lrelations = storage.get_user_file_list(userid)
+        print lrelations
+        flist = []
+        for (ufile, filet) in lrelations:
+            tmp = filet.to_dict()
+            tmp['boughtdate'] = str(ufile.boughtdate)
+            flist += [ tmp ]
+        return flist
+
+class TitleUserAll(object):
+    exposed = True
+
+    # GET  /api/title/user
+    # Requires login
+    # Details: Gets all titles that the user bought
+    @cherrypy.tools.json_out()
+    def GET(self):
+        if cherrypy.session.get(SESSION_KEY) == None:
+            cherrypy.response.status = 400
+            return {"detail": "Requires authentication"}
+        username = cherrypy.session.get(SESSION_KEY)
+        userid = storage.get_user_id(username)
+        lrelations = storage.get_user_file_list(userid, True)
         print lrelations
         flist = []
         for (ufile, filet) in lrelations:

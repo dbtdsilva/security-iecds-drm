@@ -81,7 +81,7 @@ class Storage(object):
         if include_non_bought:
             return self.session.query(UserFile, File).\
                 filter_by(userid=query[0].id).\
-                outer_join(File).all()
+                outerjoin(File).all()[:2]
         return self.session.query(UserFile, File).\
             filter_by(userid=query[0].id).\
             join(File, UserFile.fileid==File.id).all()

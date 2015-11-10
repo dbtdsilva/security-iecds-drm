@@ -9,6 +9,19 @@ App.controller('AppController',
             /**************************************************
              ***************** APPLICATION ********************
              **************************************************/
+            $rootScope.user = {
+                username: "",
+                loggedIn: false
+            };
+            $rootScope.login = function(username) {
+                $http.post("api/user/login", {"username": username}).success(function(data) {
+                    $rootScope.user.username = username;
+                    $rootScope.user.loggedIn = true;
+                    $('#myModal').modal('hide');
+                }).error(function(data, status, headers, config) {
+                    alert("Failed to login");
+                });
+            };
                 // Setup the layout mode
             //$rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout == 'app-h');
 
