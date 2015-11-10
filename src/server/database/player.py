@@ -1,9 +1,7 @@
 import logging
 import json
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from base import Base
+from sqlalchemy import Column, Integer, LargeBinary
+from base import Base, Cipher
 
 log = logging.getLogger('player')
 
@@ -11,7 +9,8 @@ class Player(Base):
     __tablename__ = 'player'
 
     id = Column(Integer, primary_key=True)
-    playerkey = Column(LargeBinary(32), nullable=False)    
+    hash = Column(LargeBinary(Cipher.PLAYER_HASH_LEN), nullable=False)
+    playerkey = Column(LargeBinary(Cipher.BLOCK_SIZE), nullable=False)
 
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)
@@ -19,10 +18,12 @@ class Player(Base):
     def to_dict(self):
         rv = dict()
         rv['id'] = self.id
+        rv['hash'] = self.hash
         rv['playerkey'] = self.playerkey
         return rv
 
     @classmethod
     def from_dict(cls, data):
         return cls(id=data['id'],
+                   hash=data['hash'],
                    playerkey=data['playerkey'])

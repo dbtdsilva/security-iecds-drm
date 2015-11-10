@@ -1,8 +1,6 @@
 import logging
 import json
-from sqlalchemy import create_engine, Column, Integer, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, ForeignKey
 from base import Base
 
 log = logging.getLogger('userplayer')
