@@ -2,7 +2,7 @@
 from Crypto import Random
 from Crypto.Cipher import AES
 import os.path
-import cherrypy
+import cherrypy.wsgiserver.ssl_builtin
 import json
 from cherrypy.lib import jsontools
 from database.storage_api import storage
@@ -234,11 +234,6 @@ class Root(object):
     pass
 
 if __name__ == '__main__':
-    import OpenSSL
-    from OpenSSL.SSL import *
-    import cherrypy.wsgiserver
-    from cherrypy.wsgiserver import ssl_builtin, ssl_pyopenssl
-
     RESTopts = {
         'tools.sessions.on': True,
         'tools.json_out.handler': jsontools.json_handler,
@@ -246,24 +241,15 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    def client_callback(conn, x509, error_num, error_depth, ret_code):
-        #print('client_callback({}, {}, {}, {}, {})'.format(conn, x509, error_num, error_depth, ret_code))
-        return ret_code
-
     key = "certificates/Security_P3G1_SSL_key.pem"
     cert = "certificates/Security_P3G1_SSL.crt"
     root = "certificates/Security_P3G1_Root.crt"
 
-    #cherrypy.server.ssl_module = 'pyopenssl'
-    context = Context(TLSv1_2_METHOD)
-    context.set_options(OP_CIPHER_SERVER_PREFERENCE)
-    context.use_privatekey_file(key)
-    context.use_certificate_file(cert)
-    context.load_client_ca(root)
-    context.load_verify_locations(root, None)
-    context.set_verify(#VERIFY_FAIL_IF_NO_PEER_CERT | 
-        VERIFY_PEER, client_callback)
-    cherrypy.server.ssl_context = context
+    cherrypy.server.ssl_module = 'builtin'
+    cherrypy.server.ssl_certificate = cert
+    cherrypy.server.ssl_private_key = key
+    cherrypy.server.ssl_ca_certificate = root
+    cherrypy.server.thread_pool = 30
     cherrypy.server.socket_port = 443
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
