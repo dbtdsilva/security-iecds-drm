@@ -1,10 +1,5 @@
 [
   {
-    "text": "Home",
-    "sref": "app.home",
-    "icon": "fa fa-home"
-  },
-  {
     "text": "Titles",
     "sref": "app.titles",
     "icon": "fa fa-shopping-cart "

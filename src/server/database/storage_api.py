@@ -112,6 +112,10 @@ class Storage(object):
             return None
         return query[0].filekey
 
+    def exists_device_key(self, devicekey):
+        query = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        return len(query) != 0
+
     def get_tile_details(self, title_id):
         query = self.session.query(File).filter_by(id=title_id).all()
         if len(query) != 1:

@@ -13,7 +13,7 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
 
   // default route
   //$urlRouterProvider.otherwise('/app/singleview');
-  $urlRouterProvider.otherwise('/app/home');
+  $urlRouterProvider.otherwise('/app/titles');
 
   // 
   // Application Routes
@@ -27,14 +27,14 @@ function ($stateProvider, $httpProvider, $locationProvider, $urlRouterProvider, 
         resolve: helper.resolveFor('localytics.directives', 'modernizr', 'slimscroll', 'icons',
                                     'ui.gravatar', 'hljs', 'toaster')
     })
-    .state('app.home', {
+    /*.state('app.home', {
         url: '/home',
         title: 'Home',
         templateUrl: helper.basepath('home.html'),
         controller: 'HomeController',
         resolve: helper.resolveFor('chart', 'localytics.directives', 'chart.js', 'angular-carousel'),
         accessLevel: 'public'
-    })
+    })*/
     .state('app.about', {
         url: '/about',
         title: 'About',
