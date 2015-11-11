@@ -2,17 +2,26 @@
 	<h2>Titles</h2>
 	<div class="row">
 		<div class="col-md-4" ng-repeat="title in titles">
-			<span>Title: {{ title.title }}</span><br/>
-			<span>Author: {{ title.author }}</span><br/>
-			<span>Category: {{ title.category }}</span><br/>
-			<span>Production Date: {{ title.production_date }}</span><br/><br/>
-			<div ng-if="user.loggedIn">
-				<button class="btn btn-primary btn-sm" disabled="disabled" ng-if="title.boughtdate != undefined">
-					Already bought!
-				</button>
-				<button class="btn btn-primary btn-sm" ng-if="title.boughtdate == undefined" ng-click="buy(title.id)">
-					Buy title!
-				</button>
+			<div class="row">
+				<div class="col-md-5">
+					<img class="img-responsive" height="209" width="140" alt="The 33 (2015) Poster" title="The 33 (2015)"
+						 src="http://ia.media-imdb.com/images/M/MV5BMTkyNDY3NDc5NF5BMl5BanBnXkFtZTgwMzI1NDM1NjE@._V1_UY209_CR0,0,140,209_AL_.jpg"
+						 itemprop="image">
+				</div>
+				<div class="col-md-7">
+					<h4>{{ title.title }}</h4><br/>
+					<span>Author: {{ title.author }}</span><br/>
+					<span>Category: {{ title.category }}</span><br/>
+					<span>Production Date: {{ title.production_date }}</span><br/><br/>
+					<div ng-if="user.loggedIn">
+						<button style="width:100%" class="btn btn-primary" disabled="disabled" ng-if="title.boughtdate != undefined">
+							Already bought!
+						</button>
+						<button style="width:100%" class="btn btn-primary" ng-if="title.boughtdate == undefined" ng-click="buy(title.id)">
+							Buy title!
+						</button>
+					</div>
+				</div>
 			</div>
 			<br/><br/>
 		</div>
