@@ -9,12 +9,21 @@ App.controller('AppController',
             /**************************************************
              ***************** APPLICATION ********************
              **************************************************/
-            $rootScope.user = {
-                username: "",
-                loggedIn: false
-            };
+            if (localStorage.username == undefined) {
+                $rootScope.user = {
+                    username: "",
+                    loggedIn: false
+                };
+            } else {
+                $rootScope.user = {
+                    username: localStorage.username,
+                    loggedIn: true
+                };
+            }
+
             $rootScope.login = function(username) {
                 $http.post("api/user/login", {"username": username}).success(function(data) {
+                    localStorage.username = username;
                     $rootScope.user.username = username;
                     $rootScope.user.loggedIn = true;
                     $('#myModal').modal('hide');

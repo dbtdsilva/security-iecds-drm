@@ -32,7 +32,7 @@ def logged():
         userid = cherrypy.session.get(SESSION_USERID)
         if userid != None:
             return (True, None)
-        return (False, cherrypy.HTTPError(400, "Requires authentication"))
+        return (False, cherrypy.HTTPError(401, "Requires authentication"))
     return check
 
 def has_title(user, title):

@@ -40,11 +40,11 @@
                     ng-click="toggleCollapse(pIndex, true)"></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li ng-if="!user.loggedIn"><a data-toggle="modal" data-target="#myModal">
+                <li ng-show="!user.loggedIn"><a data-toggle="modal" data-target="#myModal">
                     <em class="fa fa-user"></em>
                     <span>Login</span></a>
                 </li>
-                <li ng-if="user.loggedIn">
+                <li ng-show="user.loggedIn">
                     <a><span>{{ user.username }}</span></a>
                 </li>
             </ul>

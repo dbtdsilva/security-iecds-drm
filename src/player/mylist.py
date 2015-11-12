@@ -12,7 +12,6 @@ class MyList(tk.Frame):
 
     def openWindow(self, row):
         title = self.titleids[row]
-        tkMessageBox.showwarning("Oops!", "Row: %s" %title['path'] )
         self.parent.startPlayback(row)
 
     def __init__(self, root, titles):

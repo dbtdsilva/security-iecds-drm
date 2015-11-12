@@ -102,7 +102,7 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @require(logged(), device_key)
+    @require(logged(), device_key())
     def GET(self, title, seed_only = False):
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
