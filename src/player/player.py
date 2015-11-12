@@ -2,12 +2,14 @@ import Tkinter as tk
 import tkMessageBox
 import os
 from playback import Playback
+from mylist import MyList
 import requests
 from Crypto.Cipher import AES
 import hashlib
 import binascii
 import json
 from PIL import ImageTk, Image
+
 
 LARGE_FONT = ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
@@ -29,7 +31,9 @@ class MainWindow(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        self.minsize(310, 310)
+        self.minsize(420, 420)
+        self.minsize(420, 420)
+        self.resizable(width=tk.FALSE, height=tk.FALSE)
         self["bg"] = 'White'
 
         for F in (Login, List):
@@ -56,7 +60,7 @@ class Login(tk.Frame):
 
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
         self.l.session = requests.Session()
-        req = self.l.session.post('https://localhost/api/user/login/', json=payload, verify=False)
+        req = self.l.session.post('https://localhost:8181/api/user/login/', json=payload, verify=False)
 
         if req.status_code == 200:
             return True
@@ -84,7 +88,6 @@ class Login(tk.Frame):
             if not os.path.exists(path + username) or not os.path.isdir(path + username):
                 os.mkdir(path + username)
 
-            self.l.fileListBox.delete(0, "end")
             self.l.listContents()
             controller.show_frame(List)
         else:
@@ -146,32 +149,24 @@ class List(tk.Frame):
     titleids = []
 
     # ----- Change content for server interaction  -----
-    def getFileList(self):
-        req = self.session.get('https://localhost/api/title/user', verify=False)
-
-        j = json.loads(req.content)
-        l = []
-        for a in j:
-            l.append(a['title'] + " - " + a['author'])
-            self.titleids.append(a)
-
-        return l
-
-    def startPlayback(self):
+    def startPlayback(self, titleid):
         cryptoHeader = ''
         FileKey = ''
 
-        title = self.fileListBox.get(self.fileListBox.curselection()[0])
-        pos = self.titleids[self.fileListBox.curselection()[0]]
+        pos = self.titleids[titleid]
 
-        if title == None:
+        if titleid == None:
             tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play.")
             return
-            # Check if file exists
-            # -- If the file exists, if it doesn't, download it
-        if not os.path.exists(path + self.username + os.path.sep + title):
-            handle = open(path + self.username + os.path.sep + title, "w")
-            req = self.session.get('https://localhost/api/title/' + str(pos["id"]), verify=False)
+        
+        # Check if file exists
+        # -- If the file exists, if it doesn't, download it
+        videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
+        print pos['id']
+        if not os.path.exists(videofile):
+            handle = open(videofile, "w")
+            req = self.session.get('https://localhost:8181/api/title/' + str(pos["id"]), verify=False)
+            print "REQUEST: ", req
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "File download failed.")
                 return
@@ -180,7 +175,7 @@ class List(tk.Frame):
             handle.close()
         else:
             payload = {"title": str(pos["id"]), "seed_only": '1'}
-            req = self.session.get('https://localhost/api/title', params=payload, verify=False)
+            req = self.session.get('https://localhost:8181/api/title', params=payload, verify=False)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed.")
                 return
@@ -193,27 +188,29 @@ class List(tk.Frame):
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
-        req = self.session.post('https://localhost/api/title/validate/' + str(pos["id"]), json=payload, verify=False)
+        req = self.session.post('https://localhost:8181/api/title/validate/' + str(pos["id"]), json=payload, verify=False)
         seed_dev_user_key = req.content
         print "RESPONSE: ", seed_dev_user_key
         print "PLAYER KEY2: ", PlayerKey
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
 
         print "file key: ", FileKey
-        playback = Playback(path + self.username + os.path.sep + title, FileKey)
+        playback = Playback(videofile, FileKey)
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
     def logout(self, controller):
         self.username = ""
-        req = self.session.post('https://localhost/api/user/logout', verify=False)
+        req = self.session.post('https://localhost:8181/api/user/logout', verify=False)
+        self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        listFiles = self.getFileList()
+        req = self.session.get('https://localhost:8181/api/title/user', verify=False)
 
-        for f in listFiles:
-            self.fileListBox.insert("end", f)
+        self.titleids = json.loads(req.content)
+        
+        self.fileListBox = MyList(self, self.titleids)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -229,13 +226,7 @@ class List(tk.Frame):
         labelHint["fg"] = 'Blue'
         labelHint.grid(row=1, column=1, columnspan=5, padx=20, pady=15)
 
-        self.fileListBox = tk.Listbox(self, selectmode="single")
-        self.fileListBox.grid(row=3, column=1, columnspan=5, rowspan=10)
-
-        selectBtn = tk.Button(self, text="Play file", command=lambda: self.startPlayback())
-        selectBtn["bg"] = 'White'
-        selectBtn["fg"] = 'Blue'
-        selectBtn.grid(row=13, column=1, padx=10, pady=10)
+        self.fileListBox = None
 
         logoutBtn = tk.Button(self, text="Logout", command=lambda: self.logout(controller))
         logoutBtn["bg"] = 'White'
