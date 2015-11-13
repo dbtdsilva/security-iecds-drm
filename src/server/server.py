@@ -244,6 +244,7 @@ if __name__ == '__main__':
     cherrypy.server.ssl_certificate = cert
     cherrypy.server.ssl_private_key = key
     cherrypy.server.ssl_ca_certificate = root
+    cherrypy.server.ssl_certificate_chain = root
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.socket_port = 8000
 
