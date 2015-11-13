@@ -46,4 +46,9 @@ def device_key():
         return (False, cherrypy.HTTPError(400, "Device key wasn't provided"))
     return check
 
+def jsonify_error(status, message, traceback, version):
+    response = cherrypy.response
+    response.headers['Content-Type'] = 'application/json'
+    return json.dumps({'status': status, 'message': message})
+
 cherrypy.tools.checker = cherrypy.Tool('before_handler', check_parameters)

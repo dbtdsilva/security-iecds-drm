@@ -13,6 +13,7 @@ from PIL import ImageTk, Image
 
 LARGE_FONT = ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
+Root_Certificate = "Security_P3G1_Root_copy.crt"
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias = "/sys/devices/virtual/dmi/id/modalias"
 logo = "./resources/images/logo.bmp"
@@ -60,7 +61,7 @@ class Login(tk.Frame):
 
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
         self.l.session = requests.Session()
-        req = self.l.session.post('https://localhost:8181/api/user/login/', json=payload, verify=False)
+        req = self.l.session.post('https://localhost:8181/api/user/login/', json=payload, verify=Root_Certificate)
 
         if req.status_code == 200:
             return True
@@ -165,7 +166,7 @@ class List(tk.Frame):
         print pos['id']
         if not os.path.exists(videofile):
             handle = open(videofile, "w")
-            req = self.session.get('https://localhost:8181/api/title/' + str(pos["id"]), verify=False)
+            req = self.session.get('https://localhost:8181/api/title/' + str(pos["id"]), verify=Root_Certificate)
             print "REQUEST: ", req
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "File download failed.")
@@ -175,7 +176,7 @@ class List(tk.Frame):
             handle.close()
         else:
             payload = {"title": str(pos["id"]), "seed_only": '1'}
-            req = self.session.get('https://localhost:8181/api/title', params=payload, verify=False)
+            req = self.session.get('https://localhost:8181/api/title', params=payload, verify=Root_Certificate)
             if req.status_code != 200:
                 tkMessageBox.showwarning("Oops!", "Download failed.")
                 return
@@ -188,7 +189,7 @@ class List(tk.Frame):
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
-        req = self.session.post('https://localhost:8181/api/title/validate/' + str(pos["id"]), json=payload, verify=False)
+        req = self.session.post('https://localhost:8181/api/title/validate/' + str(pos["id"]), json=payload, verify=Root_Certificate)
         seed_dev_user_key = req.content
         print "RESPONSE: ", seed_dev_user_key
         print "PLAYER KEY2: ", PlayerKey
@@ -201,12 +202,12 @@ class List(tk.Frame):
 
     def logout(self, controller):
         self.username = ""
-        req = self.session.post('https://localhost:8181/api/user/logout', verify=False)
+        req = self.session.post('https://localhost:8181/api/user/logout', verify=Root_Certificate)
         self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        req = self.session.get('https://localhost:8181/api/title/user', verify=False)
+        req = self.session.get('https://localhost:8181/api/title/user', verify=Root_Certificate)
 
         self.titleids = json.loads(req.content)
         

@@ -7,7 +7,7 @@ import json
 from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
-from checker import require, logged, device_key, SESSION_DEVICE, SESSION_USERID
+from checker import require, logged, device_key, SESSION_DEVICE, SESSION_USERID, jsonify_error
 
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,11 +36,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Details: Sends the current cipher result key to the server to process
 # with user key
 
-def report_error(code, message):
-    cherrypy.response.status = code
-    cherrypy.response.headers['Content-Type'] = "application/json"
-    return json.dumps({"detail": message})
-
 class API(object):
     def __init__(self):
         self.user = User()
@@ -63,13 +58,13 @@ class UserLogin(object):
             raw_body = cherrypy.request.body.read(int(content_length))
             body = json.loads(raw_body)
         except Exception:
-            return report_error(400, "Wrong format")
+            raise cherrypy.HTTPError(400, "Wrong format")
 
         if 'username' in body and not storage.is_user_valid(body['username']):
-            return report_error(400, "Provided bad credentials")
+            raise cherrypy.HTTPError(400, "Provided bad credentials")
         if 'key' in body:
             if len(body['key']) != BLOCK_SIZE * 2:
-                return report_error(400, "Key is not valid")
+                raise cherrypy.HTTPError(400, "Key is not valid")
             cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
             username = cherrypy.session.get(SESSION_USERID)
             user_id = storage.get_user_id(username)
@@ -108,7 +103,7 @@ class Title(object):
             seed_only = True
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
-            return report_error(400, "Current user didn't buy this title")
+            raise cherrypy.HTTPError(400, "Current user didn't buy this title")
 
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
@@ -127,7 +122,12 @@ class Title(object):
             seed_dev_user_key = AES.new(player_key, AES.MODE_ECB).decrypt(file_key)
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
-        
+
+        print "Player key", binascii.hexlify(player_key)
+        print "User key: ", binascii.hexlify(user_key)
+        print "Device key: ", binascii.hexlify(device_key)
+        print "File Key: ", binascii.hexlify(file_key)
+        print "Seed: ", binascii.hexlify(seed)
         if seed_only:
             return seed
             
@@ -165,7 +165,7 @@ class TitleValidate(object):
     def POST(self, title):
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
-            return report_error(400, "Current user didn't buy this title")
+            raise cherrypy.HTTPError(400, "Current user didn't buy this title")
 
         try:
             content_length = cherrypy.request.headers['Content-Length']
@@ -175,7 +175,7 @@ class TitleValidate(object):
                 raise Exception()
             key_val = body['key']
         except Exception:
-            return report_error(400, "Current key wasn't provided")
+            raise cherrypy.HTTPError(400, "Current key wasn't provided")
 
         user_key = storage.get_user_details(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(binascii.unhexlify(key_val))
@@ -221,6 +221,7 @@ if __name__ == '__main__':
     RESTopts = {
         'tools.sessions.on': True,
         'tools.checker.on': True,
+        'error_page.default': jsonify_error,
         'tools.json_out.handler': jsontools.json_handler,
         'tools.json_in.processor': jsontools.json_processor,
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
@@ -234,29 +235,45 @@ if __name__ == '__main__':
     from OpenSSL.SSL import *
     import OpenSSL
     from cherrypy import wsgiserver
-    from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+    from cherrypy.wsgiserver import ssl_builtin, ssl_pyopenssl
     def client_callback(conn, x509, error_num, error_depth, ret_code):
         print('client_callback({}, {}, {}, {}, {})'.format(conn, x509, error_num, error_depth, ret_code))
         return ret_code
 
-    context = Context(TLSv1_METHOD)
-    context.set_options(OP_CIPHER_SERVER_PREFERENCE)
+    context = Context(SSLv23_METHOD)
     context.use_privatekey_file(key)
     context.use_certificate_file(cert)
+    supported_ciphers = ('DHE-RSA-AES256-SHA',
+      'AES256-SHA',
+      'DHE-RSA-AES128-SHA',
+      'AES128-SHA',
+      'EDH-RSA-DES-CBC3-SHA',
+      'DHE-RSA-AES256-SHA',
+      'AES256-SHA',
+      'DHE-RSA-AES128-SHA',
+      'AES128-SHA',
+      'EDH-RSA-DES-CBC3-SHA',
+      'DES-CBC3-SHA',
+      'RC4-SHA'
+    )
+
+    context.set_cipher_list(':'.join(supported_ciphers))
+    context.set_options(OpenSSL.SSL.OP_NO_SSLv2 | OpenSSL.SSL.OP_NO_SSLv3)
     context.load_client_ca(root)
-    context.load_verify_locations(root, None)
+    context.load_verify_locations(root, "Security_P3G1_SSL_chain.pem")
     context.set_verify(VERIFY_PEER, client_callback)
 
     #cherrypy.server = wsgiserver.CherryPyWSGIServer(("0.0.0.0", int(443)), API)
     cherrypy.server.ssl_module = 'pyopenssl'
-    cherrypy.server.context = context
-    cherrypy.server.ssl_certificate = cert
-    cherrypy.server.ssl_private_key = key
-    cherrypy.server.ssl_ca_certificate = root
+    #cherrypy.server.ssl_context = context
+    #cherrypy.server.ssl_certificate = cert
+    #cherrypy.server.ssl_private_key = key
+    #cherrypy.server.ssl_ca_certificate = root
+    cherrypy.server.thread_pool = 30
     #cherrypy.server.ssl_adapter = pyOpenSSLAdapter(cert, key, root)
     #cherrypy.server.ssl_adapter.context = ctx
     cherrypy.server.socket_host = "0.0.0.0"
-    cherrypy.server.socket_port = 8181
+    cherrypy.server.socket_port = 8000
 
     #cherrypy.tree.graft(app
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
