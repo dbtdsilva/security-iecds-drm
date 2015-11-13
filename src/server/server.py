@@ -79,7 +79,7 @@ class UserLogin(object):
             der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
             if der_player != None:
                 DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-                pkey = cipherLib.get_certificate_pubkey(DER)
+                pkey = cipherLib.convert_certificate_to_PEM(DER)
                 player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
                 if player_key == None:
                     raise cherrypy.HTTPError(400, "Public key on certificate expired, re-download the player.")
