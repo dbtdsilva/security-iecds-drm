@@ -7,8 +7,8 @@ class Playback:
         print path
         encFile = open(path, "r")
 
-        cmdline = ['cvlc', '--autoscale', '-'] #default demux is broken, use below instead
-        #cmdline = ['vlc', '--demux', 'avformat', '-']
+        #cmdline = ['cvlc', '--autoscale', '-'] #default demux is broken, use below instead
+        cmdline = ['cvlc', '--autoscale', '--play-and-exit', '--demux', 'avformat', '-']
 
         player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
     

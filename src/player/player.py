@@ -13,7 +13,9 @@ from PIL import ImageTk, Image
 
 LARGE_FONT = ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
-Root_Certificate = "Security_P3G1_Root_copy.crt"
+Root_Certificate = "resources/COPY_Security_P3G1_Root.crt"
+Local_Certificate = ("resources/COPY_Security_P3G1_Player_1_.crt", "resources/COPY_Security_P3G1_Player_1_key.pem")
+
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias = "/sys/devices/virtual/dmi/id/modalias"
 logo = "./resources/images/logo.bmp"
@@ -61,12 +63,12 @@ class Login(tk.Frame):
 
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
         self.l.session = requests.Session()
-        req = self.l.session.post('https://localhost:8181/api/user/login/', json=payload, verify=Root_Certificate)
+        req = self.l.session.post('https://localhost:4433/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
 
         if req.status_code == 200:
-            return True
+            return (True, "Logged in")
         else:
-            return False
+            return (False, json.loads(req.content)['message'])
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
@@ -79,7 +81,8 @@ class Login(tk.Frame):
         self.l.DeviceKey = hashlib.sha256(f.read()).digest()
         # ---------------------------------------
 
-        if self.checkCredentials(username, password, self.l.DeviceKey):
+        (valid, message) = self.checkCredentials(username, password, self.l.DeviceKey)
+        if valid:
             self.l.username = username
             # Manage directories
             # -- Check if videos directory exists
@@ -92,7 +95,7 @@ class Login(tk.Frame):
             self.l.listContents()
             controller.show_frame(List)
         else:
-            tkMessageBox.showwarning("ERROR!", "Login credentials are wrong!")
+            tkMessageBox.showwarning("ERROR!", message)
 
         usernameTextbox.delete(0, "end")
         passwordTextbox.delete(0, "end")
@@ -166,19 +169,19 @@ class List(tk.Frame):
         print pos['id']
         if not os.path.exists(videofile):
             handle = open(videofile, "w")
-            req = self.session.get('https://localhost:8181/api/title/' + str(pos["id"]), verify=Root_Certificate)
+            req = self.session.get('https://localhost:4433/api/title/' + str(pos["id"]), verify=Root_Certificate, cert=Local_Certificate)
             print "REQUEST: ", req
             if req.status_code != 200:
-                tkMessageBox.showwarning("Oops!", "File download failed.")
+                tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
                 return
             cryptoHeader = req.content[:32]
             handle.write(req.content[32:])
             handle.close()
         else:
             payload = {"title": str(pos["id"]), "seed_only": '1'}
-            req = self.session.get('https://localhost:8181/api/title', params=payload, verify=Root_Certificate)
+            req = self.session.get('https://localhost:4433/api/title', params=payload, verify=Root_Certificate, cert=Local_Certificate)
             if req.status_code != 200:
-                tkMessageBox.showwarning("Oops!", "Download failed.")
+                tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
                 return
             cryptoHeader = req.content
 
@@ -189,25 +192,25 @@ class List(tk.Frame):
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
-        req = self.session.post('https://localhost:8181/api/title/validate/' + str(pos["id"]), json=payload, verify=Root_Certificate)
+        req = self.session.post('https://localhost:4433/api/title/validate/' + str(pos["id"]), json=payload, verify=Root_Certificate, cert=Local_Certificate)
         seed_dev_user_key = req.content
-        print "RESPONSE: ", seed_dev_user_key
-        print "PLAYER KEY2: ", PlayerKey
+        print "Player key: ", binascii.hexlify(PlayerKey)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
-
-        print "file key: ", FileKey
+        print "Device key: ", binascii.hexlify(self.DeviceKey)
+        print "File key: ", binascii.hexlify(FileKey)
+        print "Seed: ", binascii.hexlify(cryptoHeader)
         playback = Playback(videofile, FileKey)
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
     def logout(self, controller):
         self.username = ""
-        req = self.session.post('https://localhost:8181/api/user/logout', verify=Root_Certificate)
+        req = self.session.post('https://localhost:4433/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
         self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        req = self.session.get('https://localhost:8181/api/title/user', verify=Root_Certificate)
+        req = self.session.get('https://localhost:4433/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
 
         self.titleids = json.loads(req.content)
         

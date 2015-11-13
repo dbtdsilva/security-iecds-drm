@@ -74,17 +74,19 @@ class UserLogin(object):
             username = cherrypy.session.get(SESSION_USERID)
             user_id = storage.get_user_id(username)
             storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
-        der_player = cherrypy.request.body.fp.rfile._sock.getpeercert(binary_form=True)
-        if der_player != None:
-            DER = cherrypy.request.body.fp.rfile._sock.getpeercert(binary_form=True)
-            pkey = cipherLib.get_certificate_pubkey(DER)
-            player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
-            if player_key == None:
-                raise cherrypy.HTTPError(400, "Public key on certificate expired, re-download the player.")
-            cherrypy.session[SESSION_PLAYER] = player_key
+        a = cherrypy
+        if hasattr(cherrypy.request.rfile, 'rfile'):
+            der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+            if der_player != None:
+                DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+                pkey = cipherLib.get_certificate_pubkey(DER)
+                player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
+                if player_key == None:
+                    raise cherrypy.HTTPError(400, "Public key on certificate expired, re-download the player.")
+                cherrypy.session[SESSION_PLAYER] = player_key
         cherrypy.session[SESSION_USERID] = storage.get_user_id(body['username'])
         cherrypy.response.status = 200
-        return {"detail": "Login successfully"}
+        return {"status": 200, "message": "Login successfully"}
         
 
 class UserLogout(object):
@@ -97,7 +99,7 @@ class UserLogout(object):
     def POST(self):
         cherrypy.response.status = 200
         cherrypy.session[SESSION_USERID] = None
-        return {"detail": "User logged out."}
+        return {"status": 200, "message": "User logged out."}
 
 class Title(object):
     exposed = True
@@ -165,7 +167,7 @@ class Title(object):
     @require(logged())
     def POST(self, title):
         storage.buy_file(cherrypy.session.get(SESSION_USERID), title)
-        return {"detail": "Title was successfully purchased"}
+        return {"status": 200, "message": "Title was successfully purchased"}
 
 class TitleValidate(object):
     exposed = True
@@ -240,9 +242,9 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    key = "certificates/Security_P3G1_SSL_key.pem"
-    cert = "certificates/Security_P3G1_SSL.crt"
-    root = "certificates/Security_P3G1_Root.crt"
+    key = "certificates/ssl/Security_P3G1_SSL_key.pem"
+    cert = "certificates/ssl/Security_P3G1_SSL.crt"
+    root = "certificates/rootCA/Security_P3G1_Root.crt"
 
     cherrypy.server.ssl_module = 'custom-ssl'
     cherrypy.server.ssl_certificate = cert

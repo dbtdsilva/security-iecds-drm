@@ -24,7 +24,8 @@ class Cipher:
         if file_type != OpenSSL.crypto.FILETYPE_ASN1 and \
             file_type != OpenSSL.crypto.FILETYPE_PEM:
             return None
-        certificate = OpenSSL.crypto.load_certificate(file_type, file_string)
-        bio = openCrypto._new_mem_buf()
-        openCryptolib.PEM_write_bio_PUBKEY(bio, certificate.get_pubkey()._pkey)
-        return openCrypto._bio_to_string(bio)
+        x509 = OpenSSL.crypto.load_certificate(file_type, file_string)
+        #certificate = OpenSSL.crypto.load_certificate(file_type, file_string)
+        #bio = openCrypto._new_mem_buf()
+        #openCryptolib.PEM_write_bio_PUBKEY(bio, certificate.get_pubkey()._pkey)
+        return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)#openCrypto._bio_to_string(bio)
