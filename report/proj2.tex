@@ -1,0 +1,172 @@
+\documentclass[11pt,a4paper]{report}
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{glossaries}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{natbib}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\setlength\parindent{0pt} % Removes all indentation from paragraphs	 
+%% Acronimos
+\newglossaryentry{sqlite}
+{
+  name=SQLite,
+  description={é um sistema de gestão de base de dados}
+}
+\newglossaryentry{post}
+{
+  name=POST,
+  description={é uma mensagem que fornece dados a um determinado recurso}
+}
+\newglossaryentry{get}
+{
+  name=GET,
+  description={é uma mensagem que solicita dados de um recurso especificado}
+}
+\newacronym{aes}{AES}{Advanced Encryption Standard}
+\newacronym{sha}{SHA}{Secure Hash Algorithm}
+\makeglossaries
+%% Fim da introdução do Acronimos
+
+\let\olditemize\itemize
+\renewcommand{\itemize}{
+  \olditemize
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}
+
+\title{\textbf{Identity Enabled Distribution Control System} \\1st Project\\ Segurança\\Universidade de Aveiro}
+\author{Diogo Silva 60337 \and Tânia Alves 60340 }
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\HRule \\[0.4cm]
+{ \huge \bfseries Identity Enabled Distribution Control System \\[0.4cm] }
+\HRule \\[1.5cm]
+\textsc{\LARGE Universidade de Aveiro}\\[1.5cm]
+\textsc{}\\[1.5cm]
+\textsc{Diogo Silva 60337 \\Tânia Alves 60340 }
+\end{center}
+\end{titlepage}
+\maketitle
+\tableofcontents
+
+\chapter*{Context}
+\addcontentsline{toc}{chapter}{Context}
+This project was done for Security, for the 2015/2016 lective year.
+It aims to create an end to end secure digital rights management system to handle the distribution of video files, music files or books.
+
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+Our project is made of two main components: the player and the server.
+The server is in charge of controlling the user access to the protected files. 
+The players requests and plays the files from the server.
+In order for the user to have access to the titles he/she wants, we also have a web application where the user can buy the titles to play later.
+To reach the goal of this project, we also needed a database that helped manage the user and file related information.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/overview.png}}
+\caption{Component overview}
+\label{schema}
+\end{figure}
+
+%%%% CAPITULO RELATIVO A APLICAÇÃO %%%%
+\chapter{Database}
+This chapter includes information about the database we used to support the server.
+We stored information about the users, files, players and devices that were later used.
+
+\section{Database}
+For the database we thought of this layout:
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/dbSchema.png}}
+\caption{DB Schema}
+\label{schema}
+\end{figure}
+
+We need to save information about the Users that belong to the system and buy the files. The Files that are stored in the server and are then sent to the players. The Players that will interact with the server and play the files. And the Devices where the users play the files.
+
+\subsection{Database tables}
+Using the information presented, we derived the tables for the database, with all the attributes necessary for our implementation of the system.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=500pt]{images/dbTables.png}}
+\caption{DB Tables}
+\label{tables}
+\end{figure}
+
+Each "main" entity (User, Device, File and Player) will have an id that identifies the entity in the database.
+We then have the required key for each one of them as well.
+\newline In the User table we have added the username field that identifies the each user.
+\newline The File table also has some extra fields that provide information to the user about the file he is playing or buying, such as, the title of the file, the author, the category and the date of the title's production.
+\newline The actions presented in Figure 1.1 had to be converted to extra tables since, in each case we had a many-to-many relationship. So, we have here the extra tables that store some information of the interactions, like specific keys and adittional information like the date that when the user bought the file. 
+
+\subsection{Technologies used}
+For the database we used:
+\begin{description}
+  \item[PostgreSQL] Open source, object relational database management system. We chose this over SQLite for example because it has a better support for storing secure data.
+  \item[SQLAlchemy] Open source SQL toolkit. Works as an object-relation mapper for Python. This allowed us to create database scripts that created the tables and populated the database.
+\end{description}
+
+\section{Server}
+The server is meant to interact with the database and control the access of the users and players to the files.
+
+\subsection{Structure}
+The server is composed of 
+\subsection{API Implementation}
+\subsection{Player validation}
+\subsection{Technologies used}
+
+
+\section{Web page}
+The web page is where the user can buy the titles.
+\subsection{Structure}
+\subsection{Implementation}
+\subsection{Technologies used}
+
+\section{Player}
+The Player allows the user to play the files he/she has bought previously.
+\subsection{Structure}
+\subsection{Implementation}
+\subsection{Technologies used}
+
+\section{Server-Client interactions}
+\subsection{Buying the file}
+\subsection{Logging in}
+\subsection{Downloading the file}
+\subsection{Playing the file}
+\subsection{Logging out}
+
+\begin{lstlisting}[frame=single,
+               framesep=3mm,
+               xleftmargin=21pt,
+               tabsize=4]
+{     
+    "author": "Diogo Silva",
+    "message" : "Mensagem de teste!",
+    "latitude" : 48.654848,
+    "longitude" : -8.6454
+}
+\end{lstlisting}
+\printglossaries
+\addcontentsline{toc}{chapter}{Glossário}
+
+\bibliographystyle{plain}
+\bibliography{proj2}
+\addcontentsline{toc}{chapter}{Bibliografia}
+
+\listoffigures
+\addcontentsline{toc}{chapter}{Lista de figuras}
+%\listoftables
+%\addcontentsline{toc}{chapter}{Lista de tabelas}
+
+\end{document}
