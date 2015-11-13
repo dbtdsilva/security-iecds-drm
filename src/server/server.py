@@ -8,6 +8,7 @@ from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, SESSION_USERID, jsonify_error
+import custom_adapter
 
 BLOCK_SIZE = 32
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -212,6 +213,14 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
+        a = cherrypy
+        #from ssl import SSLSocket
+        #b = SSLSocket.getpeercert()
+        #c = dir(cherrypy.server.httpserver.socket)
+        #d = cherrypy.server.httpserver.socket.getpeername()
+        #d = dir(cherrypy.request.rfile.rfile._sock)
+        DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+        #f = cherrypy.request.rfile.rfile._sock.getpeername()
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
@@ -231,51 +240,13 @@ if __name__ == '__main__':
     cert = "certificates/Security_P3G1_SSL.crt"
     root = "certificates/Security_P3G1_Root.crt"
 
-
-    from OpenSSL.SSL import *
-    import OpenSSL
-    from cherrypy import wsgiserver
-    from cherrypy.wsgiserver import ssl_builtin, ssl_pyopenssl
-    def client_callback(conn, x509, error_num, error_depth, ret_code):
-        print('client_callback({}, {}, {}, {}, {})'.format(conn, x509, error_num, error_depth, ret_code))
-        return ret_code
-
-    context = Context(SSLv23_METHOD)
-    context.use_privatekey_file(key)
-    context.use_certificate_file(cert)
-    supported_ciphers = ('DHE-RSA-AES256-SHA',
-      'AES256-SHA',
-      'DHE-RSA-AES128-SHA',
-      'AES128-SHA',
-      'EDH-RSA-DES-CBC3-SHA',
-      'DHE-RSA-AES256-SHA',
-      'AES256-SHA',
-      'DHE-RSA-AES128-SHA',
-      'AES128-SHA',
-      'EDH-RSA-DES-CBC3-SHA',
-      'DES-CBC3-SHA',
-      'RC4-SHA'
-    )
-
-    context.set_cipher_list(':'.join(supported_ciphers))
-    context.set_options(OpenSSL.SSL.OP_NO_SSLv2 | OpenSSL.SSL.OP_NO_SSLv3)
-    context.load_client_ca(root)
-    context.load_verify_locations(root, "Security_P3G1_SSL_chain.pem")
-    context.set_verify(VERIFY_PEER, client_callback)
-
-    #cherrypy.server = wsgiserver.CherryPyWSGIServer(("0.0.0.0", int(443)), API)
-    cherrypy.server.ssl_module = 'pyopenssl'
-    #cherrypy.server.ssl_context = context
-    #cherrypy.server.ssl_certificate = cert
-    #cherrypy.server.ssl_private_key = key
-    #cherrypy.server.ssl_ca_certificate = root
-    cherrypy.server.thread_pool = 30
-    #cherrypy.server.ssl_adapter = pyOpenSSLAdapter(cert, key, root)
-    #cherrypy.server.ssl_adapter.context = ctx
+    cherrypy.server.ssl_module = 'custom-ssl'
+    cherrypy.server.ssl_certificate = cert
+    cherrypy.server.ssl_private_key = key
+    cherrypy.server.ssl_ca_certificate = root
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.socket_port = 8000
 
-    #cherrypy.tree.graft(app
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
     cherrypy.engine.start()
