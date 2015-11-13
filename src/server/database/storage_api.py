@@ -49,13 +49,19 @@ class Storage(object):
         self.session.add(dev)
         self.session.commit()
 
-    def create_player(self, playerkey):
-        player = Player(hash=Cipher.generatePlayerHash(playerkey), playerkey=playerkey)
+    def create_player(self, playerkey, pkey):
+        player = Player(hash=Cipher.generatePlayerHash(pkey), playerkey=playerkey)
         self.session.add(player)
         self.session.commit()
 
     def validate_player(self, hash_key):
         return self.session.query(Player).filter_by(hash=hash_key).all() != []
+
+    def get_player_key(self, hash_key):
+        query = self.session.query(Player).filter_by(hash=hash_key).all()
+        if len(query) != 1:
+            return None
+        return query[0].playerkey
 
     def buy_file(self, userid, fileid):
         uf = UserFile(userid=userid, fileid=fileid, boughtdate=time.strftime("%x %X"))
@@ -114,6 +120,10 @@ class Storage(object):
 
     def exists_device_key(self, devicekey):
         query = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        return len(query) != 0
+
+    def exists_player_key(self, playerkey):
+        query = self.session.query(Player).filter_by(playerkey=playerkey).all()
         return len(query) != 0
 
     def get_tile_details(self, title_id):

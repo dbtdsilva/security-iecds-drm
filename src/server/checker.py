@@ -4,6 +4,7 @@ from database.storage_api import storage
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
+SESSION_PLAYER = 'player_key'
 
 REQUEST_PARAMETER = 'parameters'
 
@@ -35,15 +36,20 @@ def logged():
         return (False, cherrypy.HTTPError(401, "Requires authentication"))
     return check
 
-def has_title(user, title):
-    pass
-
 def device_key():
     def check():
         devkey = cherrypy.session.get(SESSION_DEVICE)
         if devkey != None and storage.exists_device_key(devkey):
             return (True, None)
         return (False, cherrypy.HTTPError(400, "Device key wasn't provided"))
+    return check
+
+def is_player():
+    def check():
+        playerkey = cherrypy.session.get(SESSION_PLAYER)
+        if playerkey != None and storage.exists_player_key(playerkey):
+            return (True, None)
+        return (False, cherrypy.HTTPError(400, "Player certificate isn't valid, re-download the player"))
     return check
 
 def jsonify_error(status, message, traceback, version):
