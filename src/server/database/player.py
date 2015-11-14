@@ -15,6 +15,7 @@ class Player(Base):
     def __repr__(self):
         dic = self.to_dict()
         dic['playerkey'] = '__pkey__'
+        dic['hash'] = '__hash__'
         return json.dumps(dic, indent=2)
 
     def to_dict(self):

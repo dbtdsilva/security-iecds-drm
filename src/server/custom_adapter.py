@@ -34,9 +34,7 @@ class BuiltinSsl(BuiltinSSLAdapter):
             raise ImportError("You must install the ssl module to use HTTPS.")
         self.certificate = certificate
         self.private_key = private_key
-        # Sadly cherrypy implemented with None as default and doesn't allow to change it
-        # without overriding classes :/
-        self.certificate_chain = "certificates/Security_P3G1_Root.crt"
+        self.certificate_chain = certificate_chain
 
     def wrap(self, sock):
         """Wrap and return the given socket, plus WSGI environ entries."""

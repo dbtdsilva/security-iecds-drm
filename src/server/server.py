@@ -7,10 +7,14 @@ import json
 from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
-from checker import require, logged, device_key, SESSION_DEVICE, SESSION_USERID, jsonify_error
+from checker import require, logged, device_key, SESSION_DEVICE, \
+    SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player
+import OpenSSL
 import custom_adapter
+from cipher import Cipher
 
 BLOCK_SIZE = 32
+cipherLib = Cipher()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # -> API DETAILS
@@ -70,9 +74,19 @@ class UserLogin(object):
             username = cherrypy.session.get(SESSION_USERID)
             user_id = storage.get_user_id(username)
             storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
+        a = cherrypy
+        if hasattr(cherrypy.request.rfile, 'rfile'):
+            der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+            if der_player != None:
+                DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+                pkey = cipherLib.get_certificate_pubkey(DER)
+                player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
+                if player_key == None:
+                    raise cherrypy.HTTPError(400, "Public key on certificate expired, re-download the player.")
+                cherrypy.session[SESSION_PLAYER] = player_key
         cherrypy.session[SESSION_USERID] = storage.get_user_id(body['username'])
         cherrypy.response.status = 200
-        return {"detail": "Login successfully"}
+        return {"status": 200, "message": "Login successfully"}
         
 
 class UserLogout(object):
@@ -85,7 +99,7 @@ class UserLogout(object):
     def POST(self):
         cherrypy.response.status = 200
         cherrypy.session[SESSION_USERID] = None
-        return {"detail": "User logged out."}
+        return {"status": 200, "message": "User logged out."}
 
 class Title(object):
     exposed = True
@@ -98,7 +112,7 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @require(logged(), device_key())
+    @require(logged(), device_key(), is_player())
     def GET(self, title, seed_only = False):
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
@@ -153,7 +167,7 @@ class Title(object):
     @require(logged())
     def POST(self, title):
         storage.buy_file(cherrypy.session.get(SESSION_USERID), title)
-        return {"detail": "Title was successfully purchased"}
+        return {"status": 200, "message": "Title was successfully purchased"}
 
 class TitleValidate(object):
     exposed = True
@@ -162,7 +176,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @require(logged())
+    @require(logged(), is_player(), device_key())
     def POST(self, title):
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
@@ -213,14 +227,6 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
-        a = cherrypy
-        #from ssl import SSLSocket
-        #b = SSLSocket.getpeercert()
-        #c = dir(cherrypy.server.httpserver.socket)
-        #d = cherrypy.server.httpserver.socket.getpeername()
-        #d = dir(cherrypy.request.rfile.rfile._sock)
-        DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-        #f = cherrypy.request.rfile.rfile._sock.getpeername()
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
@@ -236,16 +242,20 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    key = "certificates/Security_P3G1_SSL_key.pem"
-    cert = "certificates/Security_P3G1_SSL.crt"
-    root = "certificates/Security_P3G1_Root.crt"
+    key = "certificates/ssl/Security_P3G1_SSL_key.pem"
+    cert = "certificates/ssl/Security_P3G1_SSL.crt"
+    root = "certificates/rootCA/Security_P3G1_Root.crt"
 
     cherrypy.server.ssl_module = 'custom-ssl'
     cherrypy.server.ssl_certificate = cert
     cherrypy.server.ssl_private_key = key
-    cherrypy.server.ssl_ca_certificate = root
+    #cherrypy.server.ssl_ca_certificate = root
+    cherrypy.server.ssl_certificate_chain = root
     cherrypy.server.socket_host = "0.0.0.0"
-    cherrypy.server.socket_port = 8000
+    if os.getenv('DEBUG_MODE') == 'dev':
+        cherrypy.server.socket_port = 4433
+    else:
+        cherrypy.server.socket_port = 443
 
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
