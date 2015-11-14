@@ -1,5 +1,5 @@
 \documentclass[11pt,a4paper]{report}
-\usepackage[portuguese]{babel}
+\usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{glossaries}
@@ -69,7 +69,7 @@ It aims to create an end to end secure digital rights management system to handl
 
 Our project is made of two main components: the player and the server.
 The server is in charge of controlling the user access to the protected files. 
-The players requests and plays the files from the server.
+The player requests and plays the files from the server.
 In order for the user to have access to the titles he/she wants, we also have a web application where the user can buy the titles to play later.
 To reach the goal of this project, we also needed a database that helped manage the user and file related information.
 
@@ -80,7 +80,7 @@ To reach the goal of this project, we also needed a database that helped manage 
 \end{figure}
 
 %%%% CAPITULO RELATIVO A APLICAÇÃO %%%%
-\chapter{Database}
+\chapter{System components}
 This chapter includes information about the database we used to support the server.
 We stored information about the users, files, players and devices that were later used.
 
@@ -93,7 +93,8 @@ For the database we thought of this layout:
 \label{schema}
 \end{figure}
 
-We need to save information about the Users that belong to the system and buy the files. The Files that are stored in the server and are then sent to the players. The Players that will interact with the server and play the files. And the Devices where the users play the files.
+We need to save information about the users that belong to the system and buy the files. 
+The files that are stored in the server and are then sent to the players. The players that will interact with the server and play the files. And the devices where the users play the files.
 
 \subsection{Database tables}
 Using the information presented, we derived the tables for the database, with all the attributes necessary for our implementation of the system.
@@ -134,7 +135,7 @@ The web page is where the user can buy the titles.
 \subsection{Technologies used}
 
 \section{Player}
-The Player allows the user to play the files he/she has bought previously. 
+The player allows the user to play the files he/she has bought previously. 
 \newline  In this implementation we used video files in order to prove that our implementation can handle big files.
 
 \subsection{Structure}
@@ -142,12 +143,12 @@ The player implementation we have is made of 3 main files.
 
 \begin{description}
   \item[Player file] This file contains the mainloop for the player's graphical interface. It is here where most of the requests to the server and main operations are made.
-  \item[Playback file] The playback file constains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that run a VLC player.
+  \item[Playback file] The playback file contains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that runs a VLC player instance..
   \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appeareance of the list.
 \end{description}
 
 \subsection{Implementation}
-After the user downloads the player application from the web page, he/she must log in. 
+After the user starts the player application, he/she must log in. 
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
@@ -178,26 +179,26 @@ The buffer is managed by the VLC player and is customizable (the user can give t
 All the requests done to the server are performed over the server's \emph{HTTP Rest} API that was presented earlier.
 
 \subsection{Technologies used}
-\begin{itemize}
-  \item{Tkinter} We built the graphical interface with Tkinter that is the Python graphic user interface framework.
-  \item{VLC Player} To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
-\end{itemize}
+\begin{description}
+  \item[Tkinter] We built the graphical interface with Tkinter that is the Python graphic user interface framework.
+\item[VLC Player] To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
+\end{description}
 
-\section{Key generation}
-\subsection{Player Key}
+\chapter{System keys}
+\section{Player Key}
 This is a key that must be generated after each code is evaluated by the company that wants to implement the system. 
-This evaluation sees if the player, and the respective code, meet the safety requirements. 
+This evaluation checks if the player, and the respective code, meet the security requirements. 
 Taking into consideration when it is generated and the process behind it, this key ensures that the player works accordingly to the security policies.
-\newline At this stage, the Player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
-In the player, the Player key is hardcoded.
+\newline At this stage, the player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
+In the player, the Player Key is hardcoded.
 \newline This key is present in the server and in the player.
 
-\subsection{Device Key}
-The Device key is a key that identifies the device where the player is being executed. This key should be the same even if the we have more than one player running in a device.
+\section{Device Key}
+The Device Key is a key that identifies the device where the player is being executed. This key should be the same even if the we have more than one player running in a device.
 In the Device Key generation, there were some dificulties in finding the best solution.
 \newline We wanted to use the processor serial number because we know that the number we get is already unique.
 However, this is an information that is hard to get. We came across the command \emph{cpuid} that is used in linux systems, but the Python wrapper available, \emph{Pycpuid}, lacks documentation and has incomplete features, making the task of getting the UUID hard. 
-\newline We then turned to the command \emph{dmidecode} that gives a list of device informations that could be used. 
+\newline We then turned to the command \emph{dmidecode} that gives us a list of device informations that could be used. 
 Yet again, we found an obstacle. To access the processor serial number, we needed to run the player with \emph{sudo} which goes against one of the principles of security ("No entity should have greater permissions in the system other than basic permissions it needs to perform its tasks").
 So, with some research we found that the information the \emph{dmidecode} command provides is stored in some system files, specifically, in the \emph{/sys/devices/virtual/dmi/id/} directory.
 We then browsed all the files present in the directory and came across the one file that didn't require \emph{sudo} to read. 
@@ -205,12 +206,12 @@ This file was the \emph{modalias}, that contained all the information gathered b
 \newline So, for the device key generation, we read the file and hashed the entire content with SHA256, using its digest.
 \newline In our solution, this key is generated when the user logs in and is sent to the server at this stage. So, the Device Key is present both in the player and in the server.
 
-\subsection{User Key}
+\section{User Key}
 The User Key is a key that identifies the user in the server. 
 In our implementation, this key is generated when the user registers in the web page and is then stored in the database along with the rest of the user information gathered.
-This key is only ever present in the server, and, as we will see, this will be part of the step that forces the player to communicate with the server each time a file will be played.
+This key is only ever present in the server, and, as we will see, this will be part of the step that forces the player to communicate with the server each time a file is played.
 
-\subsection{File Key}
+\section{File Key}
 This key identifies the file that the user bought and is independent of the device and player. When compared to the rest of the keys, this one requires a bit more work to derive.
 
 \begin{figure}[H]
@@ -223,7 +224,7 @@ As we can see from the previous diagram, the File Key is derived from the previo
 We used the AES algorithm for this.
 \newline In the server side, if it is the first file encryption that the server performs for that file and user, we have the following steps:
 \begin{enumerate}
-  \item If it is the first file encryption, the server generates a random start seed.
+  \item The server generates a random start seed.
   \item It then performs the encryption chain presented above to get the resulting File Key.
   \item The server then encrypts the file with the result.
   \item The encrypted file and the start seed are sent to the player so that it can decrypt the file.
@@ -245,11 +246,11 @@ This chain allows the player to derive the File Key, even if the device changes,
   \item The server sends the result back and the player will then encrypt it with the Player Key, resulting in the File Key.
 \end{enumerate}
 
-\section{Server-Client interactions}
-\subsection{Registering on the web page}
-\subsection{Buying the file on the web page}
-\subsection{Logging in on the player}
-To do anything in the player he/she, the user must first login, either in the WebPage, either in the player.
+\chapter{Server-Client interactions}
+\section{Registering on the web page}
+\section{Buying the file on the web page}
+\section{Logging in on the player}
+To be able to perform any action, the user must first login. This is mandatory in both web page and player.
 \newline For this, the server offers a login operation through the \emph{Rest API}
 
 \begin{figure}[H]
@@ -260,22 +261,22 @@ To do anything in the player he/she, the user must first login, either in the We
 
 As we can see from the diagram above:
 \begin{enumerate}
-  \item The Player starts by generating the Device Key for the device.
-  \item The Player requests the login from the server, sending it the Device Key and the username that the user inserted. 
+  \item The player starts by generating the Device Key for the device.
+  \item The player requests the login from the server, sending it the Device Key and the username that the user inserted. 
   \item The server then accesses the database to verify the username it received and associate the Device Key to the user.
   \item The server now generates the session key.
-  \item The server sends the session key it generated to the Player. The server also signals that the operation was completed successfully.
+  \item The server sends the session key it generated to the player, also signalling that the operation was completed successfully.
 \end{enumerate}
 
-\subsection{Downloading the file from the player}
+\section{Downloading the file from the player}
 
 
-\subsection{Playing the file on the player}
-\subsection{Logging out from the player}
+\section{Playing the file on the player}
+\section{Logging out from the player}
 
-\section{Conclusions}
-\subsection{Encountered problems}
-\subsection{Future work}
+\chapter{Conclusions}
+\section{Encountered problems}
+\section{Future work}
 
 \begin{lstlisting}[frame=single,
                framesep=3mm,
