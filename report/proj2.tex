@@ -188,14 +188,62 @@ All the requests done to the server are performed over the server's \emph{HTTP R
 This is a key that must be generated after each code is evaluated by the company that wants to implement the system. 
 This evaluation sees if the player, and the respective code, meet the safety requirements. 
 Taking into consideration when it is generated and the process behind it, this key ensures that the player works accordingly to the security policies.
-
 \newline At this stage, the Player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
 In the player, the Player key is hardcoded.
-
+\newline This key is present in the server and in the player.
 
 \subsection{Device Key}
+The Device key is a key that identifies the device where the player is being executed. This key should be the same even if the we have more than one player running in a device.
+In the Device Key generation, there were some dificulties in finding the best solution.
+\newline We wanted to use the processor serial number because we know that the number we get is already unique.
+However, this is an information that is hard to get. We came across the command \emph{cpuid} that is used in linux systems, but the Python wrapper available, \emph{Pycpuid}, lacks documentation and has incomplete features, making the task of getting the UUID hard. 
+\newline We then turned to the command \emph{dmidecode} that gives a list of device informations that could be used. 
+Yet again, we found an obstacle. To access the processor serial number, we needed to run the player with \emph{sudo} which goes against one of the principles of security ("No entity should have greater permissions in the system other than basic permissions it needs to perform its tasks").
+So, with some research we found that the information the \emph{dmidecode} command provides is stored in some system files, specifically, in the \emph{/sys/devices/virtual/dmi/id/} directory.
+We then browsed all the files present in the directory and came across the one file that didn't require \emph{sudo} to read. 
+This file was the \emph{modalias}, that contained all the information gathered by \emph{dmidecode} that didn't require superuser permissions.
+\newline So, for the device key generation, we read the file and hashed the entire content with SHA256, using its digest.
+\newline In our solution, this key is generated when the user logs in and is sent to the server at this stage. So, the Device Key is present both in the player and in the server.
+
 \subsection{User Key}
+The User Key is a key that identifies the user in the server. 
+In our implementation, this key is generated when the user registers in the web page and is then stored in the database along with the rest of the user information gathered.
+This key is only ever present in the server, and, as we will see, this will be part of the step that forces the player to communicate with the server each time a file will be played.
+
 \subsection{File Key}
+This key identifies the file that the user bought and is independent of the device and player. When compared to the rest of the keys, this one requires a bit more work to derive.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/fileKey.png}}
+\caption{Derivation process for the File Key}
+\label{fileKey}
+\end{figure}
+
+As we can see from the previous diagram, the File Key is derived from the previous keys presented by encrypting them in a chain of operations.
+We used the AES algorithm for this.
+\newline In the server side, if it is the first file encryption that the server performs for that file and user, we have the following steps:
+\begin{enumerate}
+  \item If it is the first file encryption, the server generates a random start seed.
+  \item It then performs the encryption chain presented above to get the resulting File Key.
+  \item The server then encrypts the file with the result.
+  \item The encrypted file and the start seed are sent to the player so that it can decrypt the file.
+  \item The server stores the File Key in the database.
+\end{enumerate}
+
+If the file has already been sent at least one time, the steps change a bit:
+\begin{enumerate}
+  \item The server gets the File Key stored in the database.
+  \item It then performs the chain of encryption in reverse, decrypting the File Key with the rest of the keys that it has access at that time.
+  \item The result will be the seed that was used to derive that File Key, and so, it is sent to the player.
+\end{enumerate}
+
+This chain allows the player to derive the File Key, even if the device changes, because the information that the server sends to the player is the starting seed.
+\newline In the player side, whatever the File Key is, the operation's chain is the same. However, the blue square present in the diagram above represents a step in which the player must include the server because it does not have access to the User Key.
+\begin{enumerate}
+  \item The player gets the seed from the server and encrypts it with the Device Key.
+  \item It then sends the result to the server and the server will encrypt it with the User Key, which the player does not have access to.
+  \item The server sends the result back and the player will then encrypt it with the Player Key, resulting in the File Key.
+\end{enumerate}
 
 \section{Server-Client interactions}
 \subsection{Registering on the web page}
