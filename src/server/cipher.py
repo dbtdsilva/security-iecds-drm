@@ -20,12 +20,18 @@ class Cipher:
     def generateUserKey(self):
         return Random.new().read(self.BLOCK_SIZE)
 
-    def get_certificate_pubkey(self, file_string, file_type=OpenSSL.crypto.FILETYPE_ASN1):
+    def convert_certificate_to_PEM(self, file_string, file_type=OpenSSL.crypto.FILETYPE_ASN1):
         if file_type != OpenSSL.crypto.FILETYPE_ASN1 and \
             file_type != OpenSSL.crypto.FILETYPE_PEM:
             return None
+        if file_type == OpenSSL.crypto.FILETYPE_PEM:
+            return file_string
         x509 = OpenSSL.crypto.load_certificate(file_type, file_string)
-        #certificate = OpenSSL.crypto.load_certificate(file_type, file_string)
-        #bio = openCrypto._new_mem_buf()
-        #openCryptolib.PEM_write_bio_PUBKEY(bio, certificate.get_pubkey()._pkey)
-        return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)#openCrypto._bio_to_string(bio)
+        return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)
+
+    def pkcs7_decode(self, data, block_size):
+        return data[:-bytearray(data)[-1]]
+
+    def pkcs7_encode(self, data, block_size):
+        char_to_pad = block_size - (len(data) % block_size)
+        return data + str(bytearray([ char_to_pad for c in range(char_to_pad) ]))

@@ -14,7 +14,7 @@ from PIL import ImageTk, Image
 LARGE_FONT = ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
 Root_Certificate = "resources/COPY_Security_P3G1_Root.crt"
-Local_Certificate = ("resources/COPY_Security_P3G1_Player_1_.crt", "resources/COPY_Security_P3G1_Player_1_key.pem")
+Local_Certificate = ("resources/COPY_Security_P3G1_Player_1.crt", "resources/COPY_Security_P3G1_Player_1_key.pem")
 
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias = "/sys/devices/virtual/dmi/id/modalias"
