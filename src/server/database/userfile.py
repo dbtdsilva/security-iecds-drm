@@ -12,6 +12,7 @@ class UserFile(Base):
     fileid = Column(Integer, ForeignKey('file.id'), primary_key=True)
     filekey = Column(LargeBinary(Cipher.BLOCK_SIZE))
     boughtdate = Column(DateTime, nullable=False)
+    played = Column(Integer, default=0, nullable=False)
 
     def __repr__(self):
         dic = self.to_dict()
@@ -24,6 +25,7 @@ class UserFile(Base):
         rv['userid'] = self.userid
         rv['fileid'] = self.fileid
         rv['boughtdate'] = str(self.boughtdate)
+        rv['played'] = self.played
         return rv
 
     @classmethod
@@ -31,4 +33,5 @@ class UserFile(Base):
         return cls(filekey=data['filekey'],
                    userid=data['userid'],
                    fileid=data['fileid'],
-                   boughtdate=data['boughdata'])
+                   boughtdate=data['boughdata'],
+                   played=data['played'])

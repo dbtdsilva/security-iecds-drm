@@ -14,6 +14,8 @@ class Playback:
         player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
     
         aes = AES.new(FileKey, AES.MODE_ECB)
+        FileKey = None
+        del FileKey
         encData = encFile.read(BLOCK_SIZE)
     
         while len(encData) != 0:

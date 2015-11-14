@@ -1,11 +1,13 @@
 import cherrypy
 import json
 from database.storage_api import storage
+import datetime
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
 SESSION_PLAYER = 'player_key'
-
+SESSION_PLAYER_SALT = 'p_salt'
+SESSION_PLAYER_INTEGRITY = 'p_integrity'
 REQUEST_PARAMETER = 'parameters'
 
 def check_parameters(*args, **kwargs):
@@ -44,6 +46,22 @@ def device_key():
         return (False, cherrypy.HTTPError(400, "Device key wasn't provided"))
     return check
 
+def player_salt():
+    def check():
+        psalt = cherrypy.session.get(SESSION_PLAYER_SALT)
+        if psalt != None:
+            return (True, None)
+        return (False, cherrypy.HTTPError(400, "You must generate a salt before you begin validation"))
+    return check
+
+def player_integrity():
+    def check():
+        integrity = cherrypy.session.get(SESSION_PLAYER_INTEGRITY)
+        if integrity != None and integrity == True:
+            return (True, None)
+        return (False, cherrypy.HTTPError(400, "Player must validate his integrity"))
+    return check
+
 def is_player():
     def check():
         playerkey = cherrypy.session.get(SESSION_PLAYER)
@@ -51,6 +69,20 @@ def is_player():
             return (True, None)
         return (False, cherrypy.HTTPError(400, "Player certificate isn't valid, re-download the player"))
     return check
+
+def check_policies_and_refresh(userid, fileid, devicekey, user_agent, remote_addr):
+    if not storage.policy_is_playable_on_device(fileid, userid, devicekey):
+        return (False, "Reached maximum number of devices for this file!")
+    if not storage.policy_is_valid_policy_region(fileid, remote_addr):
+        return (False, "You're not in a valid region to play this file")
+    if not storage.policy_is_valid_time(fileid, datetime.datetime.today().time()):
+        return (False, "Current time is restricted to play the file")
+    if not storage.policy_is_valid_policy_system(fileid, user_agent):
+        return (False, "Your OS isn't allowed to reproduce the file")
+    if not storage.policy_has_valid_plays(fileid, userid):
+        return (False, "You've reached the maximum number of times that you're allowed to play this file")
+
+    return (True, None)
 
 def jsonify_error(status, message, traceback, version):
     response = cherrypy.response
