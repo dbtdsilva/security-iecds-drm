@@ -1,6 +1,7 @@
 import cherrypy
 import json
 from database.storage_api import storage
+import datetime
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
@@ -51,6 +52,10 @@ def is_player():
             return (True, None)
         return (False, cherrypy.HTTPError(400, "Player certificate isn't valid, re-download the player"))
     return check
+
+def check_policies_and_refresh(userid, fileid, devicekey, user_agent, remote_addr):
+    now = datetime.datetime.today().time().isoformat()
+    return (True, None)
 
 def jsonify_error(status, message, traceback, version):
     response = cherrypy.response

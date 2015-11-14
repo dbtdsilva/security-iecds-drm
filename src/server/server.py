@@ -8,7 +8,7 @@ from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, \
-    SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player
+    SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh
 import OpenSSL
 import custom_adapter
 from cipher import Cipher
@@ -113,18 +113,23 @@ class Title(object):
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
     @require(logged(), device_key(), is_player())
-    def GET(self, title, seed_only = False):
+    def GET(self, title, platform, seed_only = False):
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
             raise cherrypy.HTTPError(400, "Current user didn't buy this title")
-
         file_key = storage.get_file_key(user_id, title)
         user_key = storage.get_user_details(user_id).userkey
         device_key = cherrypy.session.get(SESSION_DEVICE)
         player_key = '\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c'
 
+        # Beyond this point user have bought the title, lets check the policies
+        (valid, message) = check_policies_and_refresh(user_id, title, device_key,
+                                   cherrypy.request.headers['User-Agent'],
+                                   cherrypy.request.headers['Remote-Addr'])
+        if not valid:
+            raise cherrypy.HTTPError(400, message)
         if file_key == None:
             # first time that a file was requested, must generate seed
             seed = Random.new().read(BLOCK_SIZE)
@@ -227,6 +232,7 @@ class TitleAll(object):
     # Details: Gets all titles available to be bought
     @cherrypy.tools.json_out()
     def GET(self):
+        a = cherrypy
         return [ a.to_dict() for a in storage.get_file_list() ]
 
 class Root(object):
