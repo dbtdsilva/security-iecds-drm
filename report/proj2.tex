@@ -14,24 +14,14 @@
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
 \setlength\parindent{0pt} % Removes all indentation from paragraphs	 
 %% Acronimos
-\newglossaryentry{sqlite}
-{
-  name=SQLite,
-  description={é um sistema de gestão de base de dados}
-}
-\newglossaryentry{post}
-{
-  name=POST,
-  description={é uma mensagem que fornece dados a um determinado recurso}
-}
-\newglossaryentry{get}
-{
-  name=GET,
-  description={é uma mensagem que solicita dados de um recurso especificado}
-}
-\newacronym{aes}{AES}{Advanced Encryption Standard}
-\newacronym{sha}{SHA}{Secure Hash Algorithm}
-\makeglossaries
+%\newglossaryentry{sqlite}
+%{
+%  name=SQLite,
+%  description={é um sistema de gestão de base de dados}
+%}
+%\newacronym{aes}{AES}{Advanced Encryption Standard}
+%\newacronym{sha}{SHA}{Secure Hash Algorithm}
+%\makeglossaries
 %% Fim da introdução do Acronimos
 
 \let\olditemize\itemize
@@ -120,19 +110,41 @@ For the database we used:
 
 \section{Server}
 The server is meant to interact with the database and control the access of the users and players to the files.
+This interaction is done over a \emph{Rest} interface.
 
 \subsection{Structure}
-The server is composed of 
-\subsection{API Implementation}
-\subsection{Player validation}
-\subsection{Technologies used}
+The server is composed of several files:
 
+\begin{description}
+  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because of the SSL integration.
+  \item[Custom adapter file] This is the file that overrides the SSL class so that the client is verified using its certificates.
+  \item[Cipher file] This file holds auxiliary cryptographic functions that are used by the server.
+  \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file.
+\end{description}
+
+\subsection{Implementation}
+The server communicates with the player through \emph{SSL}. We did it like this so that we could focus on other parts of the system instead of implementing it from scratch.
+For this, we needed to create certificates for both server and players.
+
+\subsection{Technologies used}
+\begin{description}
+  \item[CherryPy] Object oriented web application framework for Python. We chose this because it is built for rapid development of web applications and offers the basic configurations, that is what were looking for.
+  \item[psycopg2 package] This is a Python-PostgreSQL database adapter that manages context, diagnosis erros and more.
+  \item[OpenSSL] Toolkit that implements SSL and TLS protocols with cryptographic support. We used this so that we could create a certain level of abstraction on how the communications were made, and like that, we could focus in the rest of the system.
+\end{description}
 
 \section{Web page}
 The web page is where the user can buy the titles.
-\subsection{Structure}
-\subsection{Implementation}
-\subsection{Technologies used}
+It requires the user to log in before proceeding with the titles purchase.
+The same API that the player uses is used here.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=500pt]{images/webpage.png}}
+\caption{Web page interface}
+\label{webpage}
+\end{figure}
+
+It is a simple interface that has a button to buy a specific title.
 
 \section{Player}
 The player allows the user to play the files he/she has bought previously. 
@@ -145,6 +157,9 @@ The player implementation we have is made of 3 main files.
   \item[Player file] This file contains the mainloop for the player's graphical interface. It is here where most of the requests to the server and main operations are made.
   \item[Playback file] The playback file contains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that runs a VLC player instance..
   \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appeareance of the list.
+  \item[videos folder] This folder is where the player stores the encrypted videos. Inside, there is another folder for each user that uses the player named after his/her username. This method was chosen so that it is easy for each player to go and grab the files that belong to him/her if he/she chooses to move the files and use another player or device.
+  \item[Python requests package] This package enabled us to build the requests and responses to perform the communication.
+  \item[PyCrypto package] This is the package that helps handle encryptions and decryptions.
 \end{description}
 
 \subsection{Implementation}
@@ -181,7 +196,9 @@ All the requests done to the server are performed over the server's \emph{HTTP R
 \subsection{Technologies used}
 \begin{description}
   \item[Tkinter] We built the graphical interface with Tkinter that is the Python graphic user interface framework.
-\item[VLC Player] To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
+  \item[VLC Player] To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
+  \item[Python requests package] This package enabled us to communicate with the server producing requests and receiving responses.
+  \item[PyCrypto package] This is the package that helps handle encryptions and decryptions.
 \end{description}
 
 \chapter{System keys}
@@ -247,14 +264,13 @@ This chain allows the player to derive the File Key, even if the device changes,
 \end{enumerate}
 
 \chapter{Server-Client interactions}
-\section{Registering on the web page}
-\section{Buying the file on the web page}
-\section{Logging in on the player}
+\section{Checking player integrity}
+\section{Logging in}
 To be able to perform any action, the user must first login. This is mandatory in both web page and player.
 \newline For this, the server offers a login operation through the \emph{Rest API}
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\centerline{\includegraphics[width=200pt]{images/loginDiagram.png}}
 \caption{Login interaction (player - server)}
 \label{player}
 \end{figure}
@@ -262,42 +278,82 @@ To be able to perform any action, the user must first login. This is mandatory i
 As we can see from the diagram above:
 \begin{enumerate}
   \item The player starts by generating the Device Key for the device.
-  \item The player requests the login from the server, sending it the Device Key and the username that the user inserted. 
+  \item The player requests the login from the server, sending it the generated Device Key and the username that the user inserted. 
   \item The server then accesses the database to verify the username it received and associate the Device Key to the user.
-  \item The server now generates the session key.
-  \item The server sends the session key it generated to the player, also signalling that the operation was completed successfully.
+  \item The server sends the response that signals the opetaion was completed successfully.
 \end{enumerate}
 
+The communication between player and server is done using sessions. Before the player starts communicating with the server, a session is created with the \emph{requests} package for Python.
+From now on, all communications will be performed over this session.
+
+\section{Purchasing the file on the web page}
+This operation requires the user to be logged in already and is only available in the web page.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/buyTitle.png}}
+\caption{Purchase interaction (player - server)}
+\label{player}
+\end{figure}
+
+As we can see, the operation isn't complex and the only thing done here is the association of the purchased file with the user.
+This association translates in a new entry in the UserFile table in the database.
+
 \section{Downloading the file from the player}
+In this interaction, we have two distinct situations:
+\begin{enumerate}
+  \item Full file download
+  \item Cryptographic information download
+\end{enumerate}
 
+\subsection{Full file download}
+The full file download situation means that this is the first time the player downs the file the user selected.
+And so, the server must send back the full encrypted file along with the cryptographic information that will allow the player to decrypt said file.
 
-\section{Playing the file on the player}
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/fullFileDown.png}}
+\caption{Full file download (player - server)}
+\label{player}
+\end{figure}
+
+(*) In this operation, there can be yet another two situations:
+
+\begin{enumerate}
+  \item The server has no File Key stored in the database, which forces the server to generate a random start seed to derive the File Key from. It then sends the seed with the encrypted file.
+  \item The server already has a File Key stored, and it must derive the starting cryptographic information to send to the player, along with the file.
+\end{enumerate}
+
+\subsection{Cryptographic information download}
+This situation only occurs if the player has already downloaded the file and has it stored on the disk.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/seedOnlyDown.png}}
+\caption{Seed only download (player - server)}
+\label{player}
+\end{figure}
+
 \section{Logging out from the player}
+Logging out is a simple operation that only implies ending the session in the server.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/seedOnlyDown.png}}
+\caption{Seed only download (player - server)}
+\label{player}
+\end{figure}
+
 
 \chapter{Conclusions}
 \section{Encountered problems}
 \section{Future work}
 
-\begin{lstlisting}[frame=single,
-               framesep=3mm,
-               xleftmargin=21pt,
-               tabsize=4]
-{     
-    "author": "Diogo Silva",
-    "message" : "Mensagem de teste!",
-    "latitude" : 48.654848,
-    "longitude" : -8.6454
-}
-\end{lstlisting}
-\printglossaries
-\addcontentsline{toc}{chapter}{Glossário}
+%\printglossaries
+%\addcontentsline{toc}{chapter}{Glossário}
 
-\bibliographystyle{plain}
-\bibliography{proj2}
-\addcontentsline{toc}{chapter}{Bibliografia}
+%\bibliographystyle{plain}
+%\bibliography{proj2}
+%\addcontentsline{toc}{chapter}{Bibliografia}
 
-\listoffigures
-\addcontentsline{toc}{chapter}{Lista de figuras}
+%\listoffigures
+%\addcontentsline{toc}{chapter}{Lista de figuras}
 %\listoftables
 %\addcontentsline{toc}{chapter}{Lista de tabelas}
 
