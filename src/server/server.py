@@ -113,7 +113,7 @@ class Title(object):
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
     @require(logged(), device_key(), is_player())
-    def GET(self, title, platform, seed_only = False):
+    def GET(self, title, seed_only = False):
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
         user_id = cherrypy.session.get(SESSION_USERID)
@@ -133,7 +133,7 @@ class Title(object):
         if file_key == None:
             # first time that a file was requested, must generate seed
             seed = Random.new().read(BLOCK_SIZE)
-            seed_dev_key = AES.new(device_key, AES.MODE).encrypt(seed)
+            seed_dev_key = AES.new(device_key, AES.MODE_ECB).encrypt(seed)
             seed_dev_user_key = AES.new(user_key, AES.MODE_ECB).encrypt(seed_dev_key)
             # Player key is hardcoded for now, but we want to share it using the certificate
             file_key = AES.new(player_key, AES.MODE_ECB).encrypt(seed_dev_user_key)
@@ -150,8 +150,8 @@ class Title(object):
         #print "Seed: ", binascii.hexlify(seed)
         if seed_only:
             return seed
-            
-        f = open("media/" + storage.get_tile_details(title).path, 'rb')
+        print storage.get_tile_details(title).path
+        f = open("media/" + storage.get_tile_details(title).path, 'r')
         aes = AES.new(file_key, AES.MODE_ECB)
 
         dataEncrypted = seed

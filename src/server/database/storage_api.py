@@ -152,6 +152,7 @@ class Storage(object):
         if query.all()[0].filekey != None:
             return query.all()[0].filekey
         query.update({UserFile.filekey: file_key})
+        self.session.commit()
         return file_key
 
     def get_file_query(self, fileid):
@@ -165,12 +166,14 @@ class Storage(object):
             raise Exception("Max plays must be a positive number.")
         query = self.get_file_query(fileid)
         query.update({File.max_plays: max_plays})
+        self.session.commit()
 
     def policy_limit_file_max_devices(self, fileid, maxdevices):
         if maxdevices < 0:
             raise Exception("Max devices must be a positive number.")
         query = self.get_file_query(fileid)
         query.update({File.max_devices: maxdevices})
+        self.session.commit()
 
     def policy_limit_file_timespan(self, fileid, start=None, end=None):
         if start == None and end == None:
@@ -185,6 +188,7 @@ class Storage(object):
             raise Exception("Start time is bigger than end time")
         query = self.get_file_query(fileid)
         query.update({File.start_time_blocking: start.isoformat(), File.end_time_blocking: end.isoformat()})
+        self.session.commit()
 
     def policy_block_system(self, fileid, system):
         if len(self.session.query(FileOSBlocked).filter_by(fileid=fileid).filter_by(system=system).all()) > 0:
@@ -209,7 +213,8 @@ class Storage(object):
         if len(uf.all()) != 1:
             raise Exception("User didn't bought this file")
         plays = uf.all()[0].played + 1
-        uf.update({UserFile.plays: plays})
+        uf.update({UserFile.played: plays})
+        self.session.commit()
 
         return file.max_plays is None or plays <= file.max_plays
 
@@ -217,7 +222,7 @@ class Storage(object):
         q = self.session.query(Device).filter_by(devicekey=devicekey).all()
         if len(q) != 1:
             raise Exception("Device key doesn't exist.")
-        deviceid = q.id
+        deviceid = q[0].id
 
         q = self.session.query(UserDeviceFilePolicy).filter_by(fileid=fileid).\
             filter_by(userid=userid).all()
@@ -234,11 +239,10 @@ class Storage(object):
 
         return file.max_devices is None or len(q) <= file.max_devices
 
-
     def policy_is_valid_time(self, fileid, time):
         file = self.get_file_query(fileid)[0]
-        start = file.start
-        end = file.end
+        start = file.start_time_blocking
+        end = file.end_time_blocking
         if start == None and end == None:
             return True
         if start == None:
@@ -300,13 +304,13 @@ if __name__ == "__main__":
     storage.buy_file(2, 6)
     storage.buy_file(2, 8)
 
-    storage.policy_limit_file_plays(1, 3)
+    storage.policy_limit_file_plays(2, 3)
     storage.policy_block_region(2, 'PT')
-    storage.policy_block_system(4, 'Windows')
-    storage.policy_limit_file_max_devices(4, 2)
+    storage.policy_block_system(3, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
+    storage.policy_limit_file_max_devices(7, 0)
     # Block from 18 to the end of the day
-    storage.policy_limit_file_timespan(4, start=datetime.time(18, 0, 0))
+    storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
     # Block from 10 to 19
-    storage.policy_limit_file_timespan(2, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+    storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
 
     
