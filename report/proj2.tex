@@ -104,7 +104,7 @@ Using the information presented, we derived the tables for the database, with al
 \label{tables}
 \end{figure}
 
-Each "main" entity (User, Device, File and Player) will have an id that identifies the entity in the database.
+Each "main" entities (User, Device, File and Player) will have an id that identifies the entity in the database.
 We then have the required key for each one of them as well.
 \newline In the User table we have added the username field that identifies the each user.
 \newline The File table also has some extra fields that provide information to the user about the file he is playing or buying, such as, the title of the file, the author, the category and the date of the title's production.
@@ -134,17 +134,100 @@ The web page is where the user can buy the titles.
 \subsection{Technologies used}
 
 \section{Player}
-The Player allows the user to play the files he/she has bought previously.
+The Player allows the user to play the files he/she has bought previously. 
+\newline  In this implementation we used video files in order to prove that our implementation can handle big files.
+
 \subsection{Structure}
+The player implementation we have is made of 3 main files. 
+
+\begin{description}
+  \item[Player file] This file contains the mainloop for the player's graphical interface. It is here where most of the requests to the server and main operations are made.
+  \item[Playback file] The playback file constains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that run a VLC player.
+  \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appeareance of the list.
+\end{description}
+
 \subsection{Implementation}
+After the user downloads the player application from the web page, he/she must log in. 
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\caption{Login page for the player}
+\label{player}
+\end{figure}
+
+At this stage, the only information required to perform the login is the username. Further along the road, the login will also be possible using the Portuguese Citizen Card.
+\newline After the user logs in and it is confirmed by the server, a list of titles is displayed so that the user can choose which one he/she wants to reproduce.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\caption{Page that lists the files for the user}
+\label{player}
+\end{figure}
+
+When the user selects the file that he/she wants to play, a thread running the VLC player is started. The thread reads blocks of the encrypted file, decrypts it and sends it to the VLC buffer.
+\newline
+The buffer is managed by the VLC player and is customizable (the user can give the buffer the size it wants by changing the value on the VLC settings).
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\caption{Video playing in the VLC thread}
+\label{player}
+\end{figure}
+
+
+All the requests done to the server are performed over the server's \emph{HTTP Rest} API that was presented earlier.
+
 \subsection{Technologies used}
+\begin{itemize}
+  \item{Tkinter} We built the graphical interface with Tkinter that is the Python graphic user interface framework.
+  \item{VLC Player} To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
+\end{itemize}
+
+\section{Key generation}
+\subsection{Player Key}
+This is a key that must be generated after each code is evaluated by the company that wants to implement the system. 
+This evaluation sees if the player, and the respective code, meet the safety requirements. 
+Taking into consideration when it is generated and the process behind it, this key ensures that the player works accordingly to the security policies.
+
+\newline At this stage, the Player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
+In the player, the Player key is hardcoded.
+
+
+\subsection{Device Key}
+\subsection{User Key}
+\subsection{File Key}
 
 \section{Server-Client interactions}
-\subsection{Buying the file}
-\subsection{Logging in}
-\subsection{Downloading the file}
-\subsection{Playing the file}
-\subsection{Logging out}
+\subsection{Registering on the web page}
+\subsection{Buying the file on the web page}
+\subsection{Logging in on the player}
+To do anything in the player he/she, the user must first login, either in the WebPage, either in the player.
+\newline For this, the server offers a login operation through the \emph{Rest API}
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\caption{Login interaction (player - server)}
+\label{player}
+\end{figure}
+
+As we can see from the diagram above:
+\begin{enumerate}
+  \item The Player starts by generating the Device Key for the device.
+  \item The Player requests the login from the server, sending it the Device Key and the username that the user inserted. 
+  \item The server then accesses the database to verify the username it received and associate the Device Key to the user.
+  \item The server now generates the session key.
+  \item The server sends the session key it generated to the Player. The server also signals that the operation was completed successfully.
+\end{enumerate}
+
+\subsection{Downloading the file from the player}
+
+
+\subsection{Playing the file on the player}
+\subsection{Logging out from the player}
+
+\section{Conclusions}
+\subsection{Encountered problems}
+\subsection{Future work}
 
 \begin{lstlisting}[frame=single,
                framesep=3mm,
