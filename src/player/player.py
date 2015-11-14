@@ -199,7 +199,9 @@ class List(tk.Frame):
         print "Device key: ", binascii.hexlify(self.DeviceKey)
         print "File key: ", binascii.hexlify(FileKey)
         print "Seed: ", binascii.hexlify(cryptoHeader)
-        playback = Playback(videofile, FileKey)
+        Playback(videofile, FileKey)
+        FileKey = None
+        del FileKey
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 

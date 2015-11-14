@@ -128,7 +128,7 @@ class Title(object):
         if file_key == None:
             # first time that a file was requested, must generate seed
             seed = Random.new().read(BLOCK_SIZE)
-            seed_dev_key = AES.new(device_key, AES.MODE_ECB).encrypt(seed)
+            seed_dev_key = AES.new(device_key, AES.MODE).encrypt(seed)
             seed_dev_user_key = AES.new(user_key, AES.MODE_ECB).encrypt(seed_dev_key)
             # Player key is hardcoded for now, but we want to share it using the certificate
             file_key = AES.new(player_key, AES.MODE_ECB).encrypt(seed_dev_user_key)
@@ -138,24 +138,26 @@ class Title(object):
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
-        print "Player key", binascii.hexlify(player_key)
-        print "User key: ", binascii.hexlify(user_key)
-        print "Device key: ", binascii.hexlify(device_key)
-        print "File Key: ", binascii.hexlify(file_key)
-        print "Seed: ", binascii.hexlify(seed)
+        #print "Player key", binascii.hexlify(player_key)
+        #print "User key: ", binascii.hexlify(user_key)
+        #print "Device key: ", binascii.hexlify(device_key)
+        #print "File Key: ", binascii.hexlify(file_key)
+        #print "Seed: ", binascii.hexlify(seed)
         if seed_only:
             return seed
             
-        f = open("media/" + storage.get_tile_details(title).path, 'r')
+        f = open("media/" + storage.get_tile_details(title).path, 'rb')
         aes = AES.new(file_key, AES.MODE_ECB)
 
         dataEncrypted = seed
         data = f.read(BLOCK_SIZE)
+        print "starting"
         while data:
             if len(data) < BLOCK_SIZE:
                 data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
             dataEncrypted += aes.encrypt(data)
             data = f.read(BLOCK_SIZE)
+        print "encrypted"
         return dataEncrypted
 
     # POST  /api/title/<pk>                             

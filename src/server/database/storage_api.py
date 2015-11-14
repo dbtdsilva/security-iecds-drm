@@ -12,6 +12,10 @@ from user import User
 from userfile import UserFile
 from userdevice import UserDevice
 from userplayer import UserPlayer
+# Policy tables
+from file_os_blocked import FileOSBlocked
+from file_regions_blocked import FileRegionsBlocked
+from userdevicefile_policy import UserDeviceFilePolicy
 
 # SQLAlchemy dependencies
 from sqlalchemy import create_engine, Column, \
@@ -175,7 +179,7 @@ if __name__ == "__main__":
     storage.create_file('John Smith', 'TW News', 'Sci-fi', '2015-04-07', 'drop.avi')
     storage.create_file('Aiken Madison', 'TW News', 'Horror', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Robert Hit', 'TW News', 'Romance', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Alice TRE', 'TW News', 'Comedy', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Alice TRE', 'TW News', 'Comedy', '2015-04-07', 'edge.mkv')
     storage.buy_file(1, 1)
     storage.buy_file(1, 2)
     storage.buy_file(1, 4)
@@ -184,4 +188,5 @@ if __name__ == "__main__":
     storage.buy_file(2, 3)
     storage.buy_file(2, 7)
     storage.buy_file(2, 6)
+    storage.buy_file(2, 8)
     
