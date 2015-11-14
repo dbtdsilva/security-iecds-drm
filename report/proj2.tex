@@ -110,7 +110,7 @@ For the database we used:
 
 \section{Server}
 The server is meant to interact with the database and control the access of the users and players to the files.
-This interaction is done over a \emph{Rest} interface.
+This interaction is done over a \emph{HTTP Rest} interface.
 
 \subsection{Structure}
 The server is composed of several files:
@@ -264,7 +264,13 @@ This chain allows the player to derive the File Key, even if the device changes,
 \end{enumerate}
 
 \chapter{Server-Client interactions}
+
 \section{Checking player integrity}
+Every time a player executes, an operation to check its integrity is performed. This falls into the authorization headers, however, we deal with it right off the start.
+We get the files that belong to the player implementation and create a hash of each of the files. We then concatenate the hashes of each file and once more hash the result with a random generated salt and we get the final result.
+
+The server keeps a copy of this result, and, when the player is executed, it will perform the same process. The result will be compared with the information stored in the server, and if they are equal, the player's integrity will be confirmed, otherwise, we assume someone has altered the code and the player is rejected.
+
 \section{Logging in}
 To be able to perform any action, the user must first login. This is mandatory in both web page and player.
 \newline For this, the server offers a login operation through the \emph{Rest API}
