@@ -8,8 +8,8 @@ from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, \
-    SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh
-import OpenSSL
+    SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh, \
+    SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity
 import custom_adapter
 from cipher import Cipher
 
@@ -45,6 +45,7 @@ class API(object):
     def __init__(self):
         self.user = User()
         self.title = Title()
+        self.valplayer = ValidatePlayer()
 
 class User(object):
     def __init__(self):
@@ -74,15 +75,14 @@ class UserLogin(object):
             username = cherrypy.session.get(SESSION_USERID)
             user_id = storage.get_user_id(username)
             storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
-        a = cherrypy
-        if hasattr(cherrypy.request.rfile, 'rfile'):
+        if cherrypy.session.get(SESSION_PLAYER) is None and hasattr(cherrypy.request.rfile, 'rfile'):
             der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
             if der_player != None:
                 DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
                 pkey = cipherLib.convert_certificate_to_PEM(DER)
                 player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
                 if player_key == None:
-                    raise cherrypy.HTTPError(400, "Public key on certificate expired, re-download the player.")
+                    raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
                 cherrypy.session[SESSION_PLAYER] = player_key
         cherrypy.session[SESSION_USERID] = storage.get_user_id(body['username'])
         cherrypy.response.status = 200
@@ -112,7 +112,7 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @require(logged(), device_key(), is_player())
+    @require(logged(), device_key(), is_player(), player_integrity())
     def GET(self, title, seed_only = False):
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
@@ -181,7 +181,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @require(logged(), is_player(), device_key())
+    @require(logged(), is_player(), device_key(), player_integrity())
     def POST(self, title):
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
@@ -234,6 +234,39 @@ class TitleAll(object):
     def GET(self):
         a = cherrypy
         return [ a.to_dict() for a in storage.get_file_list() ]
+
+class ValidatePlayer(object):
+    exposed = True
+
+    def GET(self):
+        if cherrypy.session.get(SESSION_PLAYER) is None and hasattr(cherrypy.request.rfile, 'rfile'):
+            der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+            if der_player != None:
+                DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
+                pkey = cipherLib.convert_certificate_to_PEM(DER)
+                player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
+                if player_key == None:
+                    raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
+                cherrypy.session[SESSION_PLAYER] = player_key
+        if cherrypy.session.get(SESSION_PLAYER) is None:
+            raise cherrypy.HTTPError(400, "Player certificate must be provided.")
+
+        salt = Random.new().read(32)
+        cherrypy.session[SESSION_PLAYER_SALT] = salt
+        return salt
+
+    @cherrypy.tools.json_out()
+    @require(player_salt(), is_player())
+    def POST(self, hash):
+        salt = cherrypy.session.get(SESSION_PLAYER_SALT)
+        cherrypy.session[SESSION_PLAYER_SALT] = None
+        player_filelist = storage.get_player(cherrypy.session[SESSION_PLAYER]).filelist_integrity.split(",")
+        if cipherLib.getPlayerIntegrityHash(player_filelist, salt) == hash:
+            cherrypy.session[SESSION_PLAYER_INTEGRITY] = True
+            cherrypy.response.status = 200
+            return {"status": 200, "message": "Player integrity validated."}
+        else:
+            raise cherrypy.HTTPError(400, "Player integrity isn't valid.")
 
 class Root(object):
     pass

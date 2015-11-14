@@ -56,8 +56,9 @@ class Storage(object):
         self.session.add(dev)
         self.session.commit()
 
-    def create_player(self, playerkey, pkey):
-        player = Player(hash=Cipher.generatePlayerHash(pkey), playerkey=playerkey)
+    def create_player(self, playerkey, pkey, filelist):
+        filelist_str = ",".join(filelist)
+        player = Player(hash=Cipher.generatePlayerHash(pkey), playerkey=playerkey, filelist_integrity=filelist_str)
         self.session.add(player)
         self.session.commit()
 
@@ -69,6 +70,12 @@ class Storage(object):
         if len(query) != 1:
             return None
         return query[0].playerkey
+
+    def get_player(self, playerkey):
+        query = self.session.query(Player).filter_by(playerkey=playerkey).all()
+        if len(query) != 1:
+            return None
+        return query[0]
 
     def buy_file(self, userid, fileid):
         uf = UserFile(userid=userid, fileid=fileid, boughtdate=datetime.datetime.today().isoformat())
@@ -283,9 +290,29 @@ if __name__ == "__main__":
     storage.create_user('taniaalves')
     storage.create_user('diogosilva')
     storage.create_player('\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c',
-                           open('../certificates/players/Security_P3G1_Player_1.crt', 'r').read())
+                           open('../certificates/players/Security_P3G1_Player_1.crt', 'r').read(),
+                           ["../player/resources/images/icon.bmp",
+                            "../player/resources/images/icon.png",
+                            "../player/resources/images/logo.bmp",
+                            "../player/resources/COPY_Security_P3G1_Player_1.crt",
+                            "../player/resources/COPY_Security_P3G1_Player_1_key.pem",
+                            "../player/resources/COPY_Security_P3G1_Root.crt",
+                            "../player/__init__.py",
+                            "../player/mylist.py",
+                            "../player/playback.py",
+                            "../player/player.py"])
     storage.create_player('_\xb5\x8b\x85\xf12\xa3\x99\xa4YB\xeb0P\xda\xfc%\x1fG\xc3Y?\x8c\x84D\x12~\xaaw\x0f\xb6\xde',
-                           open('../certificates/players/Security_P3G1_Player_2.crt', 'r').read())
+                           open('../certificates/players/Security_P3G1_Player_2.crt', 'r').read(),
+                           ["../player/resources/images/icon.bmp",
+                            "../player/resources/images/icon.png",
+                            "../player/resources/images/logo.bmp",
+                            "../player/resources/COPY_Security_P3G1_Player_1.crt",
+                            "../player/resources/COPY_Security_P3G1_Player_1_key.pem",
+                            "../player/resources/COPY_Security_P3G1_Root.crt",
+                            "../player/__init__.py",
+                            "../player/mylist.py",
+                            "../player/playback.py",
+                            "../player/player.py"])
     storage.create_file('John Lennon', 'TW News', 'Documentary', '2015-04-07', 'news_interview.wmv')
     storage.create_file('Adamaris Doe', 'Warcraft', 'Fantasy', '2015-04-07', 'drop.avi')
     storage.create_file('Richard Damon', 'TW News', 'Action', '2015-04-07', 'drop.avi')

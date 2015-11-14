@@ -1,6 +1,6 @@
 from binascii import hexlify, unhexlify
 #import bcrypt
-from hashlib import sha512
+from hashlib import sha512, pbkdf2_hmac
 from Crypto import Random
 from OpenSSL import crypto as openCrypto
 import OpenSSL
@@ -28,6 +28,12 @@ class Cipher:
             return file_string
         x509 = OpenSSL.crypto.load_certificate(file_type, file_string)
         return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)
+
+    def getPlayerIntegrityHash(self, player_filelist, salt):
+        hash = ""
+        for file in player_filelist:
+            hash += pbkdf2_hmac('sha512', open(file, 'r').read(), salt, 1000)
+        return hexlify(pbkdf2_hmac('sha512', hash, salt, 1000))
 
     def pkcs7_decode(self, data, block_size):
         return data[:-bytearray(data)[-1]]

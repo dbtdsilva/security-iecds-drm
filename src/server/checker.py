@@ -6,7 +6,8 @@ import datetime
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
 SESSION_PLAYER = 'player_key'
-
+SESSION_PLAYER_SALT = 'p_salt'
+SESSION_PLAYER_INTEGRITY = 'p_integrity'
 REQUEST_PARAMETER = 'parameters'
 
 def check_parameters(*args, **kwargs):
@@ -43,6 +44,22 @@ def device_key():
         if devkey != None and storage.exists_device_key(devkey):
             return (True, None)
         return (False, cherrypy.HTTPError(400, "Device key wasn't provided"))
+    return check
+
+def player_salt():
+    def check():
+        psalt = cherrypy.session.get(SESSION_PLAYER_SALT)
+        if psalt != None:
+            return (True, None)
+        return (False, cherrypy.HTTPError(400, "You must generate a salt before you begin validation"))
+    return check
+
+def player_integrity():
+    def check():
+        integrity = cherrypy.session.get(SESSION_PLAYER_INTEGRITY)
+        if integrity != None and integrity == True:
+            return (True, None)
+        return (False, cherrypy.HTTPError(400, "Player must validate his integrity"))
     return check
 
 def is_player():
