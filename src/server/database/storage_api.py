@@ -24,6 +24,8 @@ from sqlalchemy_utils import database_exists, drop_database, create_database
 from sqlalchemy.orm import sessionmaker, aliased
 
 import datetime
+from geoip import geolite2
+import httpagentparser
 
 log = logging.getLogger('storage')
 
@@ -200,6 +202,67 @@ class Storage(object):
         self.session.add(fos)
         self.session.commit()
 
+    def policy_has_valid_plays(self, fileid, userid):
+        file = self.get_file_query(fileid)[0]
+
+        uf = self.session.query(UserFile).filter_by(fileid=fileid).filter_by(userid=userid)
+        if len(uf.all()) != 1:
+            raise Exception("User didn't bought this file")
+        plays = uf.all()[0].played + 1
+        uf.update({UserFile.plays: plays})
+
+        return file.max_plays is None or plays <= file.max_plays
+
+    def policy_is_playable_on_device(self, fileid, userid, devicekey):
+        q = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        if len(q) != 1:
+            raise Exception("Device key doesn't exist.")
+        deviceid = q.id
+
+        q = self.session.query(UserDeviceFilePolicy).filter_by(fileid=fileid).\
+            filter_by(userid=userid).all()
+        file = self.get_file_query(fileid)[0]
+
+        if len(self.session.query(UserDeviceFilePolicy).filter_by(fileid=fileid).filter_by(userid=userid).\
+                       filter_by(deviceid=deviceid).all()) == 0:
+            if file.max_devices is not None and len(q) >= file.max_devices:
+                return False
+            udfp = UserDeviceFilePolicy(fileid=fileid, userid=userid, deviceid=deviceid)
+            self.session.add(udfp)
+            self.session.commit()
+            return True
+
+        return file.max_devices is None or len(q) <= file.max_devices
+
+
+    def policy_is_valid_time(self, fileid, time):
+        file = self.get_file_query(fileid)[0]
+        start = file.start
+        end = file.end
+        if start == None and end == None:
+            return True
+        if start == None:
+            return time >= end
+        if end == None:
+            return time < start
+        return time < start or time >= end
+
+    def policy_is_valid_policy_system(self, fileid, user_agent):
+        self.get_file_query(fileid)
+        parser = httpagentparser.detect(user_agent)
+        if 'os' not in parser or 'name' not in parser['os']:
+            return True
+        q = self.session.query(FileOSBlocked).filter_by(fileid=fileid).filter_by(system=parser['os']['name']).all()
+        return len(q) == 0
+
+    def policy_is_valid_policy_region(self, fileid, remote_addr):
+        self.get_file_query(fileid)
+        match = geolite2.lookup(remote_addr)
+        if match is None:
+            return True
+        q = self.session.query(FileRegionsBlocked).filter_by(fileid=fileid).filter_by(region_code=match.country).all()
+        return len(q) == 0
+
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
 DATABASE_URI = 'postgresql://postgres:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'
@@ -239,7 +302,7 @@ if __name__ == "__main__":
 
     storage.policy_limit_file_plays(1, 3)
     storage.policy_block_region(2, 'PT')
-    storage.policy_block_system(4, 'linux')
+    storage.policy_block_system(4, 'Windows')
     storage.policy_limit_file_max_devices(4, 2)
     # Block from 18 to the end of the day
     storage.policy_limit_file_timespan(4, start=datetime.time(18, 0, 0))

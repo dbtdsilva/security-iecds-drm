@@ -12,6 +12,7 @@ class FileRegionsBlocked(Base):
     fileid = Column(Integer, ForeignKey('file.id'), nullable=False)
     region_code = Column(String, nullable=False)
 
+
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)
 

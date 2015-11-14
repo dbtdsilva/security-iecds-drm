@@ -54,7 +54,17 @@ def is_player():
     return check
 
 def check_policies_and_refresh(userid, fileid, devicekey, user_agent, remote_addr):
-    now = datetime.datetime.today().time().isoformat()
+    if not storage.policy_is_playable_on_device(fileid, userid, devicekey):
+        return (False, "Reached maximum number of devices for this file!")
+    if not storage.policy_is_valid_policy_region(fileid, remote_addr):
+        return (False, "You're not in a valid region to play this file")
+    if not storage.policy_is_valid_time(fileid, datetime.datetime.today().time().isoformat()):
+        return (False, "Current time is restricted to play the file")
+    if not storage.policy_is_valid_policy_system(fileid, user_agent):
+        return (False, "Your OS isn't allowed to reproduce the file")
+    if not storage.policy_has_valid_plays(fileid, userid):
+        return (False, "You've reached the maximum number of times that you're allowed to play this file")
+
     return (True, None)
 
 def jsonify_error(status, message, traceback, version):

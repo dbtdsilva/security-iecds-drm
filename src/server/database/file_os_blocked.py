@@ -10,7 +10,9 @@ class FileOSBlocked(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     fileid = Column(Integer, ForeignKey('file.id'), nullable=False)
-    system = Column(String, nullable=False) # linux*, darwin (this one is OS X), win*, others..
+    system = Column(String, nullable=False)
+    # Possible types:
+    # Linux, Windows, iOS, Macintosh, ChromeOS, NokiaS40, PlayStation
 
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)
