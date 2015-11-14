@@ -153,10 +153,8 @@ class Title(object):
         data = f.read(BLOCK_SIZE)
         while data:
             if len(data) < BLOCK_SIZE:
-                # TODO with PCKS#7
-                dataEncrypted += data
-            else:
-                dataEncrypted += aes.encrypt(data)
+                data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
+            dataEncrypted += aes.encrypt(data)
             data = f.read(BLOCK_SIZE)
         return dataEncrypted
 

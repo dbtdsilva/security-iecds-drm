@@ -28,3 +28,10 @@ class Cipher:
             return file_string
         x509 = OpenSSL.crypto.load_certificate(file_type, file_string)
         return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)
+
+    def pkcs7_decode(self, data, block_size):
+        return data[:-bytearray(data)[-1]]
+
+    def pkcs7_encode(self, data, block_size):
+        char_to_pad = block_size - (len(data) % block_size)
+        return data + str(bytearray([ char_to_pad for c in range(char_to_pad) ]))
