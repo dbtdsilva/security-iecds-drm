@@ -152,6 +152,53 @@ class Storage(object):
         query.update({UserFile.filekey: file_key})
         return file_key
 
+    def get_file_query(self, fileid):
+        query = self.session.query(File).filter_by(id=fileid)
+        if len(query.all()) != 1:
+            raise Exception("File doesn't exist")
+        return query
+
+    def policy_limit_file_plays(self, fileid, max_plays):
+        if max_plays < 0:
+            raise Exception("Max plays must be a positive number.")
+        query = self.get_file_query(fileid)
+        query.update({File.max_plays: max_plays})
+
+    def policy_limit_file_max_devices(self, fileid, maxdevices):
+        if maxdevices < 0:
+            raise Exception("Max devices must be a positive number.")
+        query = self.get_file_query(fileid)
+        query.update({File.max_devices: maxdevices})
+
+    def policy_limit_file_timespan(self, fileid, start=None, end=None):
+        if start == None and end == None:
+            raise Exception("No time limits were provided")
+        if start == None:
+            start = datetime.time(0, 0, 0)
+        if end == None:
+            end = datetime.time(23, 59, 59)
+        if type(start) != datetime.time or type(end) != datetime.time:
+            raise Exception("Arguments types accepted for start and end are None or datetime.time")
+        if start > end:
+            raise Exception("Start time is bigger than end time")
+        query = self.get_file_query(fileid)
+        query.update({File.start_time_blocking: start.isoformat(), File.end_time_blocking: end.isoformat()})
+
+    def policy_block_system(self, fileid, system):
+        if len(self.session.query(FileOSBlocked).filter_by(fileid=fileid).filter_by(system=system).all()) > 0:
+            return
+        self.get_file_query(fileid)
+        fos = FileOSBlocked(fileid=fileid, system=system)
+        self.session.add(fos)
+        self.session.commit()
+
+    def policy_block_region(self, fileid, region):
+        if len(self.session.query(FileRegionsBlocked).filter_by(fileid=fileid).filter_by(region_code=region).all()) > 0:
+            return
+        self.get_file_query(fileid)
+        fos = FileRegionsBlocked(fileid=fileid, region_code=region)
+        self.session.add(fos)
+        self.session.commit()
 
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
@@ -189,4 +236,14 @@ if __name__ == "__main__":
     storage.buy_file(2, 7)
     storage.buy_file(2, 6)
     storage.buy_file(2, 8)
+
+    storage.policy_limit_file_plays(1, 3)
+    storage.policy_block_region(2, 'PT')
+    storage.policy_block_system(4, 'linux')
+    storage.policy_limit_file_max_devices(4, 2)
+    # Block from 18 to the end of the day
+    storage.policy_limit_file_timespan(4, start=datetime.time(18, 0, 0))
+    # Block from 10 to 19
+    storage.policy_limit_file_timespan(2, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+
     

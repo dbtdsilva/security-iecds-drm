@@ -25,5 +25,5 @@ class UserDeviceFilePolicy(Base):
     @classmethod
     def from_dict(cls, data):
         return cls(userid=data['userid'],
-                   deviceid=data['fileid'],
+                   fileid=data['fileid'],
                    deviceid=data['deviceid'])
