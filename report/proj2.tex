@@ -124,10 +124,10 @@ This interaction is done over a \emph{HTTP Rest} interface.
 The server is composed of several files:
 
 \begin{description}
-  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because of the SSL integration.
-  \item[Custom adapter file] This is the file that overrides the SSL class so that the client is verified using its certificates.
+  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because server is using port 443 to host (which requires previligies).
+  \item[Custom adapter file] This is the file that overrides the BuiltinSSL class developed by CherryPy, default adapter doesn't support certificate peer verification and it is useful to check if player is valid and associate it with a determined key.
   \item[Cipher file] This file holds auxiliary cryptographic functions that are used by the server.
-  \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file.
+  \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file, or check if there's a device key reported when player logged in, etc.
 \end{description}
 
 \subsection{Implementation}
@@ -193,7 +193,7 @@ When the user selects the file that he/she wants to play, a thread running the V
 The buffer is managed by the VLC player and is customizable (the user can give the buffer the size it wants by changing the value on the VLC settings).
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=200pt]{images/playerLogin.png}}
+\centerline{\includegraphics[width=200pt]{images/playerLogin.jpg}}
 \caption{Video playing in the VLC thread}
 \label{player}
 \end{figure}
