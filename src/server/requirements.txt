@@ -1,5 +1,10 @@
-CherryPy
-SQLAlchemy
-psycopg2
-requests
-pycrypto
+CherryPy==3.8.0
+SQLAlchemy==1.0.8
+psycopg2==2.5.4
+requests==2.5.3
+pycrypto==2.6.1
+sqlalchemy_utils==0.31.2
+python-geoip-geolite2==2015.303
+python-geoip==1.2
+httpagentparser==1.7.8
+pyOpenSSL==0.15.1

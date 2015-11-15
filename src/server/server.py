@@ -42,38 +42,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Details: Sends the current cipher result key to the server to process
 # with user key
 
+# GET /api/valplayer
+# Details: Returns a salt value to be used to validate player
+
+# POST /api/valplayer/<hash>
+# Details: Check if hash on argument is valid
+
 class API(object):
     def __init__(self):
         self.user = User()
         self.title = Title()
         self.valplayer = ValidatePlayer()
-        self.stream = Stream()
-
-class Stream(object):
-    def __init__(self):
-        self.validate = StreamValidate()
-    exposed = True
-
-    def GET(self):
-        print "begin"
-        yield "asdasd"
-        print "what"
-        time.sleep(3)
-        yield "wwwww"
-        print "end"
-        time.sleep(3)
-        yield "wwwww"
-        print "end"
-    GET._cp_config = {'response.stream': True}
-class StreamValidate(object):
-    exposed = True
-    def POST(self):
-        try:
-            content_length = cherrypy.request.headers['Content-Length']
-            raw_body = cherrypy.request.body.read(int(content_length))
-            body = json.loads(raw_body)
-        except Exception:
-            raise cherrypy.HTTPError(400, "Wrong format")
 
 class User(object):
     def __init__(self):
@@ -305,16 +284,7 @@ class ValidatePlayer(object):
             raise cherrypy.HTTPError(400, "Player integrity isn't valid.")
 
 class Root(object):
-    @cherrypy.expose()
-    def thing(self):
-        self._cp_config = {'response.stream': True}
-        print "begin"
-        yield "asdasd"
-        print "what"
-        time.sleep(3)
-        yield "wwwww"
-        print "end"
-    #thing._cp_config = {'response.stream': True}
+    pass
 
 if __name__ == '__main__':
     RESTopts = {
