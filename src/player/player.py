@@ -69,7 +69,8 @@ class MainWindow(tk.Tk):
         hashfiles = binascii.hexlify(hashlib.pbkdf2_hmac('sha512', hash, salt, 1000))
         payload = {"hash": hashfiles}
         req = session.post("https://localhost/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
-        tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
+        if req.status_code != 200:
+            tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
 
     def show_frame(self, cont):
         frame = self.frames[cont]
