@@ -3,12 +3,7 @@
 	<div class="row">
 		<div class="col-md-4" ng-repeat="title in titles">
 			<div class="row">
-				<div class="col-md-5">
-					<!--<img class="img-responsive" height="209" width="140" alt="The 33 (2015) Poster" title="The 33 (2015)"
-						 src="http://ia.media-imdb.com/images/M/MV5BMTkyNDY3NDc5NF5BMl5BanBnXkFtZTgwMzI1NDM1NjE@._V1_UY209_CR0,0,140,209_AL_.jpg"
-						 itemprop="image">-->
-				</div>
-				<div class="col-md-7">
+				<div class="text-center well" style="margin-right:10px">
 					<h4>{{ title.title }}</h4><br/>
 					<span>Author: {{ title.author }}</span><br/>
 					<span>Category: {{ title.category }}</span><br/>
@@ -23,7 +18,6 @@
 					</div>
 				</div>
 			</div>
-			<br/><br/>
 		</div>
 	</div>
 </div>
