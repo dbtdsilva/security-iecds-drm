@@ -344,14 +344,14 @@ if __name__ == "__main__":
                             "../player/playback.py",
                             "../player/player.py"])
     storage.create_file('John Lennon', 'US Blocked', 'Documentary', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Adamaris Doe', 'Linux Blocked', 'Fantasy', '2015-04-07', 'drop.avi')
-    storage.create_file('Richard Damon', 'iOS and Macintosh Blocked', 'Action', '2015-04-07', 'drop.avi')
+    storage.create_file('Adamaris Doe', 'Linux Blocked', 'Fantasy', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Richard Damon', 'iOS and Macintosh Blocked', 'Action', '2015-04-07', 'sample.mkv')
     storage.create_file('Robert Patrick', '3 Plays Only', 'Action', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('John Smith', '0 Plays Only', 'Sci-fi', '2015-04-07', 'drop.avi')
+    storage.create_file('John Smith', '0 Plays Only', 'Sci-fi', '2015-04-07', 'sample.mkv')
     storage.create_file('Aiken Madison', '0 Devices Allowed', 'Horror', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Robert Hit', '1 Device Allowed', 'Romance', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Arnold Schwarzenegger', 'Blocked from 13:00 till 23:59', 'Comedy', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Alice Furlong', 'Blocked From 0:00 till 13:00', 'Comedy', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Robert Hit', '1 Device Allowed', 'Romance', '2015-04-07', 'sample.mkv')
+    storage.create_file('Arnold Schwarzenegger', 'Blocked from 13:00 till 23:59', 'Comedy', '2015-04-07', 'sample.mkv')
+    storage.create_file('Alice Furlong', 'Blocked From 0:00 till 13:00', 'Comedy', '2015-04-07', 'sample.mkv')
 
     storage.policy_block_region(1, 'US')
     storage.policy_block_system(2, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
