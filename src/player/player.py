@@ -46,8 +46,7 @@ class MainWindow(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        self.minsize(420, 420)
-        self.minsize(420, 420)
+        self.minsize(420, 380)
         self.resizable(width=tk.FALSE, height=tk.FALSE)
         self["bg"] = 'White'
 
@@ -62,14 +61,14 @@ class MainWindow(tk.Tk):
         loginFrame.l = self.frames[List]
         self.show_frame(Login)
 
-        req = session.get("https://localhost:4433/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get("https://localhost/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
         salt = req.content
         hash = ""
         for file in player_filelist:
             hash += hashlib.pbkdf2_hmac('sha512', open(file, 'r').read(), salt, 1000)
         hashfiles = binascii.hexlify(hashlib.pbkdf2_hmac('sha512', hash, salt, 1000))
         payload = {"hash": hashfiles}
-        req = session.post("https://localhost:4433/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post("https://localhost/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
         tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
 
     def show_frame(self, cont):
@@ -84,7 +83,7 @@ class Login(tk.Frame):
     def checkCredentials(self, username, password, DeviceKey):
 
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
-        req = session.post('https://localhost:4433/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post('https://localhost/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
 
         if req.status_code == 200:
             return (True, "Logged in")
@@ -175,52 +174,41 @@ class List(tk.Frame):
 
     # ----- Change content for server interaction  -----
     def startPlayback(self, titleid):
-        cryptoHeader = ''
-        FileKey = ''
-
         pos = self.titleids[titleid]
 
         if titleid == None:
             tkMessageBox.showwarning("Oops!", "No file was selected. Please select the file you want to play.")
             return
-        
-        # Check if file exists
-        # -- If the file exists, if it doesn't, download it
-        videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
-        print pos['id']
-        if not os.path.exists(videofile):
-            handle = open(videofile, "w")
-            req = session.get('https://localhost:4433/api/title/' + str(pos["id"]), verify=Root_Certificate, cert=Local_Certificate)
-            print "REQUEST: ", req
-            if req.status_code != 200:
-                tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
-                return
-            cryptoHeader = req.content[:32]
-            handle.write(req.content[32:])
-            handle.close()
-        else:
-            payload = {"title": str(pos["id"]), "seed_only": '1'}
-            req = session.get('https://localhost:4433/api/title', params=payload, verify=Root_Certificate, cert=Local_Certificate)
-            if req.status_code != 200:
-                tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
-                return
-            cryptoHeader = req.content
 
-        print cryptoHeader
+        payload = {"title": str(pos["id"]), "seed_only": '1'}
+        req = session.get('https://localhost/api/title', params=payload, stream=True, verify=Root_Certificate, cert=Local_Certificate)
+        if req.status_code != 200:
+            tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
+            return
+        cryptoHeader = req.raw.read(48)
+        seed = cryptoHeader[:32]
+        iv = cryptoHeader[32:]
+        req.raw.close()
 
-        # -- Read file
-        # -- Create file key
-        seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
+        seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(seed)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
-        req = session.post('https://localhost:4433/api/title/validate/' + str(pos["id"]), json=payload, verify=Root_Certificate, cert=Local_Certificate)
+        print payload
+        req = session.post('https://localhost/api/title/validate/' + str(pos["id"]), json=payload,
+                            verify=Root_Certificate, cert=Local_Certificate)
         seed_dev_user_key = req.content
         print "Player key: ", binascii.hexlify(PlayerKey)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
         print "Device key: ", binascii.hexlify(self.DeviceKey)
         print "File key: ", binascii.hexlify(FileKey)
-        print "Seed: ", binascii.hexlify(cryptoHeader)
-        Playback(videofile, FileKey)
+        print "Seed: ", binascii.hexlify(seed)
+
+        videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
+        stream = None
+        if not os.path.exists(videofile):
+            stream = session.get('https://localhost/api/title/' + str(pos["id"]), stream=True,
+                                 verify=Root_Certificate, cert=Local_Certificate)
+        Playback(videofile, FileKey, iv, stream)
         FileKey = None
         del FileKey
 
@@ -228,12 +216,12 @@ class List(tk.Frame):
 
     def logout(self, controller):
         self.username = ""
-        req = session.post('https://localhost:4433/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post('https://localhost/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
         self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        req = session.get('https://localhost:4433/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get('https://localhost/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
 
         self.titleids = json.loads(req.content)
         

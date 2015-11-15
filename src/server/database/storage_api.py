@@ -78,7 +78,7 @@ class Storage(object):
         return query[0]
 
     def buy_file(self, userid, fileid):
-        uf = UserFile(userid=userid, fileid=fileid, boughtdate=datetime.datetime.today().isoformat())
+        uf = UserFile(userid=userid, fileid=fileid, iv=Cipher.generateIV(), boughtdate=datetime.datetime.today().isoformat())
         self.session.add(uf)
         self.session.commit()
 
@@ -131,6 +131,12 @@ class Storage(object):
         if len(query) != 1:
             return None
         return query[0].filekey
+
+    def get_file_iv(self, user_id, title_id):
+        query = self.session.query(UserFile).filter_by(userid=user_id).filter_by(fileid=title_id).all()
+        if len(query) != 1:
+            return None
+        return query[0].iv
 
     def exists_device_key(self, devicekey):
         query = self.session.query(Device).filter_by(devicekey=devicekey).all()
@@ -331,13 +337,13 @@ if __name__ == "__main__":
     storage.buy_file(2, 6)
     storage.buy_file(2, 8)
 
-    storage.policy_limit_file_plays(2, 3)
+    #storage.policy_limit_file_plays(2, 3)
     storage.policy_block_region(2, 'PT')
     storage.policy_block_system(3, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
     storage.policy_limit_file_max_devices(7, 0)
     # Block from 18 to the end of the day
-    storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
+    #storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
     # Block from 10 to 19
-    storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+    #storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
 
     

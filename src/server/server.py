@@ -12,6 +12,7 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity
 import custom_adapter
 from cipher import Cipher
+import time
 
 BLOCK_SIZE = 32
 cipherLib = Cipher()
@@ -40,6 +41,12 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # POST /api/title/validate/<pk> key=current_result  # Requires login
 # Details: Sends the current cipher result key to the server to process
 # with user key
+
+# GET /api/valplayer
+# Details: Returns a salt value to be used to validate player
+
+# POST /api/valplayer/<hash>
+# Details: Check if hash on argument is valid
 
 class API(object):
     def __init__(self):
@@ -114,6 +121,7 @@ class Title(object):
     # before)
     @require(logged(), device_key(), is_player(), player_integrity())
     def GET(self, title, seed_only = False):
+        cherrypy.response.headers['Content-Type'] = 'application/json'
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
         user_id = cherrypy.session.get(SESSION_USERID)
@@ -143,27 +151,34 @@ class Title(object):
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
+        iv = storage.get_file_iv(user_id, title)
         #print "Player key", binascii.hexlify(player_key)
         #print "User key: ", binascii.hexlify(user_key)
         #print "Device key: ", binascii.hexlify(device_key)
         #print "File Key: ", binascii.hexlify(file_key)
         #print "Seed: ", binascii.hexlify(seed)
-        if seed_only:
-            return seed
-        print storage.get_tile_details(title).path
-        f = open("media/" + storage.get_tile_details(title).path, 'r')
-        aes = AES.new(file_key, AES.MODE_ECB)
+        def content():
+            if seed_only:
+                yield seed + iv
+                return
+            print storage.get_tile_details(title).path
+            f = open("media/" + storage.get_tile_details(title).path, 'r')
+            aes = AES.new(file_key, AES.MODE_CBC, iv)
 
-        dataEncrypted = seed
-        data = f.read(BLOCK_SIZE)
-        print "starting"
-        while data:
-            if len(data) < BLOCK_SIZE:
-                data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
-            dataEncrypted += aes.encrypt(data)
-            data = f.read(BLOCK_SIZE)
-        print "encrypted"
-        return dataEncrypted
+            yield seed + iv
+
+            channel_fragmentation = BLOCK_SIZE * 1500
+            data = f.read(channel_fragmentation)
+            while data:
+                if len(data) < channel_fragmentation:
+                    data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
+                    dataEncrypted = aes.encrypt(data)
+                    yield dataEncrypted
+                dataEncrypted = aes.encrypt(data)
+                yield dataEncrypted
+                data = f.read(channel_fragmentation)
+        return content()
+    GET._cp_config = {'response.stream': True}
 
     # POST  /api/title/<pk>                             
     # Requires login
@@ -288,6 +303,7 @@ if __name__ == '__main__':
     cherrypy.server.ssl_module = 'custom-ssl'
     cherrypy.server.ssl_certificate = cert
     cherrypy.server.ssl_private_key = key
+    cherrypy.server.thread_pool = 100
     #cherrypy.server.ssl_ca_certificate = root
     cherrypy.server.ssl_certificate_chain = root
     cherrypy.server.socket_host = "0.0.0.0"

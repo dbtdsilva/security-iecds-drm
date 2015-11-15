@@ -1,10 +1,8 @@
 from binascii import hexlify, unhexlify
-#import bcrypt
+from Crypto.Cipher import AES
 from hashlib import sha512, pbkdf2_hmac
 from Crypto import Random
-from OpenSSL import crypto as openCrypto
 import OpenSSL
-from OpenSSL._util import lib as openCryptolib
 
 class Cipher:
     BLOCK_SIZE = 32
@@ -16,6 +14,9 @@ class Cipher:
         h = sha512()
         h.update(pkey)
         return h.digest()
+
+    def generateIV(self):
+        return Random.new().read(AES.block_size)
 
     def generateUserKey(self):
         return Random.new().read(self.BLOCK_SIZE)
