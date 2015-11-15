@@ -331,13 +331,13 @@ if __name__ == "__main__":
     storage.buy_file(2, 6)
     storage.buy_file(2, 8)
 
-    storage.policy_limit_file_plays(2, 3)
+    #storage.policy_limit_file_plays(2, 3)
     storage.policy_block_region(2, 'PT')
     storage.policy_block_system(3, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
     storage.policy_limit_file_max_devices(7, 0)
     # Block from 18 to the end of the day
-    storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
+    #storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
     # Block from 10 to 19
-    storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+    #storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
 
     

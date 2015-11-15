@@ -12,6 +12,7 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity
 import custom_adapter
 from cipher import Cipher
+import time
 
 BLOCK_SIZE = 32
 cipherLib = Cipher()
@@ -46,6 +47,33 @@ class API(object):
         self.user = User()
         self.title = Title()
         self.valplayer = ValidatePlayer()
+        self.stream = Stream()
+
+class Stream(object):
+    def __init__(self):
+        self.validate = StreamValidate()
+    exposed = True
+
+    def GET(self):
+        print "begin"
+        yield "asdasd"
+        print "what"
+        time.sleep(3)
+        yield "wwwww"
+        print "end"
+        time.sleep(3)
+        yield "wwwww"
+        print "end"
+    GET._cp_config = {'response.stream': True}
+class StreamValidate(object):
+    exposed = True
+    def POST(self):
+        try:
+            content_length = cherrypy.request.headers['Content-Length']
+            raw_body = cherrypy.request.body.read(int(content_length))
+            body = json.loads(raw_body)
+        except Exception:
+            raise cherrypy.HTTPError(400, "Wrong format")
 
 class User(object):
     def __init__(self):
@@ -114,6 +142,7 @@ class Title(object):
     # before)
     @require(logged(), device_key(), is_player(), player_integrity())
     def GET(self, title, seed_only = False):
+        cherrypy.response.headers['Content-Type'] = 'application/json'
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
             seed_only = True
         user_id = cherrypy.session.get(SESSION_USERID)
@@ -148,22 +177,30 @@ class Title(object):
         #print "Device key: ", binascii.hexlify(device_key)
         #print "File Key: ", binascii.hexlify(file_key)
         #print "Seed: ", binascii.hexlify(seed)
-        if seed_only:
-            return seed
-        print storage.get_tile_details(title).path
-        f = open("media/" + storage.get_tile_details(title).path, 'r')
-        aes = AES.new(file_key, AES.MODE_ECB)
+        def content():
+            if seed_only:
+                yield seed
+                return
 
-        dataEncrypted = seed
-        data = f.read(BLOCK_SIZE)
-        print "starting"
-        while data:
-            if len(data) < BLOCK_SIZE:
-                data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
-            dataEncrypted += aes.encrypt(data)
-            data = f.read(BLOCK_SIZE)
-        print "encrypted"
-        return dataEncrypted
+            print storage.get_tile_details(title).path
+            f = open("media/" + storage.get_tile_details(title).path, 'r')
+            aes = AES.new(file_key, AES.MODE_ECB)
+
+            yield seed
+
+            channel_fragmentation = BLOCK_SIZE * 1500
+            data = f.read(channel_fragmentation)
+            print "starting"
+            while data:
+                if len(data) < channel_fragmentation:
+                    data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
+                    dataEncrypted = aes.encrypt(data)
+                    yield dataEncrypted
+                dataEncrypted = aes.encrypt(data)
+                yield dataEncrypted
+                data = f.read(channel_fragmentation)
+        return content()
+    GET._cp_config = {'response.stream': True}
 
     # POST  /api/title/<pk>                             
     # Requires login
@@ -269,7 +306,16 @@ class ValidatePlayer(object):
             raise cherrypy.HTTPError(400, "Player integrity isn't valid.")
 
 class Root(object):
-    pass
+    @cherrypy.expose()
+    def thing(self):
+        self._cp_config = {'response.stream': True}
+        print "begin"
+        yield "asdasd"
+        print "what"
+        time.sleep(3)
+        yield "wwwww"
+        print "end"
+    #thing._cp_config = {'response.stream': True}
 
 if __name__ == '__main__':
     RESTopts = {
@@ -288,6 +334,7 @@ if __name__ == '__main__':
     cherrypy.server.ssl_module = 'custom-ssl'
     cherrypy.server.ssl_certificate = cert
     cherrypy.server.ssl_private_key = key
+    cherrypy.server.thread_pool = 100
     #cherrypy.server.ssl_ca_certificate = root
     cherrypy.server.ssl_certificate_chain = root
     cherrypy.server.socket_host = "0.0.0.0"
