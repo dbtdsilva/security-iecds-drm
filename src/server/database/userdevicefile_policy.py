@@ -10,7 +10,7 @@ class UserDeviceFilePolicy(Base):
 
     userid = Column(Integer, ForeignKey('user.id'), primary_key=True)
     fileid = Column(Integer, ForeignKey('file.id'), primary_key=True)
-    deviceid = Column(Integer, ForeignKey('device.id'))
+    deviceid = Column(Integer, ForeignKey('device.id'), primary_key=True)
 
     def __repr__(self):
         return json.dumps(self.to_dict(), indent=2)

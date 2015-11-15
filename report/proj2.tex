@@ -374,6 +374,8 @@ A verificação dos requisitos é feita exactamente por esta ordem.
 The full file download situation means that this is the first time the player downs the file the user selected.
 And so, the server must send back the full encrypted file along with the cryptographic information that will allow the player to decrypt the file.
 
+Para cifrar/decifrar a chave foi usado CBC sendo que é gerado um IV que faz parte dos cabeçalhos criptográficos, apesar de usarmos stream para fazer download do ficheiro (sendo possível reproduzir ficheiros grandes sem ter o problema do tempo que demora para cifrar) usamos CBC para cifrar/decifrar porque a stream do CherryPy corre sobre TCP, ou seja, garante que todos os dados chegam ao cliente, se fosse feita em UDP provavelmente teria-se optado pela CTR porque não existe dependência para o bloco anterior ao decifrar e temos acesso aleatório ao ficheiro. 
+
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/fullFileDown.png}}
 \caption{Full file download (player - server)}
@@ -452,8 +454,10 @@ Durante a instalação vai ser pedido várias interacções do utilizador, tal c
 Foi gerada um clone de uma imagem VM, no entanto a imagem tem 3.7GB (não compactados), razão pela qual decidiu-se não fazer upload da mesma, de qualquer das formas podemos fornecer se houver problemas com a instalação.
 
 \chapter{Conclusions}
-\section{Encountered problems}
-\section{Future work}
+
+Encontrou-se alguns problemas ao longo do trabalho, tal como a geração da Device Key em que se procurou bastante para encontrar um registo que fosse único para um determinado device, ou a validação do player usando certificados porque CherryPy não suporta validação do certificado do cliente no seu adaptador, sendo que foi preciso fazer herdar a classe em questão e reescrever a função para permite a validação.\\
+
+Apesar dos problemas que foram aparecendo, foram também sido resolvidos, chegando a um bom trabalho no final. 
 
 %\printglossaries
 %\addcontentsline{toc}{chapter}{Glossário}
