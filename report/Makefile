@@ -12,7 +12,8 @@ $(docname).bbl: 	$(docname).bib
 $(docname).gls: 
 	makeglossaries $(docname)
 
-$(docname).pdf: 	$(docname).aux $(docname).bbl $(docname).gls 
+$(docname).pdf: 	$(docname).aux $(docname).bbl 
+		#$(docname).gls 
 	pdflatex $(docname).tex
 	pdflatex $(docname).tex
 

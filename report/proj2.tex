@@ -48,7 +48,7 @@
 \end{titlepage}
 \maketitle
 \tableofcontents
-
+\nocite{*}
 \chapter*{Context}
 \addcontentsline{toc}{chapter}{Context}
 This project was done for Security, for the 2015/2016 lective year.
@@ -119,7 +119,7 @@ For the database we used:
 \section{Server}
 The server is meant to interact with the database and control the access of the users and players to the files.
 This interaction is done over a \emph{HTTP Rest} interface.
-
+ 
 \subsection{Structure}
 The server is composed of several files:
 
@@ -362,8 +362,8 @@ Logging out is a simple operation that only implies ending the session in the se
 %\printglossaries
 %\addcontentsline{toc}{chapter}{Glossário}
 
-%\bibliographystyle{plain}
-%\bibliography{proj2}
+\bibliographystyle{plain}
+\bibliography{proj2}
 %\addcontentsline{toc}{chapter}{Bibliografia}
 
 %\listoffigures
