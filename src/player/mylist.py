@@ -22,7 +22,7 @@ class MyList(tk.Frame):
         self.frame = tk.Frame(self.canvas, background="#ffffff")
         self.vsb = tk.Scrollbar(root, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
-        self.vsb.grid(row = 3, column = 7, rowspan = 10, sticky=N+S+W)
+        self.vsb.grid(row = 3, column =7, rowspan = 10, sticky=N+S+W)
         self.canvas.grid(row=3, column=1, columnspan=6, rowspan=10, padx = 10, pady = 10)
         self.canvas.create_window((0,0), window=self.frame, anchor="nw", tags="self.frame")
         self.frame.bind("<Configure>", self.onFrameConfigure)

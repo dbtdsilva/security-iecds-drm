@@ -46,8 +46,7 @@ class MainWindow(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        self.minsize(420, 420)
-        self.minsize(420, 420)
+        self.minsize(420, 380)
         self.resizable(width=tk.FALSE, height=tk.FALSE)
         self["bg"] = 'White'
 
@@ -186,10 +185,12 @@ class List(tk.Frame):
         if req.status_code != 200:
             tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
             return
-        cryptoHeader = req.raw.read(32)
+        cryptoHeader = req.raw.read(48)
+        seed = cryptoHeader[:32]
+        iv = cryptoHeader[32:]
         req.raw.close()
 
-        seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(cryptoHeader)
+        seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(seed)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
         print payload
@@ -200,14 +201,14 @@ class List(tk.Frame):
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
         print "Device key: ", binascii.hexlify(self.DeviceKey)
         print "File key: ", binascii.hexlify(FileKey)
-        print "Seed: ", binascii.hexlify(cryptoHeader)
+        print "Seed: ", binascii.hexlify(seed)
 
         videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
         stream = None
         if not os.path.exists(videofile):
             stream = session.get('https://localhost/api/title/' + str(pos["id"]), stream=True,
                                  verify=Root_Certificate, cert=Local_Certificate)
-        Playback(videofile, FileKey, stream)
+        Playback(videofile, FileKey, iv, stream)
         FileKey = None
         del FileKey
 

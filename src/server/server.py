@@ -172,6 +172,7 @@ class Title(object):
             seed_dev_key = AES.new(user_key, AES.MODE_ECB).decrypt(seed_dev_user_key)
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
+        iv = storage.get_file_iv(user_id, title)
         #print "Player key", binascii.hexlify(player_key)
         #print "User key: ", binascii.hexlify(user_key)
         #print "Device key: ", binascii.hexlify(device_key)
@@ -179,18 +180,16 @@ class Title(object):
         #print "Seed: ", binascii.hexlify(seed)
         def content():
             if seed_only:
-                yield seed
+                yield seed + iv
                 return
-
             print storage.get_tile_details(title).path
             f = open("media/" + storage.get_tile_details(title).path, 'r')
-            aes = AES.new(file_key, AES.MODE_ECB)
+            aes = AES.new(file_key, AES.MODE_CBC, iv)
 
-            yield seed
+            yield seed + iv
 
             channel_fragmentation = BLOCK_SIZE * 1500
             data = f.read(channel_fragmentation)
-            print "starting"
             while data:
                 if len(data) < channel_fragmentation:
                     data = cipherLib.pkcs7_encode(data, BLOCK_SIZE)
