@@ -226,9 +226,6 @@ class Storage(object):
         if len(uf.all()) != 1:
             raise Exception("User didn't bought this file")
         plays = uf.all()[0].played + 1
-        uf.update({UserFile.played: plays})
-        self.session.commit()
-
         return file.max_plays is None or plays <= file.max_plays
 
     def policy_is_playable_on_device(self, fileid, userid, devicekey):
@@ -245,11 +242,7 @@ class Storage(object):
                        filter_by(deviceid=deviceid).all()) == 0:
             if file.max_devices is not None and len(q) >= file.max_devices:
                 return False
-            udfp = UserDeviceFilePolicy(fileid=fileid, userid=userid, deviceid=deviceid)
-            self.session.add(udfp)
-            self.session.commit()
             return True
-
         return file.max_devices is None or len(q) <= file.max_devices
 
     def policy_is_valid_time(self, fileid, time):
@@ -279,6 +272,26 @@ class Storage(object):
             return True
         q = self.session.query(FileRegionsBlocked).filter_by(fileid=fileid).filter_by(region_code=match.country).all()
         return len(q) == 0
+
+    def policies_valid_update_values(self, fileid, userid, devicekey):
+        # Update number of plays for a file
+        uf = self.session.query(UserFile).filter_by(fileid=fileid).filter_by(userid=userid)
+        if len(uf.all()) != 1:
+            raise Exception("User didn't bought this file")
+        plays = uf.all()[0].played + 1
+        uf.update({UserFile.played: plays})
+        self.session.commit()
+
+        # Update device used for the file
+        q = self.session.query(Device).filter_by(devicekey=devicekey).all()
+        if len(q) != 1:
+            raise Exception("Device key doesn't exist.")
+        deviceid = q[0].id
+        if len(self.session.query(UserDeviceFilePolicy).filter_by(fileid=fileid).filter_by(userid=userid).\
+                       filter_by(deviceid=deviceid).all()) == 0:
+            udfp = UserDeviceFilePolicy(fileid=fileid, userid=userid, deviceid=deviceid)
+            self.session.add(udfp)
+            self.session.commit()
 
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
@@ -340,10 +353,11 @@ if __name__ == "__main__":
     #storage.policy_limit_file_plays(2, 3)
     storage.policy_block_region(2, 'PT')
     storage.policy_block_system(3, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
+    storage.policy_limit_file_plays(8, 3)
     storage.policy_limit_file_max_devices(7, 0)
     # Block from 18 to the end of the day
-    #storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
+    storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
     # Block from 10 to 19
-    #storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+    storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
 
     

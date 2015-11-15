@@ -12,7 +12,6 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity
 import custom_adapter
 from cipher import Cipher
-import time
 
 BLOCK_SIZE = 32
 cipherLib = Cipher()
@@ -214,6 +213,9 @@ class TitleValidate(object):
 
         user_key = storage.get_user_details(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(binascii.unhexlify(key_val))
+
+        device_key = cherrypy.session.get(SESSION_DEVICE)
+        storage.policies_valid_update_values(title, user_id, device_key)
         return next_key
 
 class TitleUser(object):
@@ -310,7 +312,7 @@ if __name__ == '__main__':
     if os.getenv('DEBUG_MODE') == 'dev':
         cherrypy.server.socket_port = 4433
     else:
-        cherrypy.server.socket_port = 443
+        cherrypy.server.socket_port = 4433
 
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")

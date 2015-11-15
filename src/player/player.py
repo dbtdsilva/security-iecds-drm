@@ -61,14 +61,14 @@ class MainWindow(tk.Tk):
         loginFrame.l = self.frames[List]
         self.show_frame(Login)
 
-        req = session.get("https://localhost/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get("https://localhost:4433/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
         salt = req.content
         hash = ""
         for file in player_filelist:
             hash += hashlib.pbkdf2_hmac('sha512', open(file, 'r').read(), salt, 1000)
         hashfiles = binascii.hexlify(hashlib.pbkdf2_hmac('sha512', hash, salt, 1000))
         payload = {"hash": hashfiles}
-        req = session.post("https://localhost/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post("https://localhost:4433/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
         if req.status_code != 200:
             tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
 
@@ -84,7 +84,7 @@ class Login(tk.Frame):
     def checkCredentials(self, username, password, DeviceKey):
 
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
-        req = session.post('https://localhost/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post('https://localhost:4433/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
 
         if req.status_code == 200:
             return (True, "Logged in")
@@ -182,7 +182,7 @@ class List(tk.Frame):
             return
 
         payload = {"title": str(pos["id"]), "seed_only": '1'}
-        req = session.get('https://localhost/api/title', params=payload, stream=True, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get('https://localhost:4433/api/title', params=payload, stream=True, verify=Root_Certificate, cert=Local_Certificate)
         if req.status_code != 200:
             tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
             return
@@ -195,7 +195,7 @@ class List(tk.Frame):
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
         print payload
-        req = session.post('https://localhost/api/title/validate/' + str(pos["id"]), json=payload,
+        req = session.post('https://localhost:4433/api/title/validate/' + str(pos["id"]), json=payload,
                             verify=Root_Certificate, cert=Local_Certificate)
         seed_dev_user_key = req.content
         print "Player key: ", binascii.hexlify(PlayerKey)
@@ -207,7 +207,7 @@ class List(tk.Frame):
         videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
         stream = None
         if not os.path.exists(videofile):
-            stream = session.get('https://localhost/api/title/' + str(pos["id"]), stream=True,
+            stream = session.get('https://localhost:4433/api/title/' + str(pos["id"]), stream=True,
                                  verify=Root_Certificate, cert=Local_Certificate)
         Playback(videofile, FileKey, iv, stream)
         FileKey = None
@@ -217,12 +217,12 @@ class List(tk.Frame):
 
     def logout(self, controller):
         self.username = ""
-        req = session.post('https://localhost/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post('https://localhost:4433/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
         self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        req = session.get('https://localhost/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get('https://localhost:4433/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
 
         self.titleids = json.loads(req.content)
         
