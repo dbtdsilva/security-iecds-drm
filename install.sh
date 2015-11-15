@@ -22,3 +22,5 @@ echo "\n\n\tLet gulp loads to generate app.js and base.js\n"
 gulp
 cd ../../database
 python storage-api.py
+cd ../../player
+sudo apt-get install python-tk python-imaging-tk
