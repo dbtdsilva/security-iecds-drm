@@ -332,32 +332,45 @@ if __name__ == "__main__":
                             "../player/mylist.py",
                             "../player/playback.py",
                             "../player/player.py"])
-    storage.create_file('John Lennon', 'TW News', 'Documentary', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Adamaris Doe', 'Warcraft', 'Fantasy', '2015-04-07', 'drop.avi')
-    storage.create_file('Richard Damon', 'TW News', 'Action', '2015-04-07', 'drop.avi')
-    storage.create_file('Joe Doe', 'TW News', 'Action', '2015-04-07', 'drop.avi')
-    storage.create_file('John Smith', 'TW News', 'Sci-fi', '2015-04-07', 'drop.avi')
-    storage.create_file('Aiken Madison', 'TW News', 'Horror', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Robert Hit', 'TW News', 'Romance', '2015-04-07', 'news_interview.wmv')
-    storage.create_file('Alice TRE', 'TW News', 'Comedy', '2015-04-07', 'edge.mkv')
+    storage.create_file('John Lennon', 'US Blocked', 'Documentary', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Adamaris Doe', 'Linux Blocked', 'Fantasy', '2015-04-07', 'drop.avi')
+    storage.create_file('Richard Damon', 'iOS and Macintosh Blocked', 'Action', '2015-04-07', 'drop.avi')
+    storage.create_file('Robert Patrick', '3 Plays Only', 'Action', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('John Smith', '0 Plays Only', 'Sci-fi', '2015-04-07', 'drop.avi')
+    storage.create_file('Aiken Madison', '0 Devices Allowed', 'Horror', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Robert Hit', '1 Device Allowed', 'Romance', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Arnold Schwarzenegger', 'Blocked from 13:00 till 23:59', 'Comedy', '2015-04-07', 'news_interview.wmv')
+    storage.create_file('Alice Furlong', 'Blocked From 0:00 till 13:00', 'Comedy', '2015-04-07', 'news_interview.wmv')
+
+    storage.policy_block_region(1, 'US')
+    storage.policy_block_system(2, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
+    storage.policy_block_system(3, 'iOS')
+    storage.policy_block_system(3, 'Macintosh')
+    storage.policy_limit_file_plays(4, 3)
+    storage.policy_limit_file_plays(5, 0)
+    storage.policy_limit_file_max_devices(6, 0)
+    storage.policy_limit_file_max_devices(7, 1)
+    storage.policy_limit_file_timespan(8, start=datetime.time(13, 0, 0))
+    storage.policy_limit_file_timespan(9, start=datetime.time(0, 0, 0), end=datetime.time(13, 0, 0))
+
     storage.buy_file(1, 1)
     storage.buy_file(1, 2)
+    storage.buy_file(1, 3)
     storage.buy_file(1, 4)
+    storage.buy_file(1, 5)
     storage.buy_file(1, 6)
+    storage.buy_file(1, 7)
+    storage.buy_file(1, 8)
+    storage.buy_file(1, 9)
+
+    storage.buy_file(2, 1)
     storage.buy_file(2, 2)
     storage.buy_file(2, 3)
-    storage.buy_file(2, 7)
+    storage.buy_file(2, 4)
+    storage.buy_file(2, 5)
     storage.buy_file(2, 6)
+    storage.buy_file(2, 7)
     storage.buy_file(2, 8)
-
-    #storage.policy_limit_file_plays(2, 3)
-    storage.policy_block_region(2, 'PT')
-    storage.policy_block_system(3, 'Linux') # Linux, Windows, iOS, Macintosh, ChromeOS, PlayStation
-    storage.policy_limit_file_plays(8, 3)
-    storage.policy_limit_file_max_devices(7, 0)
-    # Block from 18 to the end of the day
-    storage.policy_limit_file_timespan(6, start=datetime.time(18, 0, 0))
-    # Block from 10 to 19
-    storage.policy_limit_file_timespan(8, start=datetime.time(10, 0, 0), end=datetime.time(19, 0, 0))
+    storage.buy_file(2, 9)
 
     

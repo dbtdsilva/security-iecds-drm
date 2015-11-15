@@ -151,16 +151,15 @@ class Title(object):
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
         iv = storage.get_file_iv(user_id, title)
-        print "Player key", binascii.hexlify(player_key)
-        print "User key: ", binascii.hexlify(user_key)
-        print "Device key: ", binascii.hexlify(device_key)
-        print "File Key: ", binascii.hexlify(file_key)
-        print "Seed: ", binascii.hexlify(seed)
+        #print "Player key", binascii.hexlify(player_key)
+        #print "User key: ", binascii.hexlify(user_key)
+        #print "Device key: ", binascii.hexlify(device_key)
+        #print "File Key: ", binascii.hexlify(file_key)
+        #print "Seed: ", binascii.hexlify(seed)
         def content():
             if seed_only:
                 yield seed + iv
                 return
-            print storage.get_tile_details(title).path
             f = open("media/" + storage.get_tile_details(title).path, 'r')
             aes = AES.new(file_key, AES.MODE_CBC, iv)
 

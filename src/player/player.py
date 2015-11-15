@@ -194,15 +194,15 @@ class List(tk.Frame):
         seed_dev_key = AES.new(self.DeviceKey, AES.MODE_ECB).encrypt(seed)
 
         payload = {"key": binascii.hexlify(seed_dev_key)}
-        print payload
+        #print payload
         req = session.post('https://localhost:4433/api/title/validate/' + str(pos["id"]), json=payload,
                             verify=Root_Certificate, cert=Local_Certificate)
         seed_dev_user_key = req.content
         print "Player key: ", binascii.hexlify(PlayerKey)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
         print "Device key: ", binascii.hexlify(self.DeviceKey)
-        print "File key: ", binascii.hexlify(FileKey)
-        print "Seed: ", binascii.hexlify(seed)
+        print "File key:   ", binascii.hexlify(FileKey)
+        print "Seed:       ", binascii.hexlify(seed)
 
         videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
         stream = None
