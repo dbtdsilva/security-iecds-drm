@@ -74,14 +74,14 @@ class UserLogin(object):
 
         if 'username' in body and not storage.is_user_valid(body['username']):
             raise cherrypy.HTTPError(400, "Provided bad credentials")
+        username = body['username']
         if 'key' in body:
             if len(body['key']) != BLOCK_SIZE * 2:
                 raise cherrypy.HTTPError(400, "Key is not valid")
             cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
-            username = cherrypy.session.get(SESSION_USERID)
             user_id = storage.get_user_id(username)
             storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
-        if cherrypy.session.get(SESSION_PLAYER) is None and hasattr(cherrypy.request.rfile, 'rfile'):
+        if hasattr(cherrypy.request.rfile, 'rfile'):
             der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
             if der_player != None:
                 DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
@@ -89,7 +89,9 @@ class UserLogin(object):
                 player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
                 if player_key == None:
                     raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
-                cherrypy.session[SESSION_PLAYER] = player_key
+                if cherrypy.session.get(SESSION_PLAYER) is None:
+                    cherrypy.session[SESSION_PLAYER] = player_key
+                storage.associate_player_to_user(user_id, player_key)
         cherrypy.session[SESSION_USERID] = storage.get_user_id(body['username'])
         cherrypy.response.status = 200
         return {"status": 200, "message": "Login successfully"}

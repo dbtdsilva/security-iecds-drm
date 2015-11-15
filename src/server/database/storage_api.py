@@ -82,6 +82,17 @@ class Storage(object):
         self.session.add(uf)
         self.session.commit()
 
+    def associate_player_to_user(self, user_id, playerkey):
+        query = self.session.query(Player).filter_by(playerkey=playerkey).all()
+        if len(query) == 0:
+            return None
+        player_id = query[0].id
+        query = self.session.query(UserPlayer).filter_by(userid=user_id).filter_by(playerid=player_id).all()
+        if len(query) == 0:
+            up = UserPlayer(userid=user_id, playerid=player_id)
+            self.session.add(up)
+            self.session.commit()
+
     def associate_device_to_user(self, user_id, devicekey):
         query = self.session.query(Device).filter_by(devicekey=devicekey).all()
         if len(query) == 0:
@@ -89,7 +100,7 @@ class Storage(object):
             query = self.session.query(Device).filter_by(devicekey=devicekey).all()
         device_id = query[0].id
         query = self.session.query(UserDevice).filter_by(userid=user_id).filter_by(deviceid=device_id).all()
-        if len(query) != 0:
+        if len(query) == 0:
             ud = UserDevice(userid=user_id, deviceid=device_id)
             self.session.add(ud)
             self.session.commit()
