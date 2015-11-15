@@ -48,7 +48,7 @@
 \end{titlepage}
 \maketitle
 \tableofcontents
-
+\nocite{*}
 \chapter*{Context}
 \addcontentsline{toc}{chapter}{Context}
 This project was done for Security, for the 2015/2016 lective year.
@@ -100,6 +100,14 @@ We then have the required key for each one of them as well.
 \newline In the User table we have added the username field that identifies the each user.
 \newline The File table also has some extra fields that provide information to the user about the file he is playing or buying, such as, the title of the file, the author, the category and the date of the title's production.
 \newline The actions presented in Figure 1.1 had to be converted to extra tables since, in each case we had a many-to-many relationship. So, we have here the extra tables that store some information of the interactions, like specific keys and adittional information like the date that when the user bought the file. 
+\newline Besides the tables presented before, we needed a few more tables to help implement the authorization policies:
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=300pt]{images/auxTables.png}}
+\caption{DB Auxiliary Tables}
+\label{tables}
+\end{figure}
+
 
 \subsection{Technologies used}
 For the database we used:
@@ -111,15 +119,15 @@ For the database we used:
 \section{Server}
 The server is meant to interact with the database and control the access of the users and players to the files.
 This interaction is done over a \emph{HTTP Rest} interface.
-
+ 
 \subsection{Structure}
 The server is composed of several files:
 
 \begin{description}
-  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because of the SSL integration.
-  \item[Custom adapter file] This is the file that overrides the SSL class so that the client is verified using its certificates.
+  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because server is using port 443 to host (which requires previligies).
+  \item[Custom adapter file] This is the file that overrides the BuiltinSSL class developed by CherryPy, default adapter doesn't support certificate peer verification and it is useful to check if player is valid and associate it with a determined key.
   \item[Cipher file] This file holds auxiliary cryptographic functions that are used by the server.
-  \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file.
+  \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file, or check if there's a device key reported when player logged in, etc.
 \end{description}
 
 \subsection{Implementation}
@@ -139,7 +147,7 @@ It requires the user to log in before proceeding with the titles purchase.
 The same API that the player uses is used here.
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=500pt]{images/webpage.png}}
+\centerline{\includegraphics[width=500pt]{images/webpage.jpg}}
 \caption{Web page interface}
 \label{webpage}
 \end{figure}
@@ -166,7 +174,7 @@ The player implementation we have is made of 3 main files.
 After the user starts the player application, he/she must log in. 
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\centerline{\includegraphics[width=200pt]{images/playerLogin.jpg}}
 \caption{Login page for the player}
 \label{player}
 \end{figure}
@@ -175,7 +183,7 @@ At this stage, the only information required to perform the login is the usernam
 \newline After the user logs in and it is confirmed by the server, a list of titles is displayed so that the user can choose which one he/she wants to reproduce.
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\centerline{\includegraphics[width=200pt]{images/playerList.jpg}}
 \caption{Page that lists the files for the user}
 \label{player}
 \end{figure}
@@ -185,7 +193,7 @@ When the user selects the file that he/she wants to play, a thread running the V
 The buffer is managed by the VLC player and is customizable (the user can give the buffer the size it wants by changing the value on the VLC settings).
 
 \begin{figure}[H]
-\centerline{\includegraphics[width=300pt]{images/playerLogin.png}}
+\centerline{\includegraphics[width=300pt]{images/playerPlay.jpg}}
 \caption{Video playing in the VLC thread}
 \label{player}
 \end{figure}
@@ -354,8 +362,8 @@ Logging out is a simple operation that only implies ending the session in the se
 %\printglossaries
 %\addcontentsline{toc}{chapter}{Glossário}
 
-%\bibliographystyle{plain}
-%\bibliography{proj2}
+\bibliographystyle{plain}
+\bibliography{proj2}
 %\addcontentsline{toc}{chapter}{Bibliografia}
 
 %\listoffigures
