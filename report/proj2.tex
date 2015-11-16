@@ -172,7 +172,7 @@ The player implementation we have is made of 3 main files.
 
 \subsection{Implementation}
 
-O player ao garante ao servidor que não foi modificado pelo utilizador e que o servidor conhece a sua implementação, para isso é feito uma validação da integridade do player que consiste numa troca de mensagens com o servidor, na \autoref{sec:integrity} é possível ver esta implementação com detalhe.
+The player garantees to the server that the its code was not altered by the user and the server knows how it is implemented. For that the integrity of the player is validated. This validation consists in a exchange of messages between server and player, in \autoref{sec:integrity} the details of this validation are presented with more detail.
 After the user starts the player application, he/she must log in. 
 
 \begin{figure}[H]
@@ -192,7 +192,8 @@ Further along the road, the login will also be possible using the Portuguese Cit
 \end{figure}
 
 When the user selects the file that he/she wants to play, a thread running the VLC player is started. The thread reads blocks of the encrypted file, decrypts it and sends it to the VLC buffer.
-A obtenção do ficheiro é feita através de uma stream e não através de um simples GET, de forma a poder reproduzir de imediato ficheiros muito grandes, neste momento também é feito várias validações: politicas, existência de certificado do player, integridade do player validade anteriormente, device key enviada anteriormente (Este serviço é falado com detalhe na \autoref{sec:requ}).
+The player gets the file through a stream instead of a simple \emph{GET} request, so that large files can be played immediately.
+At this point, several other validations are performed: policies, player certificate validation, player integrity (from before), and Device Key (also from before - This service is referenced in more detail at \autoref{sec:requ}).
 \newline
 The buffer is managed by the VLC player and is customizable (the user can give the buffer the size it wants by changing the value on the VLC settings).
 
@@ -221,7 +222,7 @@ Taking into consideration when it is generated and the process behind it, this k
 \newline At this stage, the player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
 In the player, the Player Key is hardcoded.
 \newline This key is present in the server and in the player.
-Para além disto ainda é gerado um certificado para o player de forma a garantir a autenticidade do mesmo e poder associar o player em questão à player key, sendo que não é possível reproduzir ficheiros sem certificado do player válido.
+Besides that, a certificate for the player is generated so that we can guarantee its authenticity and we can also associate the player that the user is using to the Player Key. As such, there is no way to reproduce files without the player having a valid certificate.
 
 \section{Device Key}
 The Device Key is a key that identifies the device where the player is being executed. This key should be the same even if the we have more than one player running in a device.
@@ -280,27 +281,27 @@ This chain allows the player to derive the File Key, even if the device or/and p
 \chapter{Server-Client interactions (REST API detailed)}
 
 \section{Summary}
-Todas as pre-verificações dos serviços encontram-se no ficheiro checker.py que implementa um decorador em que indica ao CherryPy todas as verificações necessárias a fazer antes de cada serviço (eg. @require(logged(), device\_key(), is\_player(), player\_integrity()) para o download, isto encontra-se no topo do serviço GET do download).
+All pre-validations of the services are in the \emph{checker.py} file that implements a wrapper that tells CherryPy what are the necessary verifications that it has to perform before each service (eg. @require(logged(), device\_key(), is\_player(), player\_integrity()) for the download. You can find this annotation in the top of the \emph{GET} request for the download operation).
 \subsection{Player - Server}
-A interecção do player com o servidor faz uso de 7 pedidos diferentes ao servidor:
+The server-player interaction takes advantage of 7 different types of requests to the server:
 \begin{enumerate}
-\item POST  /api/user/login em que o parametro é o nome do username (não existe password tendo em conta que a segunda parte do trabalho é autenticação) em que é associado ao session\_id actual do utilizador o nome do utilizador em questão, sabendo assim qual o login efectuado durante a sessão toda. Para além disso ainda reporta a device key como parámetro no login.
-\item POST  /api/user/logout em que remove qualquer associação no servidor ao session\_id (necessita de login, ou seja, de ter um username associado ao session\_id)
-\item GET   /api/title/user/ em que apresenta todos os titulos que o utilizador comprou (necessita apenas de login)
-\item GET   /api/valplayer/ em que devolve um SALT que permite fazer a validação de integridade do player
-\item POST  /api/valplayer/<hash> utilizando o SALT do serviço anterior tem de chegar a HASH e o servidor vai confirmar se o resultado é correcto ou não, verificando a integridade do player ou não (espécie de desafio).
-\item GET   /api/title/<pk> recebe um stream do conteúdo do ficheiro (em que pk é o identificador do titulo que precisa de fazer download), esta é a rotina é critica na segurança do sistema porque não pode ser usada se uma das seguintes condições falhar: Existência do certificado do player, validação de integridade previamente efectuada, login efectuado, device key reportada no login.
-\item POST  /api/title/validate/<hash> este método serve para enviar ao servidor a hash que tem até ao momento e o servidor cifra com a User Key de forma e envia o resultado para o player (necessita de cumprir as mesmas condições que o serviço anterior)
+\item POST  /api/user/login sending the username as a param along with it (at this point we do not use password since the second part of the project will take care of the authentication) which is associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides, the username being sent as a param, the player also sends the Device Key that it calculated.
+\item POST  /api/user/logout that removes any association in the server to the session\_id (this operation requires a previous login, that is, the username must be associated with a session\_id before hand).
+\item GET   /api/title/user/ that lists all the titles that the user purchased earlier (this operation also and only requires that the user is logged).
+\item GET   /api/valplayer/ that returns a SALT which allows the server to perform the player's integrity validation.
+\item POST  /api/valplayer/<hash> using the previous returned SALT, the player must send the locally calculated HASH and then the server will confirm if the result is the expected result or not (sort of a challenge).
+\item GET   /api/title/<pk> receives a stream of the file's content (where <pk> is the title identifier of the file that the user wants to download). This is a critical operation in terms of system security because it can't be used if one of the following conditions fails: Existance of player's certificate, previously performed player integrity, the user is logged in, the player has already sent the Device Key.
+\item POST  /api/title/validate/<hash> which it is used by the player to send to the server the HASH that it has at that moment. The server will then encrypt the HASH with the User Key and sends the result back to the player (this operation requires the same conditions presented in the previous item).
 \end{enumerate}
 
 \subsection{Webpage - Server}
-A interecção da página Web faz uso de 5 pedidos diferentes ao servidor:
+The server-web page interaction is based in 5 different requests to the server:
 \begin{enumerate}
-\item POST  /api/user/login em que o parametro é o nome do username (não existe password tendo em conta que a segunda parte do trabalho é autenticação) em que é associado ao session\_id actual do utilizador o nome do utilizador em questão, sabendo assim qual o login efectuado durante a sessão toda
-\item POST  /api/user/logout em que remove qualquer associação no servidor ao session\_id (necessita de login, ou seja, de ter um username associado ao session\_id)
-\item GET   /api/title/all em que apresenta todos os titulos disponiveis (não necessita de qualquer login)
-\item GET   /api/title/user/all em que apresenta todos os titulos mas com o detalhe para o utilizador para saber se foram comprados ou (necessita de login)
-\item POST  /api/title/<pk> em que pk é o id do titulo que vai ser comprado (precisa de ter login efectuado).
+\item POST  /api/user/login where the param is also the username (at this point we do not use password since the second part of the project will handle the authentication)  which is associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session.
+\item POST  /api/user/logout that removes any association in the server to the session\_id (this operation requires a previous login, that is, the username must be associated with a session\_id before hand).
+\item GET   /api/title/all that lists all the titles available for purchase (does not require login).
+\item GET   /api/title/user/all that lists all the titles available to the user, with more detail so that the user can purchase or just view them (this requires login).
+\item POST  /api/title/<pk> where <pk> is the id of the title that will be purchased by the user (this operation also requires previous login).
 \end{enumerate}
 
 \section{Checking player integrity}
@@ -309,12 +310,12 @@ Every time a player executes, an operation to check its integrity is performed. 
 
 We get the files that belong to the player implementation and create a hash of each of the files. We then concatenate the hashes of each file and once more hash the result with a random generated salt and we get the final result.\\
 
-The server generates a SALT and stores it to the session temporarily (SALT is discarded when routine to validate is called or when requested to generate a new SALT), and sending it to the player, player will execute the sequence of operations described before to generate the hash. The result will be compared with the information stored in the server, and if they are equal, the player's integrity will be confirmed, otherwise, we assume someone has altered the code and the player is rejected.
+The server generates a SALT and stores it to the session temporarily (SALT is discarded when the routine to validate is called or when requested to generate a new SALT), and sending it to the player. Player will execute the sequence of operations described before to generate the hash. The result will be compared with the information stored in the server, and if they are equal, the player's integrity will be confirmed, otherwise, we assume someone has altered the code and the player is rejected.
 
-São invocados dois serviços: 
+Two services are invoked:  
 \begin{enumerate}
-\item GET   /api/valplayer/ em que devolve um SALT que permite fazer a validação de integridade do player
-\item POST  /api/valplayer/<hash> em que submete o resultado do challenge (se falhar, o salt é descartado e tem de ser gerado um novo)
+\item GET   /api/valplayer/ that returns a SALT that allows the server to validate the integrity of the player.
+\item POST  /api/valplayer/<hash> that submits the result of the challenge (if it fails, the SALT is discarded and a new one must be generated).
 \end{enumerate}
 
 \section{Logging in}
@@ -359,22 +360,23 @@ In this interaction, we have two distinct situations:
 
 \subsection{Download requisites (validations)}
 \label{sec:requ}
-Para poder ser efectuado o download de um ficheiro é preciso serem cumprido os seguintes requisitos:
+So that the download of a file is possible, a few criteria must be met:
 \begin{enumerate}
-\item User tem de ter login efectuado
-\item Device key tem de ter sido reportada no login
-\item Player tem de ter validada a sua autenticidade (com o uso do certificado \autoref{sec:certs}, vai permite associar a player key também)
-\item Player tem de ter validada a sua integridade
-\item User tem de ter comprado o ficheiro em questão
-\item O ficheiro para o user em questão tem de cumprir todas as policies
+\item The user must be logged in.
+\item The Device Key must be reported to the server on the login operation.
+\item The player's authenticity must be validated (with the help of the certificate \autoref{sec:certs}, which will allow the server to associate the Player Key to session).
+\item The player's integrity must be validated.
+\item The user must have purchased the file previously through the web page.
+\item The file for the user must meet all the policies imposed.
 \end{enumerate}
-A verificação dos requisitos é feita exactamente por esta ordem.
+The criteria verification has the order presented.
 
 \subsection{Full file download}
 The full file download situation means that this is the first time the player downs the file the user selected.
 And so, the server must send back the full encrypted file along with the cryptographic information that will allow the player to decrypt the file.
 
-Para cifrar/decifrar a chave foi usado CBC sendo que é gerado um IV que faz parte dos cabeçalhos criptográficos, apesar de usarmos stream para fazer download do ficheiro (sendo possível reproduzir ficheiros grandes sem ter o problema do tempo que demora para cifrar) usamos CBC para cifrar/decifrar porque a stream do CherryPy corre sobre TCP, ou seja, garante que todos os dados chegam ao cliente, se fosse feita em UDP provavelmente teria-se optado pela CTR porque não existe dependência para o bloco anterior ao decifrar e temos acesso aleatório ao ficheiro. 
+To decrypt/encrypt the key, we used CBC, so, an IV is part of the cryptographic headers as well, even though we used streams to download the file (enabling large files to reproduce as well without the processing time of the encryptino being noticeable).
+We chose CBC because CHerryPy's stream is done over TCP, that means that all data is guaranteed to treach the player. If it was done over UDP, we would probably choose CTR because there is no dependency between blocks in the encryption operation and we have random access to the file. 
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/fullFileDown.png}}
@@ -409,10 +411,10 @@ Logging out is a simple operation that only implies ending the session in the se
 
 \chapter{TLS Socket and Certificates}
 \label{sec:certs}
-Para garantir que o canal de comunicação é seguro decidiu-se usar TLS Socket de forma a garantir que o canal é cifrado de forma segura, isto envolve alguns requisitos, tais como a geração de certificados de forma adequada.\\
+To guarantee that the communications channel is secure, we decided to the use a TLS Socket because it takes care of the channel encryption in a secure manner. This involves some criteria as well, such as the adequate generation of certificates.\\
 
-Todos os certificados foram gerados usando XCA.
-Sendo que foi gerada uma Root Certificate Authority (CA) que é o Issuer de todos os certificados referidos neste relatório e que contém os seguintes campos:
+All certificates were generated using XCA.
+We have generated a Root Certificate Authority (CA) that is the issuer of all the certificates presented in this report and contains the following fields:
 \begin{enumerate}
 \item CN - Security P3G1 Root
 \item ST - Aveiro
@@ -420,44 +422,44 @@ Sendo que foi gerada uma Root Certificate Authority (CA) que é o Issuer de todo
 \item O - Universidade de Aveiro
 \item OU - Departamento de Electrónica, Telecomunicações e Informática
 \end{enumerate}
-Também foi indicada o URI de uma CRL, no entanto não está a ser usada, podendo ser mais tarde implementada para revogar certificados.
+We also thought of the URI to a CRL that isn't being used at the moment, however, can be used later on to revoke certificates.
 
 \section{CherryPy Server SSL Certificate}
 
-Para o CherryPy teve-se de gerar um certificado emitido pela Root CA de forma a garantir a cadeia de certificados a qualquer cliente que se ligue, player ou browser. Também se alterou o adaptador SSL do CherryPy de forma a suportar validação de certificado se existir no cliente (razões na secção seguinte).
+For the CherryPy, a certificate issued by the Root CA had to be generated so that the chain of certificates can be guaranteed to work for any player, logged in user or browser. The CherryPy SSL adapter also had to be altered so that it supported client certificates (if present), for reasons that will be explained later.
 
 \section{Players SSL Certificates}
 
-Optou-se por gerar certificados para cada player de forma a efectuar a validação do player e podê-lo associa-lo a uma Player Key, sendo que foi preciso alterar o adaptador original do CherryPy (BuiltIn) para suportar peer validation porque por defeito o adaptador SSL não verifica nada do cliente.\\
+We chose to generate certificates for each player so that the player validation could be performed and associated with a Player Key. This is the reason why we needed to change the builtin SSL adapter from CherryPy, supporting like this peer validation, since the default doesn't verify anything on the client side.
 
-Sendo que se deixou a opção no CherryPy de o cliente poder ou não fornecer certificado (optional), caso não forneça tem a implicação de não poder fazer download de ficheiros, nem pedir ao servidor para fazer a validação da cadeia de chaves (aplicação da UserKey). 
+Being that the certificate is an optional step, if the client chooses not to use them, it cannot download files, nor request the chain of operations to derive the File Key.
 
 \section{Browser validation}
-Para o browser indicou-se qual a Certificate Authority do nosso DRM de forma a que o Browser reconheça a CA como trusted e todas os certificados emitidos pela mesma.
+For the browser we specified which CA of our DRM so that the browser can recognize the CA as trusted and trust all its issued certificates.
 
 \chapter{Policies}
-A verificação das políticas é feita quando o player tenta fazer download do ficheiro (apenas depois de garantir que está tudo bem com o player, isto pode ser verificado com detalhe na \autoref{sec:requ})
+The policy validation is performed when the player tries to download the file (only after ensuring that its all good with the player, this is presented with detail at  \autoref{sec:requ}).
 \begin{enumerate}
-\item Número limite de dispositivos por compra de um determinado ficheiro, sendo que existe uma tabela na base de dados que relaciona as compras com os dispositivos permitindo saber quais os dispositivos que reproduziram determinado ficheiro de uma compra.
-\item Ficheiro válido para uma determinada região (sendo que a detecção da região é feita com base no Remote-Addr disponível nos headers do pacote HTTP).
-\item Ficheiro válido para um determinado sistema operativo (sendo que a detecção do sistema operaativo é feito com base no User-Agent disponível nos headers HTTP e fazendo o parse do mesmo à procura do sistema operativo em questão)
-\item Apenas possível reproduzir em determinada altura do dia (o calculo das horas é feita do lado do servidor).
-\item Número máximo de reproduções de uma dada compra para um ficheiro (sendo que existe um contador no número de reproduções na compra).
+\item Limit the number of devices where the file can be reproduced. This information is stored in an auxiliary table in the database that associates the file with the devices allowing us to keep a track of the number.
+\item File only valid for a certain region (the region detection is done based on Remote-Addr available in the HTTP request headers).
+\item File only valid for a certain OS (the detection is done based in the User-Agent available in the HTTP headers, filtering the OS information).
+\item Limit the time of the day the file can be reproduced (the time calculation is done server side).
+\item Limit the number of times the file can be reproduced (there is a counter on the number of file plays).
 \end{enumerate}
 
 \chapter{Installation}
 
-Está disponível um install.sh na pasta / do repositório que foi feito num Ubuntu 15.04 e também testado em 14.04 e 14.10 (a password para o PostgreSQL encontra-se no mesmo ficheiro de instalação em comentário).\\
+There is an install script available in the root folder of the repository that was done in Ubuntu 15.04 and tested in the 14.04 e 14.10 versions (the password for the PostgreSQL can be found in the same file, commented out).\\
 
-Durante a instalação vai ser pedido várias interacções do utilizador, tal como seleccionar o certificado a instalar no sistema, ou a introdução da password para a Base de dados.\\
+During the instalation, the user interaction will be requestes several times, for operations like selecting a certificate to install on the system, or the input for the database password.\\
 
-Foi gerada um clone de uma imagem VM, no entanto a imagem tem 3.7GB (não compactados), razão pela qual decidiu-se não fazer upload da mesma, de qualquer das formas podemos fornecer se houver problemas com a instalação.
+A clone of a VM image was generated, however it has a size of 3.7GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.
 
 \chapter{Conclusions}
 
-Encontrou-se alguns problemas ao longo do trabalho, tal como a geração da Device Key em que se procurou bastante para encontrar um registo que fosse único para um determinado device, ou a validação do player usando certificados porque CherryPy não suporta validação do certificado do cliente no seu adaptador, sendo que foi preciso fazer herdar a classe em questão e reescrever a função para permite a validação.\\
+There were some problems through out the project, like the Device Key generation, or the player validation using certificates because CherryPy doesn't support client certificate validation on its builtin adaptor (which originatesd the override of the class).\\
 
-Apesar dos problemas que foram aparecendo, foram também sido resolvidos, chegando a um bom trabalho no final. 
+However these problems were solved after some work and the final goal was reached. 
 
 %\printglossaries
 %\addcontentsline{toc}{chapter}{Glossário}
