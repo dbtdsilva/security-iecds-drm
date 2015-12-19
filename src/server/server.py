@@ -313,7 +313,7 @@ if __name__ == '__main__':
     if os.getenv('DEBUG_MODE') == 'dev':
         cherrypy.server.socket_port = 4433
     else:
-        cherrypy.server.socket_port = 4433
+        cherrypy.server.socket_port = 443
 
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")
