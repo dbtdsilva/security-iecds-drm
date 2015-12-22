@@ -21,12 +21,11 @@ App.controller('AppController',
                 };
             }
 
-            $rootScope.login = function(username) {
-                $http.post("api/user/login", {"username": username}).success(function(data) {
-                    localStorage.username = username;
-                    $rootScope.user.username = username;
+            $rootScope.login = function() {
+                $http.post("api/user/login").success(function(data) {
+                    localStorage.username = data.username;
+                    $rootScope.user.username = data.username;
                     $rootScope.user.loggedIn = true;
-                    $('#myModal').modal('hide');
                 }).error(function(data, status, headers, config) {
                     alert("Failed to login");
                 });

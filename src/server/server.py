@@ -1,4 +1,4 @@
-#encoding=utf-8
+# encoding=utf-8
 from Crypto import Random
 from Crypto.Cipher import AES
 import os.path
@@ -9,8 +9,8 @@ from database.storage_api import storage
 import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh, \
-    SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity
-import custom_adapter
+    SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity, \
+    has_certificate
 from cipher import Cipher
 
 BLOCK_SIZE = 32
@@ -47,54 +47,58 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # POST /api/valplayer/<hash>
 # Details: Check if hash on argument is valid
 
+
 class API(object):
     def __init__(self):
         self.user = User()
         self.title = Title()
         self.valplayer = ValidatePlayer()
 
+
 class User(object):
     def __init__(self):
         self.login = UserLogin()
         self.logout = UserLogout()
 
+
 class UserLogin(object):
     exposed = True
 
-    # POST /api/user/login {username=user, key=dkey}
+    # POST /api/user/login {key=dkey}
     # Details: Creates a session
     @cherrypy.tools.json_out()
+    @require(has_certificate())
     def POST(self):
-        try:
-            content_length = cherrypy.request.headers['Content-Length']
-            raw_body = cherrypy.request.body.read(int(content_length))
-            body = json.loads(raw_body)
-        except Exception:
-            raise cherrypy.HTTPError(400, "Wrong format")
 
-        if 'username' in body and not storage.is_user_valid(body['username']):
-            raise cherrypy.HTTPError(400, "Provided bad credentials")
-        username = body['username']
-        if 'key' in body:
-            if len(body['key']) != BLOCK_SIZE * 2:
-                raise cherrypy.HTTPError(400, "Key is not valid")
-            cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
-            user_id = storage.get_user_id(username)
-            storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
-        if hasattr(cherrypy.request.rfile, 'rfile'):
-            der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-            if der_player != None:
-                DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-                pkey = cipherLib.convert_certificate_to_PEM(DER)
-                player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
-                if player_key == None:
-                    raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
-                if cherrypy.session.get(SESSION_PLAYER) is None:
-                    cherrypy.session[SESSION_PLAYER] = player_key
-                storage.associate_player_to_user(user_id, player_key)
-        cherrypy.session[SESSION_USERID] = storage.get_user_id(body['username'])
+
+        client_cert_pem = cherrypy.request.headers['Ssl-Client-Cert']
+        name = cherrypy.request.headers['Ssl-Client-S-Dn-Cn']
+
+        user_id = storage.get_user_identifier(client_cert_pem)
+        if user_id == None:
+            storage.create_new_user(name, client_cert_pem)
+            user_id = storage.get_user_identifier(client_cert_pem)
+
+        content_length = int(cherrypy.request.headers['Content-Length'])
+        if content_length > 0:
+            try:
+                raw_body = cherrypy.request.body.read(content_length)
+                body = json.loads(raw_body)
+                if 'key' in body:
+                    if len(body['key']) != BLOCK_SIZE * 2:
+                        raise cherrypy.HTTPError(400, "Key is not valid")
+                    cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
+                    storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
+            except Exception:
+                raise cherrypy.HTTPError(400, "Wrong format")
+
+
+        if SESSION_PLAYER in cherrypy.session:
+            storage.associate_player_to_user(user_id, cherrypy.session[SESSION_PLAYER])
+
+        cherrypy.session[SESSION_USERID] = user_id
         cherrypy.response.status = 200
-        return {"status": 200, "message": "Login successfully"}
+        return {"status": 200, "message": "Login successfully", "username": name}
         
 
 class UserLogout(object):
@@ -291,6 +295,7 @@ class Root(object):
 
 if __name__ == '__main__':
     RESTopts = {
+	'tools.proxy.on': True,
         'tools.sessions.on': True,
         'tools.checker.on': True,
         'error_page.default': jsonify_error,
@@ -301,19 +306,19 @@ if __name__ == '__main__':
 
     key = "certificates/ssl/Security_P3G1_SSL_key.pem"
     cert = "certificates/ssl/Security_P3G1_SSL.crt"
-    root = "certificates/rootCA/Security_P3G1_Root.crt"
+    ca = "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem"
 
-    cherrypy.server.ssl_module = 'custom-ssl'
-    cherrypy.server.ssl_certificate = cert
-    cherrypy.server.ssl_private_key = key
-    cherrypy.server.thread_pool = 100
+    #cherrypy.server.ssl_module = 'custom-ssl'
+    #cherrypy.server.ssl_certificate = cert
+    #cherrypy.server.ssl_private_key = key
+    #cherrypy.server.thread_pool = 100
     #cherrypy.server.ssl_ca_certificate = root
-    cherrypy.server.ssl_certificate_chain = root
+    #cherrypy.server.ssl_certificate_chain = ca
     cherrypy.server.socket_host = "0.0.0.0"
     if os.getenv('DEBUG_MODE') == 'dev':
         cherrypy.server.socket_port = 4433
     else:
-        cherrypy.server.socket_port = 443
+        cherrypy.server.socket_port = 8888
 
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")

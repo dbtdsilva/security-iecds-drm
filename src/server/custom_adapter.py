@@ -40,9 +40,10 @@ class BuiltinSsl(BuiltinSSLAdapter):
         """Wrap and return the given socket, plus WSGI environ entries."""
         try:
             s = ssl.wrap_socket(sock, do_handshake_on_connect=True,
-                                server_side=True, certfile=self.certificate,
-                                cert_reqs=ssl.CERT_OPTIONAL,
-                                ca_certs=self.certificate_chain,
+                                server_side=True,
+                                certfile=self.certificate,
+                                cert_reqs=ssl.CERT_REQUIRED,
+                                ca_certs="/etc/ssl/certs/",
                                 keyfile=self.private_key,
                                 ssl_version=ssl.PROTOCOL_SSLv23)
         except ssl.SSLError:

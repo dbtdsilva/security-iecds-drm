@@ -7,12 +7,18 @@ import OpenSSL
 class Cipher:
     BLOCK_SIZE = 32
     PLAYER_HASH_LEN = 64
+    USER_HASH_LEN = 64
     def __init__(self):
         pass
 
     def generatePlayerHash(self, pkey):
         h = sha512()
         h.update(pkey)
+        return h.digest()
+
+    def generateUserHash(self, user_pem):
+        h = sha512()
+        h.update(user_pem)
         return h.digest()
 
     def generateIV(self):

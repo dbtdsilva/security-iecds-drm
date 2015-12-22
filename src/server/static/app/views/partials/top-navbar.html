@@ -40,7 +40,7 @@
                     ng-click="toggleCollapse(pIndex, true)"></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
-                <li ng-show="!user.loggedIn"><a data-toggle="modal" data-target="#myModal">
+                <li ng-show="!user.loggedIn"><a ng-click="login()">
                     <em class="fa fa-user"></em>
                     <span>Login</span></a>
                 </li>
@@ -52,32 +52,4 @@
         <!--/.nav-collapse -->
     </div>
 </nav>
-
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                        aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Login Panel</h4>
-            </div>
-            <div class="modal-body">
-                <div class="text-center"><span >Please enter your username</span></br></br></div>
-                <form novalidate class="form-horizontal">
-                    <div class="form-group">
-                        <label for="username"></label>
-                        <div class="col-sm-12">
-                            <input type="text" ng-model="username"
-                                   class="form-control" id="username" placeholder="Enter your username">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" ng-click="login(username)">Login</button>
-            </div>
-        </div>
-    </div>
-</div>
 

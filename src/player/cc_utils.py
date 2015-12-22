@@ -2,6 +2,7 @@ import M2Crypto
 import sys
 import PyKCS11
 from M2Crypto import X509
+import OpenSSL
 from base64 import b64encode
 
 
@@ -44,9 +45,11 @@ def get_cert(certLabel, pin):
 
     #print objs
     der = ''.join(chr(c) for c in objs[0].to_dict()['CKA_VALUE'])
-    der_format = X509.load_cert_string(der, x509.FORMAT_DER)
+    der_format = X509.load_cert_string(der, X509.FORMAT_DER)
     #return X509.load_cert_string(der, X509.FORMAT_DER)
-    return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILTYPE_PEM, x509)
+    file_type=OpenSSL.crypto.FILETYPE_ASN1
+    x509 = OpenSSL.crypto.load_certificate(file_type, der)
+    return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)
    
 pin = input("Insert pin: ")
 print pin

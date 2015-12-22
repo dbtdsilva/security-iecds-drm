@@ -38,8 +38,8 @@ class Storage(object):
         self.session = self.Session()
         Base.metadata.create_all(self.engine)
 
-    def create_user(self, username):
-        usr = User(username=username, userkey=Cipher.generateUserKey())
+    def create_new_user(self, username, pem):
+        usr = User(username=username, hash=Cipher.generateUserHash(pem), userkey=Cipher.generateUserKey())
         self.session.add(usr)
         self.session.commit()
 
@@ -56,9 +56,9 @@ class Storage(object):
         self.session.add(dev)
         self.session.commit()
 
-    def create_player(self, playerkey, pkey, filelist):
+    def create_player(self, playerkey, pem, filelist):
         filelist_str = ",".join(filelist)
-        player = Player(hash=Cipher.generatePlayerHash(pkey), playerkey=playerkey, filelist_integrity=filelist_str)
+        player = Player(hash=Cipher.generatePlayerHash(pem), playerkey=playerkey, filelist_integrity=filelist_str)
         self.session.add(player)
         self.session.commit()
 
@@ -110,7 +110,7 @@ class Storage(object):
         if len(query) != 1:
             return None
         if include_non_bought:
-            q = storage.session.query(UserFile).filter_by(userid=2).subquery('q')
+            q = storage.session.query(UserFile).filter_by(userid=userid).subquery('q')
             lrelations = storage.session.query(File, aliased(UserFile,q)).outerjoin(q, q.c.fileid==File.id).all()
         else:
             lrelations = storage.session.query(File, UserFile).\
@@ -125,11 +125,11 @@ class Storage(object):
             flist += [ tmp ]
         return flist
 
-    def is_user_valid(self, username):
-        return len(self.session.query(User).filter_by(username=username).all()) == 1
+    #def is_user_valid(self, username):
+    #    return len(self.session.query(User).filter_by(username=username).all()) == 1
 
-    def get_user_id(self, username):
-        query = self.session.query(User).filter_by(username=username).all()
+    def get_user_identifier(self, pem):
+        query = self.session.query(User).filter_by(hash=Cipher.generateUserHash(pem)).all()
         if len(query) != 1:
             return None
         return query[0].id
@@ -163,7 +163,7 @@ class Storage(object):
             return None
         return query[0]
 
-    def get_user_details(self, user_id):
+    def get_user_detail(self, user_id):
         query = self.session.query(User).filter_by(id=user_id).all()
         if len(query) != 1:
             return None
@@ -317,8 +317,8 @@ storage = Storage(DATABASE_URI)
 
 if __name__ == "__main__":
     import OpenSSL
-    storage.create_user('taniaalves')
-    storage.create_user('diogosilva')
+    #storage.create_user('taniaalves')
+    #storage.create_user('diogosilva')
     storage.create_player('\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c',
                            open('../certificates/players/Security_P3G1_Player_1.crt', 'r').read(),
                            ["../player/resources/images/icon.bmp",
@@ -364,24 +364,24 @@ if __name__ == "__main__":
     storage.policy_limit_file_timespan(8, start=datetime.time(13, 0, 0))
     storage.policy_limit_file_timespan(9, start=datetime.time(0, 0, 0), end=datetime.time(13, 0, 0))
 
-    storage.buy_file(1, 1)
-    storage.buy_file(1, 2)
-    storage.buy_file(1, 3)
-    storage.buy_file(1, 4)
-    storage.buy_file(1, 5)
-    storage.buy_file(1, 6)
-    storage.buy_file(1, 7)
-    storage.buy_file(1, 8)
-    storage.buy_file(1, 9)
+    #storage.buy_file(1, 1)
+    #storage.buy_file(1, 2)
+    #storage.buy_file(1, 3)
+    #storage.buy_file(1, 4)
+    #storage.buy_file(1, 5)
+    #storage.buy_file(1, 6)
+    #storage.buy_file(1, 7)
+    #storage.buy_file(1, 8)
+    #storage.buy_file(1, 9)
 
-    storage.buy_file(2, 1)
-    storage.buy_file(2, 2)
-    storage.buy_file(2, 3)
-    storage.buy_file(2, 4)
-    storage.buy_file(2, 5)
-    storage.buy_file(2, 6)
-    storage.buy_file(2, 7)
-    storage.buy_file(2, 8)
-    storage.buy_file(2, 9)
+    #storage.buy_file(2, 1)
+    #storage.buy_file(2, 2)
+    #storage.buy_file(2, 3)
+    #storage.buy_file(2, 4)
+    #storage.buy_file(2, 5)
+    #storage.buy_file(2, 6)
+    #storage.buy_file(2, 7)
+    #storage.buy_file(2, 8)
+    #storage.buy_file(2, 9)
 
     

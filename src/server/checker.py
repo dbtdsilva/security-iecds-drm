@@ -30,6 +30,17 @@ def require(*conditions):
         return f
     return decorate
 
+def has_certificate():
+    def check():
+        if 'Ssl-Client-Cert' in cherrypy.request.headers and \
+                'Ssl-Client-S-Dn-Cn' in cherrypy.request.headers:
+            return (True, None)
+        if 'Ssl-Client-Cert' in cherrypy.request.headers and \
+                'Ssl-Client-S-Dn-Cn' not in cherrypy.request.headers:
+            return (False, cherrypy.HTTPError(400, "Certificate provided doesn't have his CN defined"))
+        return (False, cherrypy.HTTPError(400, "Certificate wasn't provided"))
+    return check
+
 def logged():
     def check():
         userid = cherrypy.session.get(SESSION_USERID)

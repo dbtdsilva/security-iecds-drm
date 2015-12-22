@@ -10,11 +10,14 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False)
+    hash = Column(LargeBinary(Cipher.USER_HASH_LEN), nullable=False)
     userkey = Column(LargeBinary(Cipher.BLOCK_SIZE), nullable=False)
     
 
     def __repr__(self):
         dic = self.to_dict()
+        dic['username'] = self.username
+        dic['hash'] = '__hash__'
         dic['userkey'] = '__key__'
         return json.dumps(dic, indent=2)
 
@@ -22,6 +25,7 @@ class User(Base):
         rv = dict()
         rv['id'] = self.id
         rv['username'] = self.username
+        rv['hash'] = self.hash
         rv['userkey'] = self.userkey
         return rv
 
