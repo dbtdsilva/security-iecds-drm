@@ -1,0 +1,13 @@
+#!/usr/bin/expect
+set password [lindex $argv 0];
+set mount [lindex $argv 1];
+set store [lindex $argv 2];
+spawn encfs $store $mount
+expect "?>"
+send "\r"
+expect "New Encfs Password: "
+send $password\r
+expect "Verify Encfs Password: "
+send $password\r
+wait
+expect EOF
