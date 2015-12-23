@@ -10,4 +10,3 @@ send $password\r
 expect "Verify Encfs Password: "
 send $password\r
 wait
-expect EOF

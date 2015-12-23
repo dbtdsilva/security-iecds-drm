@@ -5,53 +5,62 @@ from M2Crypto import X509
 import OpenSSL
 from base64 import b64encode
 
+class cc_utils():
+    def get_cert(self, certLabel, pin):
+        lib = "/usr/local/lib/libpteidpkcs11.so"
+        status = 0
+        #Load PKCS11 lib
+        pkcs11 = PyKCS11.PyKCS11Lib()
+        pkcs11.load(lib)
 
-def get_cert(certLabel, pin):
-    lib = "/usr/local/lib/libpteidpkcs11.so"
-    print lib
-    #Load PKCS11 lib
-    pkcs11 = PyKCS11.PyKCS11Lib()
-    pkcs11.load(lib)
+        #Open slots
+        try:
+            slots = pkcs11.getSlotList()
+        except:
+            print "Slot list failed: ", str(sys.exc_info()[1])
+            status = -1
+            return (status, None)
 
-    #Open slots
-    try:
-        slots = pkcs11.getSlotList()
-    except:
-        print "Slot list failed: ", str(sys.exc_info()[1])
-        return None
+        s = slots[0]
+        try:
+            session = pkcs11.openSession(s)
+            print session
+        except:
+            print "Session opening failed", str(sys.exc_info()[1])
+            status = -1
+            return (status, None)
 
-    s = slots[0]
-    try:
-        session = pkcs11.openSession(s)
-        print session
-    except:
-        print "Session opening failed", str(sys.exc_info()[1])
-        return None
+        try:
+            session.login(pin=pin)
+        except:
+            print "Login failed", str(sys.exc_info()[1])
+            status = -1
+            return (status, None)
 
-    try:
-        session.login(pin=pin)
-    except:
-        print "Login failed", str(sys.exc_info()[1])
-        return None
+        objs = session.findObjects(template=(
+            (PyKCS11.CKA_LABEL, certLabel),
+            (PyKCS11.CKA_CLASS, PyKCS11.CKO_CERTIFICATE)))
 
-    objs = session.findObjects(template=(
-        (PyKCS11.CKA_LABEL, certLabel),
-        (PyKCS11.CKA_CLASS, PyKCS11.CKO_CERTIFICATE)))
+        try:
+            session.logout()
+        except:
+            status = -1
+            print "Logout failed"
 
-    try:
-        session.logout()
-    except:
-        print "Logout failed"
+        #print objs
+        der = ''.join(chr(c) for c in objs[0].to_dict()['CKA_VALUE'])
+        der_format = X509.load_cert_string(der, X509.FORMAT_DER)
+        #return X509.load_cert_string(der, X509.FORMAT_DER)
+        file_type=OpenSSL.crypto.FILETYPE_ASN1
+        x509 = OpenSSL.crypto.load_certificate(file_type, der)
+        return (status, OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509))
 
-    #print objs
-    der = ''.join(chr(c) for c in objs[0].to_dict()['CKA_VALUE'])
-    der_format = X509.load_cert_string(der, X509.FORMAT_DER)
-    #return X509.load_cert_string(der, X509.FORMAT_DER)
-    file_type=OpenSSL.crypto.FILETYPE_ASN1
-    x509 = OpenSSL.crypto.load_certificate(file_type, der)
-    return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509)
-   
 pin = input("Insert pin: ")
 print pin
-cert = get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
-print cert
+cc = cc_utils()
+(status, cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
+if status == 0:
+    print cert
+else:
+    print "An error occurred"
+

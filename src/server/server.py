@@ -12,14 +12,10 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity, \
     has_certificate
 from cipher import Cipher
-import subprocess
-import shutil
 
 BLOCK_SIZE = 32
 cipherLib = Cipher()
 current_dir = os.path.dirname(os.path.abspath(__file__))
-mount_dir = "/opt/iedcs-mount"
-store_dir = "/opt/iedcs-store"
 
 # -> API DETAILS
 # POST /api/user/login username=user
@@ -311,31 +307,6 @@ if __name__ == '__main__':
     key = "certificates/ssl/Security_P3G1_SSL_key.pem"
     cert = "certificates/ssl/Security_P3G1_SSL.crt"
     ca = "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem"
-
-    # --- Manage directories ---
-
-    if not os.path.exists(mount_dir):
-        os.makedirs(mount_dir)
-
-    if not os.path.exists(store_dir):
-        os.makedirs(store_dir)
-
-    encfs_password = "abcdefgh12345"
-
-    for f in os.listdir(current_dir + "/media"):
-        if not os.path.exists(mount_dir + "/" + f):
-            os.mkdir(mount_dir + "/" + f)
-        if not os.path.exists(store_dir + "/" + f):
-            os.mkdir(store_dir + "/" + f)
-       
-        mount_f = mount_dir + "/" + f
-        store_f = store_dir + "/" + f
-        subprocess.call(["expect", "encfs.exp", encfs_password, mount_f, store_f])
-       
-        shutil.copyfile(current_dir + "/" + "media" + "/" + f, mount_f + "/" + f)
-
-        subprocess.call(["umount", "-l", mount_f])
-
 
     #cherrypy.server.ssl_module = 'custom-ssl'
     #cherrypy.server.ssl_certificate = cert
