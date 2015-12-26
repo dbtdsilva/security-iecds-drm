@@ -18,8 +18,7 @@ class cc_utils():
             slots = pkcs11.getSlotList()
         except:
             print "Slot list failed: ", str(sys.exc_info()[1])
-            status = -1
-            return (status, None)
+            return ("Failed to read citizen card!", None)
 
         s = slots[0]
         try:
@@ -27,15 +26,13 @@ class cc_utils():
             print session
         except:
             print "Session opening failed", str(sys.exc_info()[1])
-            status = -1
-            return (status, None)
+            return ("Failed to open citizen card!", None)
 
         try:
             session.login(pin=pin)
         except:
             print "Login failed", str(sys.exc_info()[1])
-            status = -1
-            return (status, None)
+            return ("Incorrect pin code!", None)
 
         objs = session.findObjects(template=(
             (PyKCS11.CKA_LABEL, certLabel),
@@ -44,7 +41,6 @@ class cc_utils():
         try:
             session.logout()
         except:
-            status = -1
             print "Logout failed"
 
         #print objs
@@ -55,12 +51,13 @@ class cc_utils():
         x509 = OpenSSL.crypto.load_certificate(file_type, der)
         return (status, OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509))
 
-pin = input("Insert pin: ")
-print pin
-cc = cc_utils()
-(status, cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
-if status == 0:
-    print cert
-else:
-    print "An error occurred"
+if __name__ == '__main__':
+    pin = input("Insert pin: ")
+    print pin
+    cc = cc_utils()
+    (status, cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
 
+    if status != "Success!":
+        print status
+    else:
+        print cert

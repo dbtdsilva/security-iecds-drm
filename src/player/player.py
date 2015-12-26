@@ -20,6 +20,7 @@ path = "." + os.path.sep + "videos" + os.path.sep
 modalias = "/sys/devices/virtual/dmi/id/modalias"
 logo = "./resources/images/logo.bmp"
 icon = "./resources/images/icon.bmp"
+cc_cert = None
 
 player_filelist = ["resources/images/icon.bmp",
                     "resources/images/icon.png",
@@ -82,7 +83,13 @@ class Login(tk.Frame):
 
     # ----- Change content for server interaction  -----
     def checkCredentials(self, username, password, DeviceKey):
+        cc = cc_utils()
+        (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(password))
+    
+        if status != "Success!":
+            return (False, status)        
 
+    # TODO - reforge request
         payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
         req = session.post('https://localhost/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
 
@@ -101,7 +108,7 @@ class Login(tk.Frame):
         f = open(modalias, "r")
         self.l.DeviceKey = hashlib.sha256(f.read()).digest()
         # ---------------------------------------
-
+        
         (valid, message) = self.checkCredentials(username, password, self.l.DeviceKey)
         if valid:
             self.l.username = username
@@ -149,15 +156,16 @@ class Login(tk.Frame):
         usernameLabel["bg"] = 'White'
         usernameLabel["fg"] = 'Blue'
         usernameLabel.grid(row=9, column=0, pady=10, padx=10)
-        passwordLabel = tk.Label(self, text="Password: ", font=LARGE_FONT)
+        # TODO - Limit numbers only
+        passwordLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
         passwordLabel["bg"] = 'White'
         passwordLabel["fg"] = 'Blue'
-        # passwordLabel.grid(row=10, column=0, pady=10, padx = 10)
+        passwordLabel.grid(row=10, column=0, pady=10, padx = 10)
 
         usernameTextbox = tk.Entry(self)
         usernameTextbox.grid(row=9, column=1, columnspan=3)
         passwordTextbox = tk.Entry(self, show="*")
-        # passwordTextbox.grid(row=10, column=1, columnspan=3)
+        passwordTextbox.grid(row=10, column=1, columnspan=3)
 
         button = tk.Button(self, text="Login!",
                            command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
