@@ -42,3 +42,5 @@ COPY src/apache2_confs/ports.conf /etc/apache2/ports.conf
 COPY src/server/certificates/ssl/Security_P3G1_SSL.crt /etc/ssl/certs/
 COPY src/server/certificates/ssl/Security_P3G1_SSL_key.pem /etc/ssl/private/
 RUN service apache2 restart
+EXPOSE 443
+WORKDIR /home/docker/server

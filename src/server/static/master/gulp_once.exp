@@ -1,0 +1,4 @@
+#!/usr/bin/expect
+set timeout -1
+spawn gulp
+expect "All Done"
