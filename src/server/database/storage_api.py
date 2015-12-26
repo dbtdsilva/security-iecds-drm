@@ -306,7 +306,7 @@ class Storage(object):
 
 BASE_DIR = os.path.dirname(__file__)
 #DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
-DATABASE_URI = 'postgresql://postgres:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'
+DATABASE_URI = 'postgresql://docker:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'
 
 if __name__ == "__main__":
     if database_exists(DATABASE_URI):

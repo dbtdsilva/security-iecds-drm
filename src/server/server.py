@@ -4,13 +4,14 @@ from Crypto.Cipher import AES
 import os.path
 import cherrypy.wsgiserver.ssl_builtin
 import json
+from OpenSSL import crypto
 from cherrypy.lib import jsontools
 from database.storage_api import storage
 import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity, \
-    has_certificate
+    has_cc_certificate
 from cipher import Cipher
 
 BLOCK_SIZE = 32
@@ -67,10 +68,8 @@ class UserLogin(object):
     # POST /api/user/login {key=dkey}
     # Details: Creates a session
     @cherrypy.tools.json_out()
-    @require(has_certificate())
+    @require(has_cc_certificate())
     def POST(self):
-
-
         client_cert_pem = cherrypy.request.headers['Ssl-Client-Cert']
         name = cherrypy.request.headers['Ssl-Client-S-Dn-Cn']
 
@@ -91,7 +90,6 @@ class UserLogin(object):
                     storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
             except Exception:
                 raise cherrypy.HTTPError(400, "Wrong format")
-
 
         if SESSION_PLAYER in cherrypy.session:
             storage.associate_player_to_user(user_id, cherrypy.session[SESSION_PLAYER])
@@ -124,7 +122,7 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @require(logged(), device_key(), is_player(), player_integrity())
+    @require(logged(), has_cc_certificate(), device_key(), is_player(), player_integrity())
     def GET(self, title, seed_only = False):
         cherrypy.response.headers['Content-Type'] = 'application/json'
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
@@ -188,7 +186,7 @@ class Title(object):
     # Requires login
     # Details: Buys a specific title
     @cherrypy.tools.json_out()
-    @require(logged())
+    @require(logged(), has_cc_certificate())
     def POST(self, title):
         storage.buy_file(cherrypy.session.get(SESSION_USERID), title)
         return {"status": 200, "message": "Title was successfully purchased"}
@@ -200,7 +198,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @require(logged(), is_player(), device_key(), player_integrity())
+    @require(logged(), has_cc_certificate(), is_player(), device_key(), player_integrity())
     def POST(self, title):
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
@@ -232,7 +230,7 @@ class TitleUser(object):
     # Requires login
     # Details: Gets all titles that the user bought
     @cherrypy.tools.json_out()
-    @require(logged())
+    @require(logged(), has_cc_certificate())
     def GET(self):
         return storage.get_user_file_list(cherrypy.session.get(SESSION_USERID))
 
@@ -243,7 +241,7 @@ class TitleUserAll(object):
     # Requires login
     # Details: Gets all titles that the user bought
     @cherrypy.tools.json_out()
-    @require(logged())
+    @require(logged(), has_cc_certificate())
     def GET(self):
         return storage.get_user_file_list(cherrypy.session.get(SESSION_USERID), True)
 
@@ -304,10 +302,9 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    key = "certificates/ssl/Security_P3G1_SSL_key.pem"
-    cert = "certificates/ssl/Security_P3G1_SSL.crt"
-    ca = "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem"
-
+    #key = "certificates/ssl/Security_P3G1_SSL_key.pem"
+    #cert = "certificates/ssl/Security_P3G1_SSL.crt"
+    #ca = "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem"
     #cherrypy.server.ssl_module = 'custom-ssl'
     #cherrypy.server.ssl_certificate = cert
     #cherrypy.server.ssl_private_key = key
@@ -315,10 +312,7 @@ if __name__ == '__main__':
     #cherrypy.server.ssl_ca_certificate = root
     #cherrypy.server.ssl_certificate_chain = ca
     cherrypy.server.socket_host = "0.0.0.0"
-    if os.getenv('DEBUG_MODE') == 'dev':
-        cherrypy.server.socket_port = 4433
-    else:
-        cherrypy.server.socket_port = 8888
+    cherrypy.server.socket_port = 8888
 
     cherrypy.tree.mount(API(), "/api/", {'/': RESTopts})
     cherrypy.tree.mount(Root(), "/", "app.config")

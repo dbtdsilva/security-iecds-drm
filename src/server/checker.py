@@ -2,6 +2,8 @@ import cherrypy
 import json
 from database.storage_api import storage
 import datetime
+from OpenSSL import crypto
+from cipher import Cipher
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
@@ -30,14 +32,26 @@ def require(*conditions):
         return f
     return decorate
 
-def has_certificate():
+def parse(x):
+    return x[:20] + x[20:-20].replace(' ', '\n') + x[-20:]
+
+def has_cc_certificate():
     def check():
         if 'Ssl-Client-Cert' in cherrypy.request.headers and \
-                'Ssl-Client-S-Dn-Cn' in cherrypy.request.headers:
-            return (True, None)
-        if 'Ssl-Client-Cert' in cherrypy.request.headers and \
-                'Ssl-Client-S-Dn-Cn' not in cherrypy.request.headers:
-            return (False, cherrypy.HTTPError(400, "Certificate provided doesn't have his CN defined"))
+                'Ssl-Client-S-Dn-Cn' in cherrypy.request.headers and \
+                'Ssl-Client-Cert-Chain-0' in cherrypy.request.headers and \
+                'Ssl-Client-I-Dn-Cn' in cherrypy.request.headers:
+            ec_de_autenticacao = crypto.load_certificate(
+                    crypto.FILETYPE_PEM,
+                    parse(cherrypy.request.headers['Ssl-Client-Cert-Chain-0']))
+
+            if Cipher().validateCertificate(parse(cherrypy.request.headers['Ssl-Client-Cert']),
+                                    ec_de_autenticacao.get_issuer().commonName,
+                                    cherrypy.request.headers['Ssl-Client-I-Dn-Cn']):
+                return (True, None)
+            return (False, "Chain of certificates provided isn't valid")
+        if 'Ssl-Client-Cert' in cherrypy.request.headers:
+            return (False, cherrypy.HTTPError(400, "Certificate provided isn't complete"))
         return (False, cherrypy.HTTPError(400, "Certificate wasn't provided"))
     return check
 

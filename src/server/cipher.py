@@ -3,6 +3,8 @@ from Crypto.Cipher import AES
 from hashlib import sha512, pbkdf2_hmac
 from Crypto import Random
 import OpenSSL
+from OpenSSL import crypto
+import os
 
 class Cipher:
     BLOCK_SIZE = 32
@@ -15,6 +17,38 @@ class Cipher:
         h = sha512()
         h.update(pkey)
         return h.digest()
+
+    def validateCertificate(self, certificate_pem, cidadao_name, autent_name):
+        cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
+
+        chain = []
+        try:
+            autent_id = int(autent_name[-1])
+            cidadao_id = int(cidadao_name[-1])
+            if cidadao_id < 1 or cidadao_id > 3 or autent_id < 1 or autent_id > 9:
+                raise ValueError
+        except ValueError:
+            return False
+
+        autent_filename = "EC-de-Autenticacao-do-Cartao-de-Cidadao-000" + str(autent_id) + ".pem"
+        cidadao_filename = "Cartao-de-Cidadao-00" + str(cidadao_id) + ".pem"
+        trusted_certs = [autent_filename, cidadao_filename, "Baltimore_CyberTrust_Root.pem","ECRaizEstado.pem"]
+        for fn in trusted_certs:
+            f = open(os.path.join(os.getcwd(), "certificates","pteidcc",fn), 'r')
+            chain.append(crypto.load_certificate(crypto.FILETYPE_PEM, f.read()))
+            f.close()
+
+        try:
+            store = crypto.X509Store()
+            for cert in chain:
+                store.add_cert(cert)
+
+            store_ctx = crypto.X509StoreContext(store, cert_obj)
+            if store_ctx.verify_certificate() == None:
+                return True
+        except Exception:
+            return False
+        return False
 
     def generateUserHash(self, user_pem):
         h = sha512()
