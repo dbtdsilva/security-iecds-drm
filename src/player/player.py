@@ -155,7 +155,7 @@ class Login(tk.Frame):
         usernameLabel = tk.Label(self, text="Username: ", font=LARGE_FONT)
         usernameLabel["bg"] = 'White'
         usernameLabel["fg"] = 'Blue'
-        usernameLabel.grid(row=9, column=0, pady=10, padx=10)
+        #usernameLabel.grid(row=9, column=0, pady=10, padx=10)
         # TODO - Limit numbers only
         passwordLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
         passwordLabel["bg"] = 'White'
@@ -163,7 +163,7 @@ class Login(tk.Frame):
         passwordLabel.grid(row=10, column=0, pady=10, padx = 10)
 
         usernameTextbox = tk.Entry(self)
-        usernameTextbox.grid(row=9, column=1, columnspan=3)
+        #usernameTextbox.grid(row=9, column=1, columnspan=3)
         passwordTextbox = tk.Entry(self, show="*")
         passwordTextbox.grid(row=10, column=1, columnspan=3)
 
