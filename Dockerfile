@@ -5,10 +5,11 @@ RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get install -y git postgresql postgresql-contrib postgresql-client pgadmin3 postgresql-server-dev-all \
 	python-dev libgeoip-dev libffi-dev npm curl python python-pip expect
-RUN curl ftp://ftp.videolan.org/pub/debian/videolan-apt.asc | apt-key add -
-RUN echo "deb ftp://ftp.videolan.org/pub/debian/stable ./" | tee /etc/apt/sources.list.d/libdvdcss.list
-RUN apt-get update
-RUN apt-get install -y vlc vlc-data vlc-plugin-pulse browser-plugin-vlc mplayer2
+# Player is not needed in the confinement
+#RUN curl ftp://ftp.videolan.org/pub/debian/videolan-apt.asc | apt-key add -
+#RUN echo "deb ftp://ftp.videolan.org/pub/debian/stable ./" | tee /etc/apt/sources.list.d/libdvdcss.list
+#RUN apt-get update
+#RUN apt-get install -y vlc vlc-data vlc-plugin-pulse browser-plugin-vlc mplayer2
 USER postgres
 RUN /etc/init.d/postgresql start &&\
 	psql --command "CREATE USER docker WITH SUPERUSER PASSWORD '7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm';" &&\

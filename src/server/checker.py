@@ -4,13 +4,19 @@ from database.storage_api import storage
 import datetime
 from OpenSSL import crypto
 from cipher import Cipher
+import binascii
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
 SESSION_PLAYER = 'player_key'
 SESSION_PLAYER_SALT = 'p_salt'
 SESSION_PLAYER_INTEGRITY = 'p_integrity'
+SESSION_CHALLENGE_SALT = 'p_challenge_salt'
+SESSION_CHALLENGE_VALID = 'p_challenge_valid'
+
 REQUEST_PARAMETER = 'parameters'
+
+cipherLib = Cipher()
 
 def check_parameters(*args, **kwargs):
     conditions = cherrypy.request.config.get('parameters', None)
@@ -32,8 +38,57 @@ def require(*conditions):
         return f
     return decorate
 
-def parse(x):
-    return x[:20] + x[20:-20].replace(' ', '\n') + x[-20:]
+def has_player_certificate():
+    def check():
+        if 'Ssl-Client-Cert' in cherrypy.request.headers:
+            #ec_de_autenticacao = crypto.load_certificate(
+            #        crypto.FILETYPE_PEM,
+            #        parse(cherrypy.request.headers['Ssl-Client-Cert-Chain-0']))
+
+            #if Cipher().validateCertificate(parse(cherrypy.request.headers['Ssl-Client-Cert']),
+            #                        ec_de_autenticacao.get_issuer().commonName,
+            #                        cherrypy.request.headers['Ssl-Client-I-Dn-Cn']):
+            #    return (True, None)
+            #return (False, "Chain of certificates provided isn't valid")
+            return (True, None)
+        if 'Ssl-Client-Cert' in cherrypy.request.headers:
+            return (False, cherrypy.HTTPError(400, "Certificate provided isn't complete"))
+        return (False, cherrypy.HTTPError(400, "Certificate wasn't provided"))
+    return check
+
+def challenge_salt_exists():
+    def check():
+        return cherrypy.session.get(SESSION_CHALLENGE_SALT) is not None
+    return check
+
+def challenge_args():
+    def check():
+        content_length = int(cherrypy.request.headers['Content-Length'])
+        try:
+            raw_body = cherrypy.request.body.read(content_length)
+            body = json.loads(raw_body)
+            if 'cert_pem' not in body or 'sign' not in body or\
+                    'cidadao_cn' not in body or 'ec_aut' not in body or\
+                    'key' not in body:
+                raise Exception
+        except Exception:
+            return (False, cherrypy.HTTPError(400, "Missing parameters"))
+
+        if len(body['key']) != Cipher().BLOCK_SIZE * 2:
+            return (False, cherrypy.HTTPError(400, "Key is not valid"))
+        return (True, None)
+    return check
+
+def challenge_valid_certificate():
+    def check():
+        content_length = int(cherrypy.request.headers['Content-Length'])
+        raw_body = cherrypy.request.body.read(content_length)
+        body = json.loads(raw_body)
+        cert_pem = binascii.unhexlify(body['cert_pem'])
+        cidadao_cn = binascii.unhexlify(body['cidadao_cn'])
+        ec_aut = binascii.unhexlify(body['ec_aut'])
+        return Cipher.validateCertificate(cert_pem, cidadao_cn, ec_aut)
+    return check
 
 def has_cc_certificate():
     def check():
@@ -43,13 +98,12 @@ def has_cc_certificate():
                 'Ssl-Client-I-Dn-Cn' in cherrypy.request.headers:
             ec_de_autenticacao = crypto.load_certificate(
                     crypto.FILETYPE_PEM,
-                    parse(cherrypy.request.headers['Ssl-Client-Cert-Chain-0']))
-
-            if Cipher().validateCertificate(parse(cherrypy.request.headers['Ssl-Client-Cert']),
+                    cipherLib.cleanReceivedPEM(cherrypy.request.headers['Ssl-Client-Cert-Chain-0']))
+            if Cipher().validateCertificate(cipherLib.cleanReceivedPEM(cherrypy.request.headers['Ssl-Client-Cert']),
                                     ec_de_autenticacao.get_issuer().commonName,
                                     cherrypy.request.headers['Ssl-Client-I-Dn-Cn']):
                 return (True, None)
-            return (False, "Chain of certificates provided isn't valid")
+            return (False, cherrypy.HTTPError(400, "Chain of certificates provided isn't valid"))
         if 'Ssl-Client-Cert' in cherrypy.request.headers:
             return (False, cherrypy.HTTPError(400, "Certificate provided isn't complete"))
         return (False, cherrypy.HTTPError(400, "Certificate wasn't provided"))

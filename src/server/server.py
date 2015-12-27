@@ -4,6 +4,7 @@ from Crypto.Cipher import AES
 import os.path
 import cherrypy.wsgiserver.ssl_builtin
 import json
+import OpenSSL
 from OpenSSL import crypto
 from cherrypy.lib import jsontools
 from database.storage_api import storage
@@ -11,7 +12,8 @@ import binascii
 from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity, \
-    has_cc_certificate
+    has_cc_certificate, has_player_certificate, SESSION_CHALLENGE_SALT, SESSION_CHALLENGE_VALID, \
+    challenge_salt_exists, challenge_args, challenge_valid_certificate
 from cipher import Cipher
 
 BLOCK_SIZE = 32
@@ -59,8 +61,60 @@ class API(object):
 class User(object):
     def __init__(self):
         self.login = UserLogin()
+        self.loginChallenge = UserLoginChallenge()
         self.logout = UserLogout()
 
+class UserLoginChallenge(object):
+    exposed = True
+
+    def GET(self):
+        salt = cipherLib.generateChallenge()
+        cherrypy.session[SESSION_CHALLENGE_SALT] = salt
+        return salt
+
+    # POST /api/user/loginchallenge {cert_pem=cert_pem, sign=sign,
+    #                       cidadao_cn=cidadao_cn, ec_aut=ec_aut, key=dkey}
+    # Details: Creates a session
+    @cherrypy.tools.json_out()
+    @require(challenge_args(), challenge_salt_exists(), challenge_valid_certificate())
+    def POST(self):
+        salt = cherrypy.session[SESSION_CHALLENGE_SALT]
+        cherrypy.session[SESSION_CHALLENGE_SALT] = None
+
+        cert_pem = binascii.unhexlify(body['cert_pem'])
+        sign = binascii.unhexlify(body['sign'])
+
+        if cipherLib.verifySignature(cert_pem, salt, sign):
+            obj = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_pem)
+            names = obj.get_subject().get_components()
+            username = None
+            for (name, value) in names:
+                if 'CN' == name:
+                    username = value
+            if username is None:
+                raise cherrypy.HTTPError(400, "Certificate doesn't have CN property defined")
+
+            user_id = storage.get_user_identifier(cert_pem)
+            if user_id == None:
+                storage.create_new_user(username, cert_pem)
+                user_id = storage.get_user_identifier(cert_pem)
+
+            # Associate device to the user
+            content_length = int(cherrypy.request.headers['Content-Length'])
+            raw_body = cherrypy.request.body.read(content_length)
+            body = json.loads(raw_body)
+            cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
+            storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
+
+            if SESSION_PLAYER in cherrypy.session:
+                storage.associate_player_to_user(user_id, cherrypy.session[SESSION_PLAYER])
+
+            cherrypy.session[SESSION_USERID] = user_id
+            cherrypy.session[SESSION_CHALLENGE_VALID] = True
+            cherrypy.response.status = 200
+            return {"status": 200, "message": "User challenge validated with success."}
+        else:
+            raise cherrypy.HTTPError(400, "User challenge failed.")
 
 class UserLogin(object):
     exposed = True
@@ -258,25 +312,22 @@ class TitleAll(object):
 class ValidatePlayer(object):
     exposed = True
 
+    @require(has_player_certificate())
     def GET(self):
-        if cherrypy.session.get(SESSION_PLAYER) is None and hasattr(cherrypy.request.rfile, 'rfile'):
-            der_player = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-            if der_player != None:
-                DER = cherrypy.request.rfile.rfile._sock.getpeercert(binary_form=True)
-                pkey = cipherLib.convert_certificate_to_PEM(DER)
-                player_key = storage.get_player_key(cipherLib.generatePlayerHash(pkey))
-                if player_key == None:
-                    raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
-                cherrypy.session[SESSION_PLAYER] = player_key
-        if cherrypy.session.get(SESSION_PLAYER) is None:
-            raise cherrypy.HTTPError(400, "Player certificate must be provided.")
+        # At this point the certificate chain is already validated by has_player_certificate()
+        client_cert_pem = cipherLib.cleanReceivedPEM(cherrypy.request.headers['Ssl-Client-Cert'])
+        player_key = storage.get_player_key(cipherLib.generatePlayerHash(client_cert_pem))
+        # Checking if the certificate is still valid according with the database
+        if player_key == None:
+            raise cherrypy.HTTPError(400, "Certificate expired, re-download the player.")
+        cherrypy.session[SESSION_PLAYER] = player_key
 
         salt = Random.new().read(32)
         cherrypy.session[SESSION_PLAYER_SALT] = salt
         return salt
 
     @cherrypy.tools.json_out()
-    @require(player_salt(), is_player())
+    @require(has_player_certificate(), player_salt(), is_player())
     def POST(self, hash):
         salt = cherrypy.session.get(SESSION_PLAYER_SALT)
         cherrypy.session[SESSION_PLAYER_SALT] = None

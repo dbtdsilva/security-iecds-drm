@@ -9,12 +9,15 @@ import hashlib
 import binascii
 import json
 from PIL import ImageTk, Image
+from cc_utils import cc_utils
 
 
 LARGE_FONT = ("Verdana", 12)
 PlayerKey = "\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c"
 Root_Certificate = "resources/COPY_Security_P3G1_Root.crt"
-Local_Certificate = ("resources/COPY_Security_P3G1_Player_1.crt", "resources/COPY_Security_P3G1_Player_1_key.pem")
+Local_Certificate = ("resources/COPY_Security_P3G1_Player_1.crt",
+                     "resources/COPY_Security_P3G1_Player_1_key.pem")
+CC_Certificate = None
 
 path = "." + os.path.sep + "videos" + os.path.sep
 modalias = "/sys/devices/virtual/dmi/id/modalias"
@@ -25,9 +28,9 @@ cc_cert = None
 player_filelist = ["resources/images/icon.bmp",
                     "resources/images/icon.png",
                     "resources/images/logo.bmp",
-                    #"resources/COPY_Security_P3G1_Player_1.crt",
-                    #"resources/COPY_Security_P3G1_Player_1_key.pem",
-                    #"resources/COPY_Security_P3G1_Root.crt",
+                    "resources/COPY_Security_P3G1_Player_1.crt",
+                    "resources/COPY_Security_P3G1_Player_1_key.pem",
+                    "resources/COPY_Security_P3G1_Root.crt",
                     "__init__.py",
                     "mylist.py",
                     "playback.py",
@@ -63,6 +66,9 @@ class MainWindow(tk.Tk):
         self.show_frame(Login)
 
         req = session.get("https://localhost/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
+        if req.status_code != 200:
+            tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
+            exit(0)
         salt = req.content
         hash = ""
         for file in player_filelist:
@@ -72,6 +78,7 @@ class MainWindow(tk.Tk):
         req = session.post("https://localhost/api/valplayer/", params=payload, verify=Root_Certificate, cert=Local_Certificate)
         if req.status_code != 200:
             tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
+            exit(0)
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -82,17 +89,31 @@ class Login(tk.Frame):
     l = None
 
     # ----- Change content for server interaction  -----
-    def checkCredentials(self, username, password, DeviceKey):
+    def checkCredentials(self, username, pin, DeviceKey):
         cc = cc_utils()
-        (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(password))
-    
-        if status != "Success!":
-            return (False, status)        
+        (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
+        CC_Certificate = cc_cert
+        if status != "Success":
+            return (False, status)
 
-    # TODO - reforge request
-        payload = {"username": username, "key": binascii.hexlify(DeviceKey)}
-        req = session.post('https://localhost/api/user/login/', json=payload, verify=Root_Certificate, cert=Local_Certificate)
 
+        payload = {"key": binascii.hexlify(DeviceKey)}
+        req = session.get('https://localhost/api/user/loginchallenge/', json=payload,
+                           verify=Root_Certificate)
+        if req.status_code != 200:
+            return (False, json.loads(req.content)['message'])
+        salt = req.content
+        signature = cc.sign(salt, str(pin))
+
+        (ec_aut, cidadao_cn) = cc.get_subca_common_names(str(pin))
+        # cert_pem=cert_pem, sign=sign, cidadao_cn=cidadao_cn, ec_aut=ec_aut, key=dkey
+        payload = {"cert_pem": binascii.hexlify(cc_cert),
+                   "sign": binascii.hexlify(signature),
+                   "cidadao_cn": binascii.hexlify(cidadao_cn),
+                   "ec_aut": binascii.hexlify(ec_aut),
+                   "key": binascii.hexlify(DeviceKey)}
+        
+        req = session.post("https://localhost/api/user/loginchallenge", params=payload, verify=Root_Certificate)
         if req.status_code == 200:
             return (True, "Logged in")
         else:
@@ -100,16 +121,16 @@ class Login(tk.Frame):
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
-    def login(self, usernameTextbox, passwordTextbox, controller):
+    def login(self, usernameTextbox, pinTextbox, controller):
         username = usernameTextbox.get()
-        password = passwordTextbox.get()
+        pin = pinTextbox.get()
 
         # ----- Calculate deviceKey -----------
         f = open(modalias, "r")
         self.l.DeviceKey = hashlib.sha256(f.read()).digest()
         # ---------------------------------------
         
-        (valid, message) = self.checkCredentials(username, password, self.l.DeviceKey)
+        (valid, message) = self.checkCredentials(username, pin, self.l.DeviceKey)
         if valid:
             self.l.username = username
             # Manage directories
@@ -126,7 +147,7 @@ class Login(tk.Frame):
             tkMessageBox.showwarning("ERROR!", message)
 
         usernameTextbox.delete(0, "end")
-        passwordTextbox.delete(0, "end")
+        pinTextbox.delete(0, "end")
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -157,18 +178,18 @@ class Login(tk.Frame):
         usernameLabel["fg"] = 'Blue'
         usernameLabel.grid(row=9, column=0, pady=10, padx=10)
         # TODO - Limit numbers only
-        passwordLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
-        passwordLabel["bg"] = 'White'
-        passwordLabel["fg"] = 'Blue'
-        passwordLabel.grid(row=10, column=0, pady=10, padx = 10)
+        pinLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
+        pinLabel["bg"] = 'White'
+        pinLabel["fg"] = 'Blue'
+        pinLabel.grid(row=10, column=0, pady=10, padx = 10)
 
         usernameTextbox = tk.Entry(self)
         usernameTextbox.grid(row=9, column=1, columnspan=3)
-        passwordTextbox = tk.Entry(self, show="*")
-        passwordTextbox.grid(row=10, column=1, columnspan=3)
+        pinTextbox = tk.Entry(self, show="*")
+        pinTextbox.grid(row=10, column=1, columnspan=3)
 
         button = tk.Button(self, text="Login!",
-                           command=lambda: self.login(usernameTextbox, passwordTextbox, controller))
+                           command=lambda: self.login(usernameTextbox, pinTextbox, controller))
         button.grid(row=12, column=1, pady=10, padx=10, columnspan=2)
         button["fg"] = "Blue"
         button["bg"] = "White"
@@ -190,7 +211,8 @@ class List(tk.Frame):
             return
 
         payload = {"title": str(pos["id"]), "seed_only": '1'}
-        req = session.get('https://localhost/api/title', params=payload, stream=True, verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get('https://localhost/api/title', params=payload, stream=True,
+                          verify=Root_Certificate)
         if req.status_code != 200:
             tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
             return
@@ -204,7 +226,7 @@ class List(tk.Frame):
         payload = {"key": binascii.hexlify(seed_dev_key)}
         #print payload
         req = session.post('https://localhost/api/title/validate/' + str(pos["id"]), json=payload,
-                            verify=Root_Certificate, cert=Local_Certificate)
+                            verify=Root_Certificate)
         seed_dev_user_key = req.content
         print "Player key: ", binascii.hexlify(PlayerKey)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)
@@ -216,7 +238,7 @@ class List(tk.Frame):
         stream = None
         if not os.path.exists(videofile):
             stream = session.get('https://localhost/api/title/' + str(pos["id"]), stream=True,
-                                 verify=Root_Certificate, cert=Local_Certificate)
+                                 verify=Root_Certificate)
         Playback(videofile, FileKey, iv, stream)
         FileKey = None
         del FileKey
@@ -225,12 +247,12 @@ class List(tk.Frame):
 
     def logout(self, controller):
         self.username = ""
-        req = session.post('https://localhost/api/user/logout', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.post('https://localhost/api/user/logout', verify=Root_Certificate)
         self.fileListBox = None
         controller.show_frame(Login)
 
     def listContents(self):
-        req = session.get('https://localhost/api/title/user', verify=Root_Certificate, cert=Local_Certificate)
+        req = session.get('https://localhost/api/title/user', verify=Root_Certificate)
 
         self.titleids = json.loads(req.content)
         

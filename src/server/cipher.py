@@ -4,6 +4,10 @@ from hashlib import sha512, pbkdf2_hmac
 from Crypto import Random
 import OpenSSL
 from OpenSSL import crypto
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA
+from base64 import b64decode
 import os
 
 class Cipher:
@@ -13,6 +17,26 @@ class Cipher:
     def __init__(self):
         pass
 
+    def generateChallenge(self):
+        return Random.new().read(32)
+
+    def verifySignature(self, certificate_pem, original_data, signature):
+        b64 = certificate_pem.replace("\n","").\
+                replace("-----BEGIN PUBLIC KEY-----","").\
+                replace("-----END PUBLIC KEY-----","")
+        keyder = b64decode(b64)
+        keypub = RSA.importKey(keyder)
+        verifier = PKCS1_v1_5.new(keypub)
+        digest = SHA.new()
+        digest.update(original_data)
+        return verifier.verify(digest, signature)
+
+    def cleanReceivedPEM(self, pem):
+        pem = pem[:20] + pem[20:-20].replace(' ', '\n') + pem[-20:]
+        if pem[-1] != '\n':
+            pem += '\n'
+        return pem
+
     def generatePlayerHash(self, pkey):
         h = sha512()
         h.update(pkey)
@@ -20,7 +44,7 @@ class Cipher:
 
     def validateCertificate(self, certificate_pem, cidadao_name, autent_name):
         cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
-
+        print len(certificate_pem)
         chain = []
         try:
             autent_id = int(autent_name[-1])
