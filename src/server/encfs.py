@@ -1,57 +1,44 @@
 import subprocess
 import shutil
 import os
+import binascii
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-mount_dir = "/opt/iedcs-mount"
-store_dir = "/opt/iedcs-store"
+media_dir = "files"
+mount_dir = "mount"
+store_dir = "store"
 
-# --- Manage directories (all files in media folder) ---
+def insert_encrypted_file(filename, encfs_password):
+    title = binascii.hexlify(filename)
 
-#if not os.path.exists(mount_dir):
-#    os.makedirs(mount_dir)
+    mount_f = media_dir + os.path.sep + mount_dir + os.path.sep + title
+    store_f = media_dir + os.path.sep + store_dir + os.path.sep + title
 
-#if not os.path.exists(store_dir):
-#    os.makedirs(store_dir)
+    if not os.path.exists(mount_f):
+        os.makedirs(mount_f)
+    if not os.path.exists(store_f):
+        os.makedirs(store_f)
 
-#encfs_password = "abcdefgh12345"
+    subprocess.call(["expect", "encfs.exp", encfs_password, os.path.abspath(mount_f), os.path.abspath(store_f)])
+    subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S '+os.path.abspath(store_f)+' '+os.path.abspath(mount_f)])
+    shutil.copyfile(filename, mount_f + os.path.sep + filename)
+    subprocess.call(["fusermount", "-u", os.path.abspath(mount_f)])
 
-#for f in os.listdir(current_dir + os.path.sep + "media"):
-#    if not os.path.exists(mount_dir + os.path.sep + f):
-#        os.mkdir(mount_dir + os.path.sep + f)
-#    if not os.path.exists(store_dir + os.path.sep + f):
-#        os.mkdir(store_dir + os.path.sep + f)
-       
-#    mount_f = mount_dir + os.path.sep + f
-#    store_f = store_dir + os.path.sep + f
-#    subprocess.call(["expect", "encfs.exp", encfs_password, mount_f, store_f])
-       
-#    shutil.copyfile(current_dir + os.path.sep + "media" + os.path.sep + f, mount_f + os.path.sep + f)
+def mount_encrypted_file(filename, encfs_password):
+    title = binascii.hexlify(filename)
+    mount_f = media_dir + os.path.sep + mount_dir + os.path.sep + title
+    store_f = media_dir + os.path.sep + store_dir + os.path.sep + title
+    if not os.path.exists(mount_f + os.path.sep + filename):
+        subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S '+
+                         os.path.abspath(store_f)+' '+os.path.abspath(mount_f)])
+    return open(mount_f + os.path.sep + filename)
 
-#    subprocess.call(["umount", "-l", mount_f + os.path.sep + f])
+def unmount_encrypted_file(filename):
+    title = binascii.hexlify(filename)
+    mount_f = media_dir + os.path.sep + mount_dir + os.path.sep + title
+    subprocess.call(["fusermount", "-u", os.path.abspath(mount_f)])
 
-
-# --- Manage directory (when adding new file) ---
-file_path = "./media/sample2.mkv"
-title = "sample2.mkv"
-encfs_password = "abcdefgh12345"
-
-if not os.path.exists(mount_dir):
-    os.makedirs(mount_dir)
-if not os.path.exists(store_dir):
-    os.makedirs(store_dir)
-
-if not os.path.exists(mount_dir + os.path.sep + title):
-    os.mkdir(mount_dir + os.path.sep + title)
-if not os.path.exists(store_dir + os.path.sep + title):
-    os.mkdir(store_dir + os.path.sep + title)
-
-mount_f = mount_dir + os.path.sep + title
-store_f = store_dir + os.path.sep + title
-subprocess.call(["expect", "encfs.exp", encfs_password, mount_f, store_f])
-subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S /opt/iedcs-store/sample2.mkv/ /opt/iedcs-mount/sample2.mkv/'])
-
-shutil.copyfile(file_path, mount_f + os.path.sep + title)
-
-subprocess.call(["fusermount", "-u", mount_f])
-
+#insert_encrypted_file('sample.mkv', 'abc')
+#f = mount_encrypted_file('sample.mkv', 'abc')
+#print f.read()
+#f.close()
+#unmount_encrypted_file('sample.mkv')
