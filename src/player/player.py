@@ -9,6 +9,7 @@ import hashlib
 import binascii
 import json
 from PIL import ImageTk, Image
+import OpenSSL
 from cc_utils import cc_utils
 
 
@@ -24,6 +25,7 @@ modalias = "/sys/devices/virtual/dmi/id/modalias"
 logo = "./resources/images/logo.bmp"
 icon = "./resources/images/icon.bmp"
 cc_cert = None
+username = None
 
 player_filelist = ["resources/images/icon.bmp",
                     "resources/images/icon.png",
@@ -89,7 +91,7 @@ class Login(tk.Frame):
     l = None
 
     # ----- Change content for server interaction  -----
-    def checkCredentials(self, username, pin, DeviceKey):
+    def checkCredentials(self, pin, DeviceKey):
         cc = cc_utils()
         (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
         if status != "Success":
@@ -111,14 +113,21 @@ class Login(tk.Frame):
 
         req = session.post("https://localhost/api/user/loginchallenge", json=payload, verify=Root_Certificate)
         if req.status_code == 200:
-            return (True, "Logged in")
+            obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cc_cert)
+            names = obj.get_subject().get_components()
+            username = None
+            for (name, value) in names:
+                if 'CN' == name:
+                    username = value
+            if username is None:
+                return (False, "Your certificate doesn't have CN defined.", None)
+            return (True, "Logged in", username)
         else:
-            return (False, json.loads(req.content)['message'])
+            return (False, json.loads(req.content)['message'], None)
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
-    def login(self, usernameTextbox, pinTextbox, controller):
-        username = usernameTextbox.get()
+    def login(self, pinTextbox, controller):
         pin = pinTextbox.get()
 
         # ----- Calculate deviceKey -----------
@@ -126,7 +135,7 @@ class Login(tk.Frame):
         self.l.DeviceKey = hashlib.sha256(f.read()).digest()
         # ---------------------------------------
         
-        (valid, message) = self.checkCredentials(username, pin, self.l.DeviceKey)
+        (valid, message, username) = self.checkCredentials(pin, self.l.DeviceKey)
         if valid:
             self.l.username = username
             # Manage directories
@@ -134,15 +143,15 @@ class Login(tk.Frame):
             if not os.path.exists(path) or not os.path.isdir(path):
                 os.mkdir(path)
             # -- Check if user videos directory exists
-            if not os.path.exists(path + username) or not os.path.isdir(path + username):
-                os.mkdir(path + username)
+            if not os.path.exists(path + binascii.hexlify(username)) or \
+                    not os.path.isdir(path + binascii.hexlify(username)):
+                os.mkdir(path + binascii.hexlify(username))
 
             self.l.listContents()
             controller.show_frame(List)
         else:
             tkMessageBox.showwarning("ERROR!", message)
 
-        usernameTextbox.delete(0, "end")
         pinTextbox.delete(0, "end")
 
     def __init__(self, parent, controller):
@@ -172,20 +181,19 @@ class Login(tk.Frame):
         usernameLabel = tk.Label(self, text="Username: ", font=LARGE_FONT)
         usernameLabel["bg"] = 'White'
         usernameLabel["fg"] = 'Blue'
-        usernameLabel.grid(row=9, column=0, pady=10, padx=10)
-        # TODO - Limit numbers only
+        #usernameLabel.grid(row=9, column=0, pady=10, padx=10)
         pinLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
         pinLabel["bg"] = 'White'
         pinLabel["fg"] = 'Blue'
         pinLabel.grid(row=10, column=0, pady=10, padx = 10)
 
-        usernameTextbox = tk.Entry(self)
-        usernameTextbox.grid(row=9, column=1, columnspan=3)
+        #usernameTextbox = tk.Entry(self)
+        #usernameTextbox.grid(row=9, column=1, columnspan=3)
         pinTextbox = tk.Entry(self, show="*")
         pinTextbox.grid(row=10, column=1, columnspan=3)
 
         button = tk.Button(self, text="Login!",
-                           command=lambda: self.login(usernameTextbox, pinTextbox, controller))
+                           command=lambda: self.login(pinTextbox, controller))
         button.grid(row=12, column=1, pady=10, padx=10, columnspan=2)
         button["fg"] = "Blue"
         button["bg"] = "White"
@@ -233,7 +241,8 @@ class List(tk.Frame):
         print "File key:   ", binascii.hexlify(FileKey)
         print "Seed:       ", binascii.hexlify(seed)
 
-        videofile = path + self.username + os.path.sep + pos['title'] + ' - ' + pos['author']
+        videofile = path + binascii.hexlify(self.username) + os.path.sep + \
+                    binascii.hexlify(pos['title']+' - '+pos['author'])
         stream = None
         if not os.path.exists(videofile):
             stream = session.get('https://localhost/api/title/' + str(pos["id"]), stream=True,
