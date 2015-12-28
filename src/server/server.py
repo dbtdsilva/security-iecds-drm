@@ -218,11 +218,11 @@ class Title(object):
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
         iv = storage.get_file_iv(user_id, title)
-        print "Player key", binascii.hexlify(player_key)
-        print "User key: ", binascii.hexlify(user_key)
-        print "Device key: ", binascii.hexlify(device_key)
-        print "File Key: ", binascii.hexlify(file_key)
-        print "Seed: ", binascii.hexlify(seed)
+        #print "Player key", binascii.hexlify(player_key)
+        #print "User key: ", binascii.hexlify(user_key)
+        #print "Device key: ", binascii.hexlify(device_key)
+        #print "File Key: ", binascii.hexlify(file_key)
+        #print "Seed: ", binascii.hexlify(seed)
         def content():
             if seed_only:
                 yield seed + iv

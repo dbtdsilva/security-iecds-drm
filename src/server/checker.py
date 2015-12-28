@@ -42,18 +42,10 @@ def require(*conditions):
 def has_player_certificate():
     def check():
         if 'Ssl-Client-Cert' in cherrypy.request.headers:
-            #ec_de_autenticacao = crypto.load_certificate(
-            #        crypto.FILETYPE_PEM,
-            #        parse(cherrypy.request.headers['Ssl-Client-Cert-Chain-0']))
-
-            #if Cipher().validateCertificate(parse(cherrypy.request.headers['Ssl-Client-Cert']),
-            #                        ec_de_autenticacao.get_issuer().commonName,
-            #                        cherrypy.request.headers['Ssl-Client-I-Dn-Cn']):
-            #    return (True, None)
-            #return (False, "Chain of certificates provided isn't valid")
-            return (True, None)
-        if 'Ssl-Client-Cert' in cherrypy.request.headers:
-            return (False, cherrypy.HTTPError(400, "Certificate provided isn't complete"))
+            if Cipher().validatePlayerCertificate(
+                    cipherLib.cleanReceivedPEM(cherrypy.request.headers['Ssl-Client-Cert'])):
+                return (True, None)
+            return (False, "Chain of certificates provided isn't valid")
         return (False, cherrypy.HTTPError(400, "Certificate wasn't provided"))
     return check
 

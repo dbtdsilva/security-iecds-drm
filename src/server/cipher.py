@@ -47,6 +47,23 @@ class Cipher:
         h.update(pkey)
         return h.digest()
 
+    def validatePlayerCertificate(self, certificate_pem):
+        cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
+        try:
+            store = crypto.X509Store()
+
+            f = open(os.path.join(os.getcwd(), "certificates", "rootCA", "Security_P3G1_Root.crt"), 'r')
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+            f.close()
+
+            store.add_cert(cert)
+            store_ctx = crypto.X509StoreContext(store, cert_obj)
+            if store_ctx.verify_certificate() == None:
+                return True
+        except Exception:
+            return False
+        return False
+
     def validateCertificate(self, certificate_pem, cidadao_name, autent_name):
         cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
         chain = []
