@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 sudo apt-get install postgresql postgresql-contrib postgresql-client pgadmin3 postgresql-server-dev-9.4 \
 	python-dev libgeoip-dev libffi-dev npm curl python python-pip apache2
-curl ftp://ftp.videolan.org/pub/debian/videolan-apt.asc | sudo apt-key add -
-echo "deb ftp://ftp.videolan.org/pub/debian/stable ./" | sudo tee /etc/apt/sources.list.d/libdvdcss.list
-sudo apt-get update
-sudo apt-get install vlc vlc-data vlc-plugin-pulse browser-plugin-vlc mplayer2 
+#curl ftp://ftp.videolan.org/pub/debian/videolan-apt.asc | sudo apt-key add -
+#echo "deb ftp://ftp.videolan.org/pub/debian/stable ./" | sudo tee /etc/apt/sources.list.d/libdvdcss.list
+#sudo apt-get update
+#sudo apt-get install vlc vlc-data vlc-plugin-pulse browser-plugin-vlc mplayer2 
 sudo apt-get install ubuntu-restricted-extras
 sudo -u postgres psql --command "CREATE USER docker WITH SUPERUSER PASSWORD '7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm';"
 sudo -u postgres createdb -O docker security
@@ -34,3 +34,5 @@ sudo cp src/server/certificates/ssl/Security_P3G1_SSL_key.pem /etc/ssl/private/
 sudo service apache2 restart
 cd src/player
 sudo apt-get install python-tk python-imaging-tk
+cd ../..
+sudo docker build -t ubuntu/iecds-server .
