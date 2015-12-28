@@ -342,7 +342,6 @@ As we can see from the diagram above:
 The communication between player and server is done using sessions. Before the player starts communicating with the server, a session is created with the \emph{requests} package for Python.
 From now on, all communications will be performed over this session.
 
-%TODO 
 \section{Purchasing the file on the web page}
 This operation requires the user to be logged in already and is only available in the web page.
 
@@ -450,6 +449,27 @@ The policy validation is performed when the player tries to download the file (o
 \item Limit the time of the day the file can be reproduced (the time calculation is done server side).
 \item Limit the number of times the file can be reproduced (there is a counter on the number of file plays).
 \end{enumerate}
+
+\chapter{Secure file storage}
+To have a secure file storage for the server stored in the server side, we decided to take the approach of the file system level security presented in the practical classes. Even though the attacker will have access to the metadata of the files and the file system structure, this information is mostly available on the WebPage for any person to browse, so, there is no need to use this step.
+\newline
+To achieve this secure storage, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted on unmount.
+\newline
+It was our goal to automate this whole process and so, we created a script in \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}.
+
+\section{Structure}
+We defined the structure of our file system taking into account that each user should have access what he/she needs, and nothing more.
+\newline
+For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only this file is decrypted when the access to it is required.
+
+\section{Files}
+
+\chapter{Confinment}
+
+\chapter{System vulnerabilities review}
+\section{SQL Injection}
+\section{Buffer Overflow}
+\section{Cross scripting}
 
 \chapter{Installation}
 
