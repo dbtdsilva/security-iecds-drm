@@ -91,9 +91,9 @@ class Login(tk.Frame):
     l = None
 
     # ----- Change content for server interaction  -----
-    def checkCredentials(self, pin, DeviceKey):
+    def checkCredentials(self, DeviceKey):
         cc = cc_utils()
-        (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
+        (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE")
         if status != "Success":
             return (False, status)
 
@@ -101,9 +101,9 @@ class Login(tk.Frame):
         if req.status_code != 200:
             return (False, json.loads(req.content)['message'])
         salt = req.content
-        signature = cc.sign(salt, str(pin))
+        signature = cc.sign(salt)
 
-        (ec_aut, cidadao_cn) = cc.get_subca_common_names(str(pin))
+        (ec_aut, cidadao_cn) = cc.get_subca_common_names()
         # cert_pem=cert_pem, sign=sign, cidadao_cn=cidadao_cn, ec_aut=ec_aut, key=dkey
         payload = {"cert_pem": binascii.hexlify(cc_cert),
                    "sign": binascii.hexlify(signature),
@@ -127,15 +127,13 @@ class Login(tk.Frame):
 
     # ----- ----- ----- ----- ----- ----- ----- ----- --
 
-    def login(self, pinTextbox, controller):
-        pin = pinTextbox.get()
-
+    def login(self, controller):
         # ----- Calculate deviceKey -----------
         f = open(modalias, "r")
         self.l.DeviceKey = hashlib.sha256(f.read()).digest()
         # ---------------------------------------
         
-        (valid, message, username) = self.checkCredentials(pin, self.l.DeviceKey)
+        (valid, message, username) = self.checkCredentials(self.l.DeviceKey)
         if valid:
             self.l.username = username
             # Manage directories
@@ -152,7 +150,6 @@ class Login(tk.Frame):
         else:
             tkMessageBox.showwarning("ERROR!", message)
 
-        pinTextbox.delete(0, "end")
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -185,15 +182,15 @@ class Login(tk.Frame):
         pinLabel = tk.Label(self, text="Citizen Card Pin: ", font=LARGE_FONT)
         pinLabel["bg"] = 'White'
         pinLabel["fg"] = 'Blue'
-        pinLabel.grid(row=10, column=0, pady=10, padx = 10)
+        #pinLabel.grid(row=10, column=0, pady=10, padx = 10)
 
         #usernameTextbox = tk.Entry(self)
         #usernameTextbox.grid(row=9, column=1, columnspan=3)
         pinTextbox = tk.Entry(self, show="*")
-        pinTextbox.grid(row=10, column=1, columnspan=3)
+        #pinTextbox.grid(row=10, column=1, columnspan=3)
 
-        button = tk.Button(self, text="Login!",
-                           command=lambda: self.login(pinTextbox, controller))
+        button = tk.Button(self, text="Login using Portuguese Citizen Card!",
+                           command=lambda: self.login(controller))
         button.grid(row=12, column=1, pady=10, padx=10, columnspan=2)
         button["fg"] = "Blue"
         button["bg"] = "White"
