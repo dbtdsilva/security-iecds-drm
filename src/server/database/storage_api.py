@@ -157,7 +157,7 @@ class Storage(object):
         query = self.session.query(Player).filter_by(playerkey=playerkey).all()
         return len(query) != 0
 
-    def get_tile_details(self, title_id):
+    def get_title_details(self, title_id):
         query = self.session.query(File).filter_by(id=title_id).all()
         if len(query) != 1:
             return None

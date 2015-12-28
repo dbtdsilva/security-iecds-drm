@@ -3,6 +3,7 @@ from Crypto.Cipher import AES
 from hashlib import sha512, pbkdf2_hmac
 from Crypto import Random
 import OpenSSL
+from OpenSSL._util import lib as cryptolib
 from OpenSSL import crypto
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.PublicKey import RSA
@@ -21,7 +22,11 @@ class Cipher:
         return Random.new().read(32)
 
     def verifySignature(self, certificate_pem, original_data, signature):
-        b64 = certificate_pem.replace("\n","").\
+        cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
+        bio = crypto._new_mem_buf()
+        cryptolib.PEM_write_bio_PUBKEY(bio, cert_obj.get_pubkey()._pkey)
+        pkey_pem = crypto._bio_to_string(bio)
+        b64 = pkey_pem.replace("\n","").\
                 replace("-----BEGIN PUBLIC KEY-----","").\
                 replace("-----END PUBLIC KEY-----","")
         keyder = b64decode(b64)
@@ -44,7 +49,6 @@ class Cipher:
 
     def validateCertificate(self, certificate_pem, cidadao_name, autent_name):
         cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate_pem)
-        print len(certificate_pem)
         chain = []
         try:
             autent_id = int(autent_name[-1])

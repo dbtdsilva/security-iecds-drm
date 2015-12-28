@@ -5,6 +5,7 @@ import datetime
 from OpenSSL import crypto
 from cipher import Cipher
 import binascii
+from copy import deepcopy
 
 SESSION_USERID = 'userid'
 SESSION_DEVICE = 'device_key'
@@ -58,36 +59,9 @@ def has_player_certificate():
 
 def challenge_salt_exists():
     def check():
-        return cherrypy.session.get(SESSION_CHALLENGE_SALT) is not None
-    return check
-
-def challenge_args():
-    def check():
-        content_length = int(cherrypy.request.headers['Content-Length'])
-        try:
-            raw_body = cherrypy.request.body.read(content_length)
-            body = json.loads(raw_body)
-            if 'cert_pem' not in body or 'sign' not in body or\
-                    'cidadao_cn' not in body or 'ec_aut' not in body or\
-                    'key' not in body:
-                raise Exception
-        except Exception:
-            return (False, cherrypy.HTTPError(400, "Missing parameters"))
-
-        if len(body['key']) != Cipher().BLOCK_SIZE * 2:
-            return (False, cherrypy.HTTPError(400, "Key is not valid"))
-        return (True, None)
-    return check
-
-def challenge_valid_certificate():
-    def check():
-        content_length = int(cherrypy.request.headers['Content-Length'])
-        raw_body = cherrypy.request.body.read(content_length)
-        body = json.loads(raw_body)
-        cert_pem = binascii.unhexlify(body['cert_pem'])
-        cidadao_cn = binascii.unhexlify(body['cidadao_cn'])
-        ec_aut = binascii.unhexlify(body['ec_aut'])
-        return Cipher.validateCertificate(cert_pem, cidadao_cn, ec_aut)
+        if cherrypy.session.get(SESSION_CHALLENGE_SALT) is not None:
+            return (True, None)
+        return (False, cherrypy.HTTPError("Must generate a challenge before validate"))
     return check
 
 def has_cc_certificate():

@@ -92,14 +92,10 @@ class Login(tk.Frame):
     def checkCredentials(self, username, pin, DeviceKey):
         cc = cc_utils()
         (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE", str(pin))
-        CC_Certificate = cc_cert
         if status != "Success":
             return (False, status)
 
-
-        payload = {"key": binascii.hexlify(DeviceKey)}
-        req = session.get('https://localhost/api/user/loginchallenge/', json=payload,
-                           verify=Root_Certificate)
+        req = session.get('https://localhost/api/user/loginchallenge/', verify=Root_Certificate)
         if req.status_code != 200:
             return (False, json.loads(req.content)['message'])
         salt = req.content
@@ -112,8 +108,8 @@ class Login(tk.Frame):
                    "cidadao_cn": binascii.hexlify(cidadao_cn),
                    "ec_aut": binascii.hexlify(ec_aut),
                    "key": binascii.hexlify(DeviceKey)}
-        
-        req = session.post("https://localhost/api/user/loginchallenge", params=payload, verify=Root_Certificate)
+
+        req = session.post("https://localhost/api/user/loginchallenge", json=payload, verify=Root_Certificate)
         if req.status_code == 200:
             return (True, "Logged in")
         else:
@@ -227,6 +223,9 @@ class List(tk.Frame):
         #print payload
         req = session.post('https://localhost/api/title/validate/' + str(pos["id"]), json=payload,
                             verify=Root_Certificate)
+        if req.status_code != 200:
+            tkMessageBox.showwarning("Oops!", json.loads(req.content)['message'])
+            return
         seed_dev_user_key = req.content
         print "Player key: ", binascii.hexlify(PlayerKey)
         FileKey = AES.new(PlayerKey, AES.MODE_ECB).encrypt(seed_dev_user_key)

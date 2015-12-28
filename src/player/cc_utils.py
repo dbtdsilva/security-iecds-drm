@@ -48,12 +48,14 @@ class cc_utils():
         return ("Success", pem)
 
     def get_subca_common_names(self, pin):
-        subca = self.get_cert('AUTHENTICATION SUB CA', pin)
+        subca = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                self.get_cert('AUTHENTICATION SUB CA', pin)[1])
         subca_cn = None
         for (name, value) in subca.get_subject().get_components():
             if name == 'CN':
                 subca_cn = value
-        rootca = self.get_cert('ROOT CA', pin)
+        rootca = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                self.get_cert('ROOT CA', pin)[1])
         rootca_cn = None
         for (name, value) in rootca.get_subject().get_components():
             if name == 'CN':

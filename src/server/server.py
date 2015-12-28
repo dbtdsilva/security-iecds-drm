@@ -13,7 +13,7 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     SESSION_USERID, jsonify_error, SESSION_PLAYER, is_player, check_policies_and_refresh, \
     SESSION_PLAYER_SALT, player_salt, SESSION_PLAYER_INTEGRITY, player_integrity, \
     has_cc_certificate, has_player_certificate, SESSION_CHALLENGE_SALT, SESSION_CHALLENGE_VALID, \
-    challenge_salt_exists, challenge_args, challenge_valid_certificate
+    challenge_salt_exists
 from cipher import Cipher
 
 BLOCK_SIZE = 32
@@ -61,7 +61,7 @@ class API(object):
 class User(object):
     def __init__(self):
         self.login = UserLogin()
-        self.loginChallenge = UserLoginChallenge()
+        self.loginchallenge = UserLoginChallenge()
         self.logout = UserLogout()
 
 class UserLoginChallenge(object):
@@ -76,16 +76,33 @@ class UserLoginChallenge(object):
     #                       cidadao_cn=cidadao_cn, ec_aut=ec_aut, key=dkey}
     # Details: Creates a session
     @cherrypy.tools.json_out()
-    @require(challenge_args(), challenge_salt_exists(), challenge_valid_certificate())
+    @require(challenge_salt_exists())
     def POST(self):
         salt = cherrypy.session[SESSION_CHALLENGE_SALT]
         cherrypy.session[SESSION_CHALLENGE_SALT] = None
 
-        cert_pem = binascii.unhexlify(body['cert_pem'])
-        sign = binascii.unhexlify(body['sign'])
+        try:
+            content_length = int(cherrypy.request.headers['Content-Length'])
+            raw_body = cherrypy.request.body.read(content_length)
+            body = json.loads(raw_body)
 
-        if cipherLib.verifySignature(cert_pem, salt, sign):
-            obj = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_pem)
+            cert_pem = binascii.unhexlify(body['cert_pem'])
+            sign = binascii.unhexlify(body['sign'])
+            cidadao_cn = binascii.unhexlify(body['cidadao_cn'])
+            ec_aut = binascii.unhexlify(body['ec_aut'])
+            dkey = binascii.unhexlify(body['key'])
+        except Exception:
+            raise cherrypy.HTTPError(400, "Parameters with wrong format")
+
+        if not cipherLib.validateCertificate(cert_pem, cidadao_cn, ec_aut):
+            raise cherrypy.HTTPError(400, "Certificate couldn't be validated")
+
+        if not cipherLib.verifySignature(cert_pem, salt, sign):
+            raise cherrypy.HTTPError(400, "User challenge failed")
+
+        user_id = storage.get_user_identifier(cert_pem)
+        if user_id == None:
+            obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_pem)
             names = obj.get_subject().get_components()
             username = None
             for (name, value) in names:
@@ -93,28 +110,20 @@ class UserLoginChallenge(object):
                     username = value
             if username is None:
                 raise cherrypy.HTTPError(400, "Certificate doesn't have CN property defined")
-
+            storage.create_new_user(username, cert_pem)
             user_id = storage.get_user_identifier(cert_pem)
-            if user_id == None:
-                storage.create_new_user(username, cert_pem)
-                user_id = storage.get_user_identifier(cert_pem)
 
-            # Associate device to the user
-            content_length = int(cherrypy.request.headers['Content-Length'])
-            raw_body = cherrypy.request.body.read(content_length)
-            body = json.loads(raw_body)
-            cherrypy.session[SESSION_DEVICE] = binascii.unhexlify(body['key'])
-            storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
+        # Associate device to the user
+        cherrypy.session[SESSION_DEVICE] = dkey
+        storage.associate_device_to_user(user_id, cherrypy.session.get(SESSION_DEVICE))
 
-            if SESSION_PLAYER in cherrypy.session:
-                storage.associate_player_to_user(user_id, cherrypy.session[SESSION_PLAYER])
+        if SESSION_PLAYER in cherrypy.session:
+            storage.associate_player_to_user(user_id, cherrypy.session[SESSION_PLAYER])
 
-            cherrypy.session[SESSION_USERID] = user_id
-            cherrypy.session[SESSION_CHALLENGE_VALID] = True
-            cherrypy.response.status = 200
-            return {"status": 200, "message": "User challenge validated with success."}
-        else:
-            raise cherrypy.HTTPError(400, "User challenge failed.")
+        cherrypy.session[SESSION_USERID] = user_id
+        cherrypy.session[SESSION_CHALLENGE_VALID] = True
+        cherrypy.response.status = 200
+        return {"status": 200, "message": "User challenge validated with success."}
 
 class UserLogin(object):
     exposed = True
@@ -124,7 +133,7 @@ class UserLogin(object):
     @cherrypy.tools.json_out()
     @require(has_cc_certificate())
     def POST(self):
-        client_cert_pem = cherrypy.request.headers['Ssl-Client-Cert']
+        client_cert_pem = cipherLib.cleanReceivedPEM(cherrypy.request.headers['Ssl-Client-Cert'])
         name = cherrypy.request.headers['Ssl-Client-S-Dn-Cn']
 
         user_id = storage.get_user_identifier(client_cert_pem)
@@ -176,7 +185,7 @@ class Title(object):
     # Requires login
     # Details: Downloads a specific title encrypted (must have been bought
     # before)
-    @require(logged(), has_cc_certificate(), device_key(), is_player(), player_integrity())
+    @require(logged(), device_key(), is_player(), player_integrity())
     def GET(self, title, seed_only = False):
         cherrypy.response.headers['Content-Type'] = 'application/json'
         if seed_only == '1' or seed_only == 'True' or seed_only == 'true':
@@ -185,7 +194,7 @@ class Title(object):
         if not storage.user_has_title(user_id, title):
             raise cherrypy.HTTPError(400, "Current user didn't buy this title")
         file_key = storage.get_file_key(user_id, title)
-        user_key = storage.get_user_details(user_id).userkey
+        user_key = storage.get_user_detail(user_id).userkey
         device_key = cherrypy.session.get(SESSION_DEVICE)
         player_key = '\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c'
 
@@ -209,16 +218,16 @@ class Title(object):
             seed = AES.new(device_key, AES.MODE_ECB).decrypt(seed_dev_key)
 
         iv = storage.get_file_iv(user_id, title)
-        #print "Player key", binascii.hexlify(player_key)
-        #print "User key: ", binascii.hexlify(user_key)
-        #print "Device key: ", binascii.hexlify(device_key)
-        #print "File Key: ", binascii.hexlify(file_key)
-        #print "Seed: ", binascii.hexlify(seed)
+        print "Player key", binascii.hexlify(player_key)
+        print "User key: ", binascii.hexlify(user_key)
+        print "Device key: ", binascii.hexlify(device_key)
+        print "File Key: ", binascii.hexlify(file_key)
+        print "Seed: ", binascii.hexlify(seed)
         def content():
             if seed_only:
                 yield seed + iv
                 return
-            f = open("media/" + storage.get_tile_details(title).path, 'r')
+            f = open("media/" + storage.get_title_details(title).path, 'r')
             aes = AES.new(file_key, AES.MODE_CBC, iv)
 
             yield seed + iv
@@ -240,7 +249,7 @@ class Title(object):
     # Requires login
     # Details: Buys a specific title
     @cherrypy.tools.json_out()
-    @require(logged(), has_cc_certificate())
+    @require(logged())
     def POST(self, title):
         storage.buy_file(cherrypy.session.get(SESSION_USERID), title)
         return {"status": 200, "message": "Title was successfully purchased"}
@@ -252,7 +261,7 @@ class TitleValidate(object):
     # Requires login
     # Details: Sends the current cipher result key to the server to process
     # with user key
-    @require(logged(), has_cc_certificate(), is_player(), device_key(), player_integrity())
+    @require(logged(), is_player(), device_key(), player_integrity())
     def POST(self, title):
         user_id = cherrypy.session.get(SESSION_USERID)
         if not storage.user_has_title(user_id, title):
@@ -268,7 +277,7 @@ class TitleValidate(object):
         except Exception:
             raise cherrypy.HTTPError(400, "Current key wasn't provided")
 
-        user_key = storage.get_user_details(user_id).userkey
+        user_key = storage.get_user_detail(user_id).userkey
         next_key = AES.new(user_key, AES.MODE_ECB).encrypt(binascii.unhexlify(key_val))
 
         device_key = cherrypy.session.get(SESSION_DEVICE)
@@ -284,7 +293,7 @@ class TitleUser(object):
     # Requires login
     # Details: Gets all titles that the user bought
     @cherrypy.tools.json_out()
-    @require(logged(), has_cc_certificate())
+    @require(logged())
     def GET(self):
         return storage.get_user_file_list(cherrypy.session.get(SESSION_USERID))
 
@@ -295,7 +304,7 @@ class TitleUserAll(object):
     # Requires login
     # Details: Gets all titles that the user bought
     @cherrypy.tools.json_out()
-    @require(logged(), has_cc_certificate())
+    @require(logged())
     def GET(self):
         return storage.get_user_file_list(cherrypy.session.get(SESSION_USERID), True)
 
@@ -353,15 +362,6 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
-    #key = "certificates/ssl/Security_P3G1_SSL_key.pem"
-    #cert = "certificates/ssl/Security_P3G1_SSL.crt"
-    #ca = "/etc/ssl/certs/Baltimore_CyberTrust_Root.pem"
-    #cherrypy.server.ssl_module = 'custom-ssl'
-    #cherrypy.server.ssl_certificate = cert
-    #cherrypy.server.ssl_private_key = key
-    #cherrypy.server.thread_pool = 100
-    #cherrypy.server.ssl_ca_certificate = root
-    #cherrypy.server.ssl_certificate_chain = ca
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.socket_port = 8888
 

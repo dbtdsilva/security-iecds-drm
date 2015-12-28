@@ -9,10 +9,10 @@ class Playback:
             line = stdout.readline()
             if line == '':
                 break
+            print "MPlayer: ", line.rstrip()
             if "xcb_window window error: X server failure" in line.rstrip():
                 self.running = False
                 player.terminate()
-            print "Player: ", line.rstrip()
 
     def __init__(self, path, FileKey, iv, stream=None):
         self.running = True
@@ -22,16 +22,16 @@ class Playback:
         else:
             handle = open(path, 'w')
 
-        cmdline = ['cvlc','--autoscale','--play-and-exit','--demux','avformat','-']
-        player = subprocess.Popen(cmdline, bufsize = 0, stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        player = subprocess.Popen(["mplayer","-"],
+                                  stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                                  )
 
         thread = threading.Thread(target=self.read_stdout, args=(player.stdout, player))
         thread.start()
 
         if stream is not None:
             cryptoHeader = stream.raw.read(BLOCK_SIZE + AES.block_size)
-            seed = cryptoHeader[:BLOCK_SIZE]
             iv = cryptoHeader[BLOCK_SIZE:]
         aes = AES.new(FileKey, AES.MODE_CBC, iv)
         FileKey = None
@@ -57,9 +57,11 @@ class Playback:
             try:
                 player.stdin.write(data)
             except:
-                print "VLC was closed."
+                print "MPlayer was closed."
                 break
 
-
+        print "Waiting for player to end.."
         handle.close()
         player.terminate()
+        player.wait()
+        print "Player ended and now closing window"
