@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 sudo apt-get install -y postgresql postgresql-contrib postgresql-client pgadmin3 postgresql-server-dev-9.4 \
-	python-dev libgeoip-dev libffi-dev curl python apache2 mplayer2 expect npm python-pip
+	python-dev libgeoip-dev libffi-dev curl python apache2 mplayer2 expect npm python-pip docker
 sudo -u postgres psql --command "CREATE USER docker WITH SUPERUSER PASSWORD '7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm';"
 sudo -u postgres createdb -O docker security
 sudo pip install --upgrade cffi
@@ -9,7 +9,9 @@ sudo mkdir /usr/local/share/ca-certificates/extra
 sudo cp src/server/certificates/rootCA/Security_P3G1_Root.crt /usr/local/share/ca-certificates/extra/
 sudo update-ca-certificates --fresh
 cd src/server/static/master
-sudo apt-get install -y nodejs-legacy
+sudo npm install -g n
+sudo n stable
+sudo npm install -g npm@latest
 sudo npm install
 sudo npm install -g bower
 sudo npm install -g gulp
