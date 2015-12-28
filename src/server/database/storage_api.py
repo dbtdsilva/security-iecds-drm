@@ -125,9 +125,6 @@ class Storage(object):
             flist += [ tmp ]
         return flist
 
-    #def is_user_valid(self, username):
-    #    return len(self.session.query(User).filter_by(username=username).all()) == 1
-
     def get_user_identifier(self, pem):
         query = self.session.query(User).filter_by(hash=Cipher.generateUserHash(pem)).all()
         if len(query) != 1:
