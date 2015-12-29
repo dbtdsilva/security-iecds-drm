@@ -10,5 +10,5 @@ send $password\r
 expect "Verify Encfs Password: "
 send $password\r
 wait
-spawn fusermount -u $mount
-wait
+#spawn fusermount -u $mount
+#wait

@@ -26,8 +26,10 @@ from sqlalchemy.orm import sessionmaker, aliased
 import datetime
 from geoip import geolite2
 import httpagentparser
+from encfs import insert_encrypted_file
 
 log = logging.getLogger('storage')
+encfs_mpassword = None
 
 class Storage(object):
     def __init__(self, DATABASE_URI):
@@ -44,9 +46,14 @@ class Storage(object):
         self.session.commit()
 
     def create_file(self, author, title, category, production_date, path):
+        if encfs_mpassword == None:
+            print "You're not able to create any files"
+            return
         f = File(author=author, title=title, category=category, production_date=production_date, path=path)
         self.session.add(f)
         self.session.commit()
+
+        insert_encrypted_file(f, encfs_mpassword)
 
     def get_file_list(self):
         return self.session.query(File).all()
@@ -302,10 +309,14 @@ class Storage(object):
             self.session.commit()
 
 BASE_DIR = os.path.dirname(__file__)
-#DATABASE_URI = 'sqlite:///%s' % os.path.join(BASE_DIR, 'storage_main.sqlite3')
 DATABASE_URI = 'postgresql://docker:7yl74Zm4ZpcEsPMilEqUa4vNuRt7jvzm@localhost:5432/security'
 
 if __name__ == "__main__":
+    import shutil
+    if os.path.exists("../files"):
+        shutil.rmtree("../files")
+    from Crypto.Hash import SHA256
+    encfs_mpassword = SHA256.new("185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969").hexdigest()
     if database_exists(DATABASE_URI):
         drop_database(DATABASE_URI)
     create_database(DATABASE_URI)
@@ -313,9 +324,6 @@ if __name__ == "__main__":
 storage = Storage(DATABASE_URI)
 
 if __name__ == "__main__":
-    import OpenSSL
-    #storage.create_user('taniaalves')
-    #storage.create_user('diogosilva')
     storage.create_player('\xb8\x8b\xa6Q)c\xd6\x14/\x9dpxc]\xff\x81L\xd2o&\xc2\xd1\x94l\xbf\xa6\x1d\x8fA\xdee\x9c',
                            open('../certificates/players/Security_P3G1_Player_1.crt', 'r').read(),
                            ["../player/resources/images/icon.bmp",

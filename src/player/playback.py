@@ -2,6 +2,7 @@ import subprocess
 from Crypto.Cipher import AES
 BLOCK_SIZE = 32
 import threading
+import signal
 
 class Playback:
     def read_stdout(self, stdout, player):
@@ -50,6 +51,7 @@ class Playback:
                 encData = handle.read(channelFragmentation)
             else:
                 encData = stream.raw.read(channelFragmentation)
+                print len(encData)
                 handle.write(encData)
 
             if len(encData) == 0:
@@ -61,7 +63,17 @@ class Playback:
                 break
 
         print "Waiting for player to end.."
-        handle.close()
-        player.terminate()
-        player.wait()
+
+        def _handle_timeout(signum, frame):
+            player.kill()
+
+        signal.signal(signal.SIGALRM, _handle_timeout)
+        signal.alarm(3)
+        try:
+            handle.close()
+            player.terminate()
+            player.wait()
+        finally:
+            signal.alarm(0)
+
         print "Player ended and now closing window"

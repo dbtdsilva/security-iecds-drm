@@ -1,8 +1,7 @@
 import subprocess
-import shutil
 import os
-import binascii
 import threading
+from Crypto.Hash import SHA256, SHA512
 
 media_dir = "files"
 mount_dir = "mount"
@@ -13,10 +12,22 @@ class EncryptedFileSystemMedia:
         self.requests = {}
         self.access = threading.Lock()
 
-    def mount_encrypted_file(self, filename, encfs_password):
+    def mount_encrypted_file(self, file, master_password):
         self.access.acquire()
+        filename = file.path
+        obj = SHA256.new()
+        obj.update(file.author)
+        obj.update(filename)
+        obj.update(file.title)
+        title = obj.hexdigest()
+
+        obj_pass = SHA512.new()
+        obj_pass.update(file.author)
+        obj_pass.update(master_password)
+        obj_pass.update(file.title)
+        encfs_password = obj_pass.hexdigest()
         try:
-            title = binascii.hexlify(filename)
+
             mount_f = media_dir + os.path.sep + mount_dir + os.path.sep + title
             store_f = media_dir + os.path.sep + store_dir + os.path.sep + title
 
@@ -29,7 +40,7 @@ class EncryptedFileSystemMedia:
             return None
         finally:
             if filename not in self.requests:
-                self.requests[filename] = 0
+                self.requests[filename] = 1
             else:
                 self.requests[filename] += 1
             self.access.release()
@@ -38,11 +49,13 @@ class EncryptedFileSystemMedia:
         self.access.acquire()
 
         try:
-            title = binascii.hexlify(filename)
+            obj = SHA256.new()
+            obj.update(filename)
+            title = obj.hexdigest()
             mount_f = media_dir + os.path.sep + mount_dir + os.path.sep + title
             if filename in self.requests:
                 self.requests[filename] -= 1
                 if self.requests[filename] == 0:
-                    subprocess.call(["fusermount", "-u", os.path.abspath(mount_f)])
+                    subprocess.call(["fusermount","-z","-u",os.path.abspath(mount_f)])
         finally:
             self.access.release()

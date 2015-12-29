@@ -15,8 +15,10 @@ from checker import require, logged, device_key, SESSION_DEVICE, \
     has_cc_certificate, has_player_certificate, SESSION_CHALLENGE_SALT, SESSION_CHALLENGE_VALID, \
     challenge_salt_exists
 from cipher import Cipher
+from encfs import EncryptedFileSystemMedia
 
 BLOCK_SIZE = 32
+encfs = EncryptedFileSystemMedia()
 cipherLib = Cipher()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,6 +52,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # POST /api/valplayer/<hash>
 # Details: Check if hash on argument is valid
 
+encfs_mpassword = None
 
 class API(object):
     def __init__(self):
@@ -227,7 +230,11 @@ class Title(object):
             if seed_only:
                 yield seed + iv
                 return
-            f = open("media/" + storage.get_title_details(title).path, 'r')
+
+            title_file = storage.get_title_details(title)
+            filename = title_file.path
+            f = encfs.mount_encrypted_file(title_file, encfs_mpassword)
+            #f = open("media/" + filename, 'r')
             aes = AES.new(file_key, AES.MODE_CBC, iv)
 
             yield seed + iv
@@ -242,6 +249,7 @@ class Title(object):
                 dataEncrypted = aes.encrypt(data)
                 yield dataEncrypted
                 data = f.read(channel_fragmentation)
+            encfs.unmount_encrypted_file(filename)
         return content()
     GET._cp_config = {'response.stream': True}
 
@@ -352,6 +360,8 @@ class Root(object):
     pass
 
 if __name__ == '__main__':
+    from Crypto.Hash import SHA256
+    encfs_mpassword = SHA256.new("185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969").hexdigest()
     RESTopts = {
 	'tools.proxy.on': True,
         'tools.sessions.on': True,
