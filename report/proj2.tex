@@ -285,9 +285,10 @@ All pre-validations of the services are in the \emph{checker.py} file that imple
 \subsection{Player - Server}
 The server-player interaction takes advantage of 7 different types of requests to the server:
 \begin{enumerate}
-\item GET /api/user/loginchallenge allows the player to get a challenge to initiate a session in the server, logging in the user. The server generates a random byte array and returns it to the user to be signed, confirming the user's identity.
-\item POST  /api/user/loginchallenge is sent with the following payload in json format: user PEM certificate, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
-    After the certificate is validated, this information will be associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides these parameters, the player also sends the Device Key that it calculated.
+\item GET /api/user/loginchallenge allows the player to get a challenge to initiate a session in the server, logging in the user. The server generates a random byte array and returns it to the user to be signed, confirming the user's identity. It requires the portuguese citizen to be able to use this function.
+\item POST  /api/user/loginchallenge is sent with the following payload in json format: portuguese citizen auhentication certificate in PEM format, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
+    After the certificate is validated, this information will be associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides these parameters, the player also sends the Device Key that it calculated.\\
+    If the user fails to validate the challenge, it will need to request a new challenge.
 \item POST  /api/user/logout that removes any association in the server to the session\_id (this operation requires a previous login, that is, the username must be associated with a session\_id before hand).
 \item GET   /api/title/user/ that lists all the titles that the user purchased earlier (this operation also and only requires that the user is logged).
 \item GET   /api/valplayer/ that returns a SALT which allows the server to perform the player's integrity validation.
@@ -335,7 +336,7 @@ As we can see from the diagram above:
   \item The player starts by generating the Device Key for the device. \label{sec:diagfile}
   \item The player requests a challenge to the server.
   \item The player sends the response to the server containing generated Device Key, the user authentication certificate, the certificates common name, the certificate's root common name and the data received earlier from the server signed with the user's private key. 
-  \item The server checks the certificate that the user sent and accesses the database to verify the information it received associating the Device Key to the user.
+  \item The server checks the certificate that the user sent, verifies the signed challenge and accesses the database to verify the information it received associating the Device Key to the user and the player to the user if he used a player to log in.
   \item The server sends the response that signals the operation was completed successfully.
 \end{enumerate}
 
@@ -427,7 +428,24 @@ We have generated a Root Certificate Authority (CA) that is the issuer of all th
 \end{enumerate}
 We also thought of the URI to a CRL that isn't being used at the moment, however, can be used later on to revoke certificates.
 
-\section{CherryPy Server SSL Certificate}
+\section{Apache Rewrite}
+
+O apache é usado para verificar a validade dos certificados, neste caso, para os seguintes paths:
+\begin{enumerate}
+\item /api/user/login que faz require de um certificado valido do cartão de cidadão
+\item /api/valplayer que faz require de um certificado do Player
+\end{enumerate}
+
+Todos os pedidos se o Apache os validar, são enviados para o servidor de CherryPy que vai verificar a cadeia de certificados caso necessário, por exemplo, para o path /api/valplayer ele verifica se a cadeia de certificados está de acordo com o Root CA que gerou os certificados dos players. Se for do cartão de cidadão é carregada toda a cadeia e verificada se é válida.\\
+Se for do path /api/user/loginchallenge para além da cadeia ainda é verificado se o challenge assinado está correcto.\\
+
+O CherryPy trabalha na porta 8888 que é para lá que o Apache redirecciona o tráfico, apesar de este proxy correr dentro do servidor, decidiu usar SSL Socket no Proxy na mesma.
+
+\section{Citizen Authentication Certificate}
+
+Estamos a usar este certificado para validar que é um certificado válido e verificar o signed challenge, para assinar o challenge estamos a usar a chave privada CITIZEN AUTHENTICATION KEY fazendo um pedido ao cartão de cidadão para assinar o challenge, do lado do servidor é extraida a chave publica do certificado e verificada a assinatura, para além que também se valida a cadeia do certificado.
+
+\section{Apache Server SSL Certificate}
 
 For the CherryPy, a certificate issued by the Root CA had to be generated so that the chain of certificates can be guaranteed to work for any player, logged in user or browser. The CherryPy SSL adapter also had to be altered so that it supported client certificates (if present), for reasons that will be explained later.
 
@@ -455,16 +473,32 @@ To have a secure file storage for the server media files, we decided to take the
 \newline
 To achieve this secure storage feature, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted.
 \newline
-It was our goal to automate this whole process and so, we created a script in \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}.
+It was our goal to automate this whole process and so, we created a script using \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}, that script is inside src/server/database/encfs.exp, it is used to create an encfs for a specific file.
 \newline
 We defined the structure of our file system taking into account that each user should have access what he/she needs, and nothing more.
 \newline
-For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required.
+For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required, it will mount the specific file using \emph{encfs} and after 1 minute of inactivity it will unmount by itself, allowing multiple users requesting and using the same file at the same time.
 \newline
 The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server.
 
+\chapter{Confinement}
+\label{sec:docker}
+Supondo que queremos proteger o nosso servidor/estrutura onde o nosso serviço está instalado caso seja invadido, existe a necessidade de criar um confinamento para os nossos serviços, neste caso existe 3 serviços bastante importantes:
+\begin{enumerate}
+\item Apache (que é responsável por autenticar com o cartão de cidadão e servir de proxy para o CherryPy)
+\item CherryPy (servidor web)
+\item PostgreSQL (base de dados)
+\end{enumerate}
 
-\chapter{Confinment}
+Para o confinamento optou-se por um container Docker, sendo que foi desenvolvido um Dockerfile que permite instalar todo o sistema (não inclui o player, não fazia sentido incluir o player num servidor).\\
+Convém referir também que o Docker quando é criado pela primeira vez cria a base de dados com os ficheiros na pasta server/media, no entanto também os elimina logo após estarem no disco encriptado.\\
+Para além do Dockerfile, ainda é disponibilizado um script ``iecds-server\_run.sh'' que permite executar 4 comandos distintos sobre a instancia do docker:
+\begin{enumerate}
+\item start - Este comando inicia a instância do Docker caso ainda não esteja a correr
+\item stop - Pára a instância do Docker caso esteja a correr
+\item status - Permite verificar o estado actual do Docker
+\item reset - Permite criar a instância novamente, sendo que a base de dados é eliminada e criada novamente aqui
+\end{enumerate}
 
 \chapter{System vulnerabilities review}
 \section{SQL Injection}
@@ -491,21 +525,25 @@ We have some examples of tests we performed to try and explore the vulnerabiliti
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/loginTest.png}}
-\caption{This was a login attempt. The first result was a successful login, with an existing user, which results in a 200 response code (status OK). In the next attempt, we try to create a table by sending a CREATE SQL command. This produces a 400 status response (BAD REQUEST status), which means that the server did not find the user we tried. In the three next attempts, we try to force the login, however, the response is the same BAD REQUEST status.}
+\caption{Login attempt}
 \label{player}
 \end{figure}
+This was a login attempt. The first result was a successful login, with an existing user, which results in a 200 response code (status OK). In the next attempt, we try to create a table by sending a CREATE SQL command. This produces a 400 status response (BAD REQUEST status), which means that the server did not find the user we tried. In the three next attempts, we try to force the login, however, the response is the same BAD REQUEST status.
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/escapedChar.png}}
-\caption{In this figure we have the server information displayed when it tries to search for the user ‘; create table xpto (id numeric); -- . We can see here that the character that finishes the string to start the command is escaped with a \ by SQLAlchemy (underlined with a small red line), and so the whole command is treated as a simple string.}
+\caption{SQL Injection in user search}
 \label{player}
 \end{figure}
+In this figure we have the server information displayed when it tries to search for the user ‘; create table xpto (id numeric); -- . We can see here that the character that finishes the string to start the command is escaped with a \ by SQLAlchemy (underlined with a small red line), and so the whole command is treated as a simple string.
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/requestTitleTest.png}}
-\caption{In this example, we tried to inject code through the title request, considering that we are already logged in. So, for the login, we had a successful request, however, if the title is not a integer, we receive a 500 (INTERNAL ERROR) status code in the response, as it is trying to convert the string to an integer.}
+\caption{Injecting in the title}
 \label{player}
 \end{figure}
+
+In this example, we tried to inject code through the title request, considering that we are already logged in. So, for the login, we had a successful request, however, if the title is not a integer, we receive a 500 (INTERNAL ERROR) status code in the response, as it is trying to convert the string to an integer.
 
 \section{Buffer Overflow}
 
@@ -537,15 +575,17 @@ Some of these issues, even if not solved in the versions of Python could be solv
 
 \chapter{Installation}
 
-There is an install script available in the root folder of the repository that was done in Ubuntu 15.04 and tested in the 14.04 e 14.10 versions (the password for the PostgreSQL can be found in the same file, commented out).\\
+There is an install script available (install.sh) in the root folder of the repository that was done in Ubuntu 15.10 (it was tested inside a VM with 20 GB with default options).\\
 
-During the instalation, the user interaction will be requestes several times, for operations like selecting a certificate to install on the system, or the input for the database password.\\
+A clone of a VM image was generated, however it is bigger than 4 GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.\\
 
-A clone of a VM image was generated, however it has a size of 3.7GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.
+Depois de instalar todo o sistema, se for para fazer deploy convém parar o apache2 se estiver a correr na VM (foi instalado apenas para efeitos de teste caso necessário) porque o Docker vai expor a porta 443 para fora, sendo assim possivel fazer pedidos para o Docker e receber respostas.\\
+
+Para correr o Docker existe o script iecds-server\_run.sh que permite realizar as operações de start/stop/status/reset tal como referido no capitulo \autoref{sec:docker}. 
 
 \chapter{Conclusions}
 
-There were some problems through out the project, like the Device Key generation, or the player validation using certificates because CherryPy doesn't support client certificate validation on its builtin adaptor (which originatesd the override of the class).\\
+There were some problems through out the project, like the Device Key generation, or the player validation using certificates because CherryPy doesn't support client certificate validation on its builtin adaptor (which originatesd the override of the class) on the first part, although it we changed the server on the second part for Apache2 and redirected all the traffic to the CherryPy.\\
 
 However these problems were solved after some work and the final goal was reached. 
 
@@ -556,8 +596,8 @@ However these problems were solved after some work and the final goal was reache
 \bibliography{proj2}
 %\addcontentsline{toc}{chapter}{Bibliografia}
 
-%\listoffigures
-%\addcontentsline{toc}{chapter}{Lista de figuras}
+\listoffigures
+\addcontentsline{toc}{chapter}{Lista de figuras}
 %\listoftables
 %\addcontentsline{toc}{chapter}{Lista de tabelas}
 

@@ -372,6 +372,16 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher()
     }
 
+    key = "certificates/ssl/Security_P3G1_SSL_key.pem"
+    cert = "certificates/ssl/Security_P3G1_SSL.crt"
+    root = "certificates/rootCA/Security_P3G1_Root.crt"
+
+    cherrypy.server.ssl_module = 'builtin'
+    cherrypy.server.ssl_certificate = cert
+    cherrypy.server.ssl_private_key = key
+    cherrypy.server.thread_pool = 100
+    cherrypy.server.ssl_certificate_chain = root
+
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.socket_port = 8888
 

@@ -51,7 +51,7 @@ class Playback:
                 encData = handle.read(channelFragmentation)
             else:
                 encData = stream.raw.read(channelFragmentation)
-                print len(encData)
+                #print len(encData)
                 handle.write(encData)
 
             if len(encData) == 0:
