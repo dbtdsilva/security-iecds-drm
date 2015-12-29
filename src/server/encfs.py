@@ -25,7 +25,7 @@ class EncryptedFileSystemMedia:
         store_f = media_dir + os.path.sep + store_dir + os.path.sep + title
 
         if not os.path.exists(mount_f + os.path.sep + filename):
-            subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S --idle=1 '+
+            subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S -o allow_root --idle=1 '+
                                  os.path.abspath(store_f)+' '+os.path.abspath(mount_f)])
         f = open(mount_f + os.path.sep + filename)
         return f

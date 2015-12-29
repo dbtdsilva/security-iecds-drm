@@ -36,6 +36,6 @@ def insert_encrypted_file(file, master_password):
     subprocess.call(["expect", "encfs.exp", encfs_password, os.path.abspath(mount_f), os.path.abspath(store_f)],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     subprocess.call(["fusermount","-z","-u", os.path.abspath(mount_f)])
-    subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S --idle=1 '+os.path.abspath(store_f)+' '+os.path.abspath(mount_f)])
+    subprocess.call(["/bin/sh", "-c", 'echo '+encfs_password+' | encfs -S -o allow_root --idle=1 '+os.path.abspath(store_f)+' '+os.path.abspath(mount_f)])
     shutil.copyfile("../media/" + filename, mount_f + os.path.sep + filename)
     #subprocess.call(["fusermount","-u", os.path.abspath(mount_f)])

@@ -28,7 +28,7 @@ RUN bower install
 RUN expect gulp_once.exp
 WORKDIR /home/docker/server/database
 RUN apt-get install -y python2.7-dev apache2
-RUN /etc/init.d/postgresql start && sleep 60 && python storage_api.py
+#RUN /etc/init.d/postgresql start && until python storage_api.py; do echo "Database is still booting up, sleeping 30 seconds"; sleep 30; done
 RUN a2enmod ssl rewrite proxy_http headers
 COPY src/apache2_confs/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
 RUN ln -s /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-enabled/default-ssl.conf
@@ -37,5 +37,6 @@ COPY src/apache2_confs/ports.conf /etc/apache2/ports.conf
 COPY src/server/certificates/ssl/Security_P3G1_SSL.crt /etc/ssl/certs/
 COPY src/server/certificates/ssl/Security_P3G1_SSL_key.pem /etc/ssl/private/
 RUN service apache2 restart
+COPY src/player /home/docker/player
 EXPOSE 443
 WORKDIR /home/docker/server

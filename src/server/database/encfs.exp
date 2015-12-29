@@ -2,7 +2,7 @@
 set password [lindex $argv 0];
 set mount [lindex $argv 1];
 set store [lindex $argv 2];
-spawn encfs $store $mount
+spawn encfs -o allow_root $store $mount
 expect "?>"
 send "\r"
 expect "New Encfs Password: "

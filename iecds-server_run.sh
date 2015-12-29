@@ -23,7 +23,7 @@ if [ "$1" = "status" ]; then
 	fi
 elif [ "$1" = "start" ]; then
 	if [ "$exists" -eq "0" ]; then
-		sudo docker run --name=iecds_server -d -p 443:443 -t -i ubuntu/iecds-server sh -c "/etc/init.d/postgresql start && service apache2 start && sleep 60 && python /home/docker/server/server.py"
+		sudo docker run --name=iecds_server --privileged=true -d -p 443:443 ubuntu/iecds-server /bin/bash -c "/etc/init.d/postgresql start && service apache2 start && cd /home/docker/server/database; until python storage_api.py; do echo 'sleep 30 seconds'; sleep 30; done && cd /home/docker/server; python server.py"
 	else
 		sudo docker start iecds_server
 	fi
@@ -37,5 +37,5 @@ elif [ "$1" = "reset" ]; then
 	if [ "$exists" -eq "1" ]; then
 		sudo docker rm iecds_server
 	fi
-	sudo docker run --name=iecds_server -d -p 443:443 -t -i ubuntu/iecds-server sh -c "/etc/init.d/postgresql start && service apache2 start && sleep 60 && python /home/docker/server/server.py"
+	sudo docker run --name=iecds_server --privileged=true -d -p 443:443 ubuntu/iecds-server /bin/bash -c "/etc/init.d/postgresql start && service apache2 start && cd /home/docker/server/database; until python storage_api.py; do echo 'sleep 30 seconds'; sleep 30; done && cd /home/docker/server; python server.py"
 fi
