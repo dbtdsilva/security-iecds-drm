@@ -210,7 +210,7 @@ All the requests done to the server are performed over the server's \emph{HTTP R
   \item[Mplayer] To make things a bit easier when handling video files, we used the Mplayer2 player that takes care of the video format encoding.
   \item[Python requests package] This package enabled us to communicate with the server producing requests and receiving responses.
   \item[PyCrypto package] This is the package that helps handle encryptions and decryptions.
-  \item[M2Crypto package] This package was used to get information from the citizen card.
+  \item[PCKS11 package] This package was used to get information from the citizen card.
 \end{description}
 
 \chapter{System keys}
@@ -376,11 +376,11 @@ So that the download of a file is possible, a few criteria must be met:
 The criteria verification has the order presented.
 
 \subsection{Full file download}
-The full file download situation means that this is the first time the player downs the file the user selected.
+The full file download situation means that this is the first time the player downloads the file the user selected.
 And so, the server must send back the full encrypted file along with the cryptographic information that will allow the player to decrypt the file.
 
 To decrypt/encrypt the key, we used CBC, so, an IV is part of the cryptographic headers as well, even though we used streams to download the file (enabling large files to reproduce as well without the processing time of the encryptino being noticeable).
-We chose CBC because CHerryPy's stream is done over TCP, that means that all data is guaranteed to treach the player. If it was done over UDP, we would probably choose CTR because there is no dependency between blocks in the encryption operation and we have random access to the file. 
+We chose CBC because CherryPy's stream is done over TCP, that means that all data is guaranteed to treach the player. If it was done over UDP, we would probably choose CTR because there is no dependency between blocks in the encryption operation and we have random access to the file. 
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/fullFileDown.png}}
@@ -430,20 +430,23 @@ We also thought of the URI to a CRL that isn't being used at the moment, however
 
 \section{Apache Rewrite}
 
-O apache é usado para verificar a validade dos certificados, neste caso, para os seguintes paths:
+The Apache webserver is used to validate the certificates, in our system, for the following paths:
 \begin{enumerate}
-\item /api/user/login que faz require de um certificado valido do cartão de cidadão
-\item /api/valplayer que faz require de um certificado do Player
+\item /api/user/login that requests a valid citizen card authentication certificate
+\item /api/valplayer that requests a valid Player certificate
 \end{enumerate}
 
-Todos os pedidos se o Apache os validar, são enviados para o servidor de CherryPy que vai verificar a cadeia de certificados caso necessário, por exemplo, para o path /api/valplayer ele verifica se a cadeia de certificados está de acordo com o Root CA que gerou os certificados dos players. Se for do cartão de cidadão é carregada toda a cadeia e verificada se é válida.\\
-Se for do path /api/user/loginchallenge para além da cadeia ainda é verificado se o challenge assinado está correcto.\\
+All the requests validate by Apache are sent to the CherryPy server that will then verify the chain of certificates if necessary. For example, in /api/valplayer, it verifies if the chain of certificates is in compliance with the RootCA that generated the Player certificates.\\
+If the certificate was extracted from the citizen card, the whole chain is verified and its validation is checked.\\
+If the path we are using is /api/user/loginchallenge, besides checking the validity of the chain of certificates, the signature of the challenge is also verified.\\
 
-O CherryPy trabalha na porta 8888 que é para lá que o Apache redirecciona o tráfico, apesar de este proxy correr dentro do servidor, decidiu usar SSL Socket no Proxy na mesma.
+CherryPy is running on port 8888 which is to where the traffic is redirected from Apache to CherryPy. Even though the proxy is running in the same machine as the server, we have decided to use SSL Sockets anyway.
 
 \section{Citizen Authentication Certificate}
 
-Estamos a usar este certificado para validar que é um certificado válido e verificar o signed challenge, para assinar o challenge estamos a usar a chave privada CITIZEN AUTHENTICATION KEY fazendo um pedido ao cartão de cidadão para assinar o challenge, do lado do servidor é extraida a chave publica do certificado e verificada a assinatura, para além que também se valida a cadeia do certificado.
+We are validating the citizen authentication certificate and using it to verify the signed challenge send by the user/player.
+To sign the challeng requested to the server, we are using the CITIZEN AUTHENTICATION KEY (the private key) to sign the challenge on the Player side, using the citizen card signing operation.
+On the server side, the certificate's public key is extracted from the certificate and the signature is verified, besides, of course, validating the chain of certificates.
 
 \section{Apache Server SSL Certificate}
 
@@ -483,21 +486,22 @@ The tool \emph{encfs} requires a password to be defined when the configurations 
 
 \chapter{Confinement}
 \label{sec:docker}
-Supondo que queremos proteger o nosso servidor/estrutura onde o nosso serviço está instalado caso seja invadido, existe a necessidade de criar um confinamento para os nossos serviços, neste caso existe 3 serviços bastante importantes:
+Suposing that we want to protect our server/system infrastructure where our server is running from being invaded by unwanted people, we need to create a confinment for our services to run.
+There are 3 very important services:
 \begin{enumerate}
-\item Apache (que é responsável por autenticar com o cartão de cidadão e servir de proxy para o CherryPy)
-\item CherryPy (servidor web)
-\item PostgreSQL (base de dados)
+    \item Apache webserver (that is responsible for authentication the user with the citizen card and serves as proxy for the CherryPy requests)
+\item CherryPy (our main web server where all requests are answered)
+\item PostgreSQL (our data base that holds information about users, players, devices and files)
 \end{enumerate}
 
-Para o confinamento optou-se por um container Docker, sendo que foi desenvolvido um Dockerfile que permite instalar todo o sistema (não inclui o player, não fazia sentido incluir o player num servidor).\\
-Convém referir também que o Docker quando é criado pela primeira vez cria a base de dados com os ficheiros na pasta server/media, no entanto também os elimina logo após estarem no disco encriptado.\\
-Para além do Dockerfile, ainda é disponibilizado um script ``iecds-server\_run.sh'' que permite executar 4 comandos distintos sobre a instancia do docker:
+For the confinment of the services, we chose to use a Docker container. For this, we developped a Dockerfile that allows to install the whole system (not including the player since there was no need to include a player in the server side)\\
+An important point must be enhanced: the first time that the Docker is created, the database is also created and populated and the files are stored in the .../server/media/ folder. However, these files are also deleted once they are stored in the encrypted file system.
+Besides the Dockerfile, we also have a script ``iecds-server\_run.sh'' that allows to execute 4 different commands on the Docker instance:
 \begin{enumerate}
-\item start - Este comando inicia a instância do Docker caso ainda não esteja a correr
-\item stop - Pára a instância do Docker caso esteja a correr
-\item status - Permite verificar o estado actual do Docker
-\item reset - Permite criar a instância novamente, sendo que a base de dados é eliminada e criada novamente aqui
+\item start - This command starts a Docker instance in case there isn't one already running
+\item stop - Stops the Docker instance if it is already running
+\item status - Gives information about the Docker's instance current state
+\item reset - Allows to create the Docker instance again, (here, the database is deleted and re-created once again)
 \end{enumerate}
 
 \chapter{System vulnerabilities review}
@@ -572,6 +576,9 @@ We will go through a few problems found along the way in several versions of Pyt
 Some of these issues, even if not solved in the versions of Python could be solved by recompiling Python’s source code with canaries in the C compiler.
 
 \section{Cross scripting}
+This is a serious security issue that consists of an attacker taking control of the user/website interaction.
+This issue does not expose any way to break into the server itself. 
+If the website is made mostly of static content, there isn't much the attacked could do, besides altering how a page appears to a particular user.
 
 \chapter{Installation}
 
@@ -579,9 +586,9 @@ There is an install script available (install.sh) in the root folder of the repo
 
 A clone of a VM image was generated, however it is bigger than 4 GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.\\
 
-Depois de instalar todo o sistema, se for para fazer deploy convém parar o apache2 se estiver a correr na VM (foi instalado apenas para efeitos de teste caso necessário) porque o Docker vai expor a porta 443 para fora, sendo assim possivel fazer pedidos para o Docker e receber respostas.\\
+After installing the whole system, if the next step is the deploy of the system, the apache2 service must be stopped if it is already running in the VM (it was installed only for tests if needed) because the Docker will expose port 443 to the outside world, enabling Docker to receive requests and send responses.\\
 
-Para correr o Docker existe o script iecds-server\_run.sh que permite realizar as operações de start/stop/status/reset tal como referido no capitulo \autoref{sec:docker}. 
+To run the Docker, there is a script iecds-server\_run.sh that allows to perform start/stop/status/reset operations like we mentioned in \autoref{sec:docker}. 
 
 \chapter{Conclusions}
 
