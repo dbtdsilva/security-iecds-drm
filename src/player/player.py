@@ -69,7 +69,10 @@ class MainWindow(tk.Tk):
 
         req = session.get("https://localhost/api/valplayer/", verify=Root_Certificate, cert=Local_Certificate)
         if req.status_code != 200:
-            tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
+            if req.status_code == 503:
+                tkMessageBox.showwarning("ERROR!", "Server is offline, try again later!")
+            else:
+                tkMessageBox.showwarning("ERROR!", json.loads(req.content)['message'])
             exit(0)
         salt = req.content
         hash = ""
@@ -95,11 +98,11 @@ class Login(tk.Frame):
         cc = cc_utils()
         (status, cc_cert) = cc.get_cert("CITIZEN AUTHENTICATION CERTIFICATE")
         if status != "Success":
-            return (False, status)
+            return (False, status, None)
 
         req = session.get('https://localhost/api/user/loginchallenge/', verify=Root_Certificate)
         if req.status_code != 200:
-            return (False, json.loads(req.content)['message'])
+            return (False, json.loads(req.content)['message'], None)
         salt = req.content
         signature = cc.sign(salt)
 
