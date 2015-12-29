@@ -485,7 +485,6 @@ However, having the operations based on a HTTP Rest API, the user can still try 
 \end{enumerate}
 
 There is not much room for injection in our API, however, in our case, we used the SQLAlchemy toolkit for the database interactions, as mentioned before. This toolkit automatically escapes the characters used in database queries, ONLY IF the queries aren’t performed in raw form. To take advantage of this functionality we used only built in operations to INSERT, MODIFY or DELETE information from the database, never using raw built queries.
-
 \newline
 However, having the operations based on a HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
 We have some examples of tests we performed to try and explore the vulnerabilities. (This was a simple python script that was changed with different values and ran)
@@ -509,6 +508,31 @@ We have some examples of tests we performed to try and explore the vulnerabiliti
 \end{figure}
 
 \section{Buffer Overflow}
+
+Attackers can use buffer overflows to corrupt the execution stack of an application by sending custom input to the application, enabling him/her to execute code that can for example open a command shell and allow him/her to take over the machine.
+This attack relies on write access to particular memory addresses and the system mishandling data types.
+Essentially every platform is vulnerable to this attack with the exception of:
+
+\begin{itemize}
+ \item Java / J2EE – As long as system calls or native methods are avoided
+ \item .NET – as long as the developer stays away from unsafe or unmanaged code such as using P/Invoke or COM Interop
+ \item PHP, Python, Perl – As long as the developer does not rely on vulnerable extensions or other vulnerable programs.
+\end{itemize}
+
+For this project we used Python alone throughout the functionalities. Python does not allow direct memory access and it is a strongly typed language (the definition for this is a fray area, however, we can that it is because the interpreter keeps track of all the variable types and so, it is the programmer’s responsibility to use the variables correctly).
+
+Even though Python is “immune” to such attacks, it settles on a C language base, having its source code written in C, which is a vulnerable language because of allowing direct memory access and not being a strongly typed language. This is a concern because we have found some problems that, having its origin in the C code, propagate to the Python language as well.
+
+We will go through a few problems found along the way in several versions of Python: (https://lwn.net/Alerts/651990/)
+
+\begin{itemize}
+    \item CVE–2014-1912: the function \emph{socket.recvform\_into()}, from the Modules/socketmodule.c module, failed to check the size of the supplied buffer for the receiving socket. This led to a security flaw and was present in Python 2.5 through 2.7.7, Python 3.x before 3.3.4 and Python 3.4.x before 3.4rc1. For this project we used the Python 2.7.9 version, so, being introduced after 2.7.7, the problem was fixed by adding a simple size check of the received information. (https://yazadk.wordpress.com/2014/12/10/remotely-exploitable-buffer-overflow-in-python/)
+ \item CVE-2013-1752: multiple standard library modules implementing network protocols such as httplib and smtplib failed to restrict the sizes of server responses. This CVE actually is made of several issues for httplib, and even though we use requests, these are based on httplib. We also found that all the issues belonging to this CVE were fixed for version 2.7 and 3.1.
+ \item There are other issues that will not be addressed here that were already corrected in Python versions prior to 2.7.9.
+\end{itemize}
+
+Some of these issues, even if not solved in the versions of Python could be solved by recompiling Python’s source code with canaries in the C compiler.
+
 \section{Cross scripting}
 
 \chapter{Installation}
