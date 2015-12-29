@@ -525,21 +525,25 @@ We have some examples of tests we performed to try and explore the vulnerabiliti
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/loginTest.png}}
-\caption{This was a login attempt. The first result was a successful login, with an existing user, which results in a 200 response code (status OK). In the next attempt, we try to create a table by sending a CREATE SQL command. This produces a 400 status response (BAD REQUEST status), which means that the server did not find the user we tried. In the three next attempts, we try to force the login, however, the response is the same BAD REQUEST status.}
+\caption{Login attempt}
 \label{player}
 \end{figure}
+This was a login attempt. The first result was a successful login, with an existing user, which results in a 200 response code (status OK). In the next attempt, we try to create a table by sending a CREATE SQL command. This produces a 400 status response (BAD REQUEST status), which means that the server did not find the user we tried. In the three next attempts, we try to force the login, however, the response is the same BAD REQUEST status.
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/escapedChar.png}}
-\caption{In this figure we have the server information displayed when it tries to search for the user ‘; create table xpto (id numeric); -- . We can see here that the character that finishes the string to start the command is escaped with a \ by SQLAlchemy (underlined with a small red line), and so the whole command is treated as a simple string.}
+\caption{SQL Injection in user search}
 \label{player}
 \end{figure}
+In this figure we have the server information displayed when it tries to search for the user ‘; create table xpto (id numeric); -- . We can see here that the character that finishes the string to start the command is escaped with a \ by SQLAlchemy (underlined with a small red line), and so the whole command is treated as a simple string.
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/requestTitleTest.png}}
-\caption{In this example, we tried to inject code through the title request, considering that we are already logged in. So, for the login, we had a successful request, however, if the title is not a integer, we receive a 500 (INTERNAL ERROR) status code in the response, as it is trying to convert the string to an integer.}
+\caption{Injecting in the title}
 \label{player}
 \end{figure}
+
+In this example, we tried to inject code through the title request, considering that we are already logged in. So, for the login, we had a successful request, however, if the title is not a integer, we receive a 500 (INTERNAL ERROR) status code in the response, as it is trying to convert the string to an integer.
 
 \section{Buffer Overflow}
 
@@ -592,8 +596,8 @@ However these problems were solved after some work and the final goal was reache
 \bibliography{proj2}
 %\addcontentsline{toc}{chapter}{Bibliografia}
 
-%\listoffigures
-%\addcontentsline{toc}{chapter}{Lista de figuras}
+\listoffigures
+\addcontentsline{toc}{chapter}{Lista de figuras}
 %\listoftables
 %\addcontentsline{toc}{chapter}{Lista de tabelas}
 
