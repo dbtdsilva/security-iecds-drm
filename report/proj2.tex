@@ -32,7 +32,7 @@
   \setlength{\parsep}{0pt}
 }
 
-\title{\textbf{Identity Enabled Distribution Control System} \\1st Project\\ Segurança\\Universidade de Aveiro}
+\title{\textbf{Identity Enabled Distribution Control System} \\2nd Project\\ Segurança\\Universidade de Aveiro}
 \author{Diogo Silva 60337 \and Tânia Alves 60340 }
 
 \begin{document}
@@ -163,7 +163,7 @@ The player implementation we have is made of 5 main files.
 
 \begin{description}
   \item[Player file] This file contains the mainloop for the player's graphical interface. It is here where most of the requests to the server and main operations are made.
-  \item[Playback file] The playback file contains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that runs a VLC player instance.
+  \item[Playback file] The playback file contains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that runs a Mplayer2 instance.
   \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appeareance of the list.
   \item[videos folder] This folder is where the player stores the encrypted videos. Inside, there is another folder for each user that uses the player named after his/her username. This method was chosen so that it is easy for each player to go and grab the files that belong to him/her if he/she chooses to move the files and use another player or device.
   \item[CC utils file] This auxiliary files contains methods that allow interact with the citizen card.
@@ -189,15 +189,15 @@ For the user to login, the citizen card must be inserted in the card slot and th
 \label{player}
 \end{figure}
 
-When the user selects the file that he/she wants to play, a thread running the VLC player is started. The thread reads blocks of the encrypted file, decrypts it and sends it to the VLC buffer.
+When the user selects the file that he/she wants to play, a thread running the Mplayer2 is started. The thread reads blocks of the encrypted file, decrypts it and sends it to the Mplayer2 buffer.
 The player gets the file through a stream instead of a simple \emph{GET} request, so that large files can be played immediately.
 At this point, several other validations are performed: policies, player certificate validation, player integrity (from before), and Device Key (also from before - This service is referenced in more detail at \autoref{sec:requ}).
 \newline
-The buffer is managed by the VLC player and is customizable (the user can give the buffer the size it wants by changing the value on the VLC settings).
+The buffer is managed by the Mplayer2 player and is customizable (the user can give the buffer the size it wants by changing the value on the Mplayer2 settings).
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=300pt]{images/playerPlay.jpg}}
-\caption{Video playing in the VLC thread}
+\caption{Video playing in the Mplayer2 thread}
 \label{player}
 \end{figure}
 
@@ -207,7 +207,7 @@ All the requests done to the server are performed over the server's \emph{HTTP R
 \subsection{Technologies used}
 \begin{description}
   \item[Tkinter] We built the graphical interface with Tkinter that is the Python graphic user interface framework.
-  \item[VLC Player] To make things a bit easier when handling video files, we used the VLC player that takes care of the video format encoding.
+  \item[Mplayer] To make things a bit easier when handling video files, we used the Mplayer2 player that takes care of the video format encoding.
   \item[Python requests package] This package enabled us to communicate with the server producing requests and receiving responses.
   \item[PyCrypto package] This is the package that helps handle encryptions and decryptions.
   \item[M2Crypto package] This package was used to get information from the citizen card.
