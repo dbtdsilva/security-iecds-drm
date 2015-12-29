@@ -46,13 +46,7 @@ class cc_utils():
         for (name, value) in subca.get_subject().get_components():
             if name == 'CN':
                 subca_cn = value
-        rootca = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
-                self.get_cert('ROOT CA')[1])
-        rootca_cn = None
-        for (name, value) in rootca.get_subject().get_components():
-            if name == 'CN':
-                rootca_cn = value
-        return (subca_cn, rootca_cn)
+        return (subca_cn, subca.get_issuer().commonName)
 
     # Signs given data
     def sign(self, data):

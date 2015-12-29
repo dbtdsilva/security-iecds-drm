@@ -40,6 +40,9 @@ player_filelist = ["resources/images/icon.bmp",
 
 session = requests.Session()
 
+def fix_encoding(text):
+	return ''.join([i if ord(i) < 128 else ' ' for i in text])
+
 class MainWindow(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -108,10 +111,11 @@ class Login(tk.Frame):
 
         (ec_aut, cidadao_cn) = cc.get_subca_common_names()
         # cert_pem=cert_pem, sign=sign, cidadao_cn=cidadao_cn, ec_aut=ec_aut, key=dkey
+	print fix_encoding(cidadao_cn)
         payload = {"cert_pem": binascii.hexlify(cc_cert),
                    "sign": binascii.hexlify(signature),
-                   "cidadao_cn": binascii.hexlify(cidadao_cn),
-                   "ec_aut": binascii.hexlify(ec_aut),
+                   "cidadao_cn": binascii.hexlify(fix_encoding(cidadao_cn)),
+                   "ec_aut": binascii.hexlify(fix_encoding(ec_aut)),
                    "key": binascii.hexlify(DeviceKey)}
 
         req = session.post("https://localhost/api/user/loginchallenge", json=payload, verify=Root_Certificate)

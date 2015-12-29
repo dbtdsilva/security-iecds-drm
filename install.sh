@@ -30,9 +30,19 @@ sudo apt-get install -y python-tk python-imaging-tk
 cd ../..
 sudo docker build -t ubuntu/iecds-server .
 cd src/server/database
-python storage_api.py
+sudo python storage_api.py
 cd ../../..
 wget https://www.cartaodecidadao.pt/ccsoftware/cartaodecidadao-ubuntu-1.60.0-1608.x86_64.deb
 sudo dpkg -i cartaodecidadao-ubuntu-1.60.0-1608.x86_64.deb
 sudo apt-get install -f
 sudo rm cartaodecidadao-ubuntu-1.60.0-1608.x86_64.deb
+echo "#########################################################################################"
+echo "# I decided to install apache in this environment although it will be running on docker #"
+echo "# but it might be useful here for test purposes                                         #"
+echo "#########################################################################################"
+sudo service apache2 stop
+echo "#########################################################"
+echo "# Remember to use iecds-server_run.sh to run Docker now #"
+echo "# There's also a script to run locally instead of       #"
+echo "#     Docker for testing purposes                       #"
+echo "#########################################################"
