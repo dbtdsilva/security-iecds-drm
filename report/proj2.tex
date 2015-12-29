@@ -99,7 +99,7 @@ Each "main" entities (User, Device, File and Player) will have an id that identi
 We then have the required key for each one of them as well.
 \newline In the User table we have added the username field that identifies the each user. For the second part of the project, the username is literally the full name present in the authentication certificate extracted from the user's citizen card. Also, for this part of the project, we added an extra field that holds the hash of the user's authentication certificate.
 \newline The File table also has some extra fields that provide information to the user about the file he is playing or buying, such as, the title of the file, the author, the category and the date of the title's production.
-\newline The actions presented in Figure 1.1 had to be converted to extra tables since, in each case we had a many-to-many relationship. So, we have here the extra tables that store some information of the interactions, like specific keys and adittional information like the date that when the user bought the file. 
+\newline The actions presented in Figure 1.1 had to be converted to extra tables since, in each case we had a many-to-many relationship. So, we have here the extra tables that store some information of the interactions, like specific keys and additional information like the date that when the user bought the file. 
 \newline Besides the tables presented before, we needed a few more tables to help implement the authorization policies:
 
 \begin{figure}[H]
@@ -117,13 +117,13 @@ For the database we used:
 
 \section{Server}
 The server is meant to interact with the database and control the access of the users and players to the files.
-This interaction is done over a \emph{HTTP Rest} interface.
+This interaction is done over an \emph{HTTP Rest} interface.
  
 \subsection{Structure}
 The server is composed of several files:
 
 \begin{description}
-  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because the server is using port 443 to host (which requires previligies).
+  \item[Server file] This is the main file that holds the code to execute the server. When we want to start the server, it must be with \emph{sudo} because the server is using port 443 to host (which requires privileges).
   \item[Cipher file] This file holds auxiliary cryptographic functions that are used by the server.
   \item[Checker file] Holds auxiliary functions that make certain verifications before each request to the \emph{HTTP Rest API}, such as making sure the user is logged in before the player tries to download a file, or check if there's a device key reported when player logged in, etc.
 \end{description}
@@ -131,7 +131,7 @@ The server is composed of several files:
 \subsection{Implementation}
 The server communicates with the player through \emph{SSL}. We did it like this so that we could focus on other parts of the system instead of implementing it from scratch.
 For this, we needed to create certificates for both server and players.
-\newline CherryPy does not run SSL communications natively so, we needed to use Apache to create a proxy for the CherryPy server. The requests are caught by the Apache server and sent to CherryPy to be proccess. The responses to these requests are then sent back to Apache and returned to the client.
+\newline CherryPy does not run SSL communications natively so, we needed to use Apache to create a proxy for the CherryPy server. The requests are caught by the Apache server and sent to CherryPy to be process. The responses to these requests are then sent back to Apache and returned to the client.
 
 \subsection{Technologies used}
 \begin{description}
@@ -155,7 +155,7 @@ The same API that the player uses is used here.
 It is a simple interface that has a button to buy a specific title.
 
 \section{Player}
-The player allows the user to play the files he/she has bought previously through the WebPage. 
+The player allows the user to play the files he/she has bought previously through the Web Page. 
 \newline  In this implementation we used video files in order to prove that our implementation can handle big files.
 
 \subsection{Structure}
@@ -164,14 +164,14 @@ The player implementation we have is made of 5 main files.
 \begin{description}
   \item[Player file] This file contains the mainloop for the player's graphical interface. It is here where most of the requests to the server and main operations are made.
   \item[Playback file] The playback file contains the code that actually plays the file. The decryption is done here, block by block and fed to the thread that runs a Mplayer2 instance.
-  \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appeareance of the list.
+  \item[My List file] This file is an auxiliary file that defines the structure of the list that the player displays to the user containing the titles the users owns. This is only to improve the appearance of the list.
   \item[videos folder] This folder is where the player stores the encrypted videos. Inside, there is another folder for each user that uses the player named after his/her username. This method was chosen so that it is easy for each player to go and grab the files that belong to him/her if he/she chooses to move the files and use another player or device.
   \item[CC utils file] This auxiliary files contains methods that allow interact with the citizen card.
 \end{description}
 
 \subsection{Implementation}
 
-The player garantees to the server that the its code was not altered by the user and the server knows how it is implemented. For that the integrity of the player is validated. This validation consists in a exchange of messages between server and player, in \autoref{sec:integrity} the details of this validation are presented with more detail.
+The player guarantees to the server that the its code was not altered by the user and the server knows how it is implemented. For that the integrity of the player is validated. This validation consists in a exchange of messages between server and player, in \autoref{sec:integrity} the details of this validation are presented with more detail.
 After the user starts the player application, he/she must log in. 
 
 \begin{figure}[H]
@@ -181,7 +181,15 @@ After the user starts the player application, he/she must log in.
 \end{figure}
 
 For the user to login, the citizen card must be inserted in the card slot and the user must insert the pin code that corresponds to the authentication action. At this point, besides the user authentication certificate, we also send the Device Key (\autoref{sec:diagfile}) to the server alongside the Player certificate (\autoref{sec:certs}).
-\newline After the user logs in and it is confirmed by the server, a list of titles is displayed so that the user can choose which one he/she wants to reproduce.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/playerLogin2.jpg}}
+\caption{Dialog for citizen card PIN}
+\label{player}
+\end{figure}
+
+
+After the user logs in and it is confirmed by the server, a list of titles is displayed so that the user can choose which one he/she wants to reproduce.
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/playerList.jpg}}
@@ -218,14 +226,14 @@ All the requests done to the server are performed over the server's \emph{HTTP R
 This is a key that must be generated after each code is evaluated by the company that wants to implement the system. 
 This evaluation checks if the player, and the respective code, meet the security requirements. 
 Taking into consideration when it is generated and the process behind it, this key ensures that the player works accordingly to the security policies.
-\newline At this stage, the player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are devoloping the player.
+\newline At this stage, the player was generated from a random array of bytes and stored in the database, on the server side, since we are the ones that are developing the player.
 In the player, the Player Key is hardcoded.
 \newline This key is present in the server and in the player.
 Besides that, a certificate for the player is generated so that we can guarantee its authenticity and we can also associate the player that the user is using to the Player Key. As such, there is no way to reproduce files without the player having a valid certificate.
 
 \section{Device Key}
 The Device Key is a key that identifies the device where the player is being executed. This key should be the same even if the we have more than one player running in a device.
-In the Device Key generation, there were some dificulties in finding the best solution.
+In the Device Key generation, there were some difficulties in finding the best solution.
 \newline We wanted to use the processor serial number because we know that the number we get is already unique.
 However, this is an information that is hard to get. We came across the command \emph{cpuid} that is used in linux systems, but the Python wrapper available, \emph{Pycpuid}, requires an option to be enabled on BIOS to check the CPU UUID (not everyone has it enabled).
 We also thought about the MAC Address but it was automatically discarded since MAC Address can be modified easily.
@@ -255,11 +263,11 @@ As we can see from the previous diagram, the File Key is derived from the previo
 We used the AES algorithm for this.
 \newline In the server side, if it is the first file encryption that the server performs for that file and user, we have the following steps:
 \begin{enumerate}
-  \item The server generates a random start seed and a random initilization vector since we are going to use CBC to decrypt the file.
+  \item The server generates a random start seed and a random initialization vector since we are going to use CBC to decrypt the file.
   \item It then performs the encryption chain presented above to get the resulting File Key.
   \item The server then encrypts the file with the result.
   \item The encrypted file and the start seed are sent to the player so that it can decrypt the file.
-  \item The server stores the File Key and the initilization vector (IV) in the database.
+  \item The server stores the File Key and the initialization vector (IV) in the database.
 \end{enumerate}
 
 If the file has already been sent at least one time, the steps change a bit:
@@ -286,18 +294,18 @@ All pre-validations of the services are in the \emph{checker.py} file that imple
 The server-player interaction takes advantage of 7 different types of requests to the server:
 \begin{enumerate}
 \item GET /api/user/loginchallenge allows the player to get a challenge to initiate a session in the server, logging in the user. The server generates a random byte array and returns it to the user to be signed, confirming the user's identity. It requires the portuguese citizen to be able to use this function.
-\item POST  /api/user/loginchallenge is sent with the following payload in json format: portuguese citizen auhentication certificate in PEM format, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
+\item POST  /api/user/loginchallenge is sent with the following payload in json format: portuguese citizen authentication certificate in PEM format, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
     After the certificate is validated, this information will be associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides these parameters, the player also sends the Device Key that it calculated.\\
     If the user fails to validate the challenge, it will need to request a new challenge.
 \item POST  /api/user/logout that removes any association in the server to the session\_id (this operation requires a previous login, that is, the username must be associated with a session\_id before hand).
 \item GET   /api/title/user/ that lists all the titles that the user purchased earlier (this operation also and only requires that the user is logged).
 \item GET   /api/valplayer/ that returns a SALT which allows the server to perform the player's integrity validation.
 \item POST  /api/valplayer/<hash> using the previous returned SALT, the player must send the locally calculated HASH and then the server will confirm if the result is the expected result or not (sort of a challenge).
-\item GET   /api/title/<pk> receives a stream of the file's content (where <pk> is the title identifier of the file that the user wants to download). This is a critical operation in terms of system security because it can't be used if one of the following conditions fails: Existance of player's certificate, previously performed player integrity, the user is logged in, the player has already sent the Device Key.
+\item GET   /api/title/<pk> receives a stream of the file's content (where <pk> is the title identifier of the file that the user wants to download). This is a critical operation in terms of system security because it can't be used if one of the following conditions fails: Existence of player's certificate, previously performed player integrity, the user is logged in, the player has already sent the Device Key.
 \item POST  /api/title/validate/<hash> which it is used by the player to send to the server the HASH that it has at that moment. The server will then encrypt the HASH with the User Key and sends the result back to the player (this operation requires the same conditions presented in the previous item).
 \end{enumerate}
 
-\subsection{Webpage - Server}
+\subsection{Web page - Server}
 The server-web page interaction is based in 5 different requests to the server:
 \begin{enumerate}
 \item POST  /api/user/login where the param is the device key. On the server side, the server will try to obtain the certificate used for the SSL communications that should be the citizen card certificate.
@@ -379,8 +387,8 @@ The criteria verification has the order presented.
 The full file download situation means that this is the first time the player downloads the file the user selected.
 And so, the server must send back the full encrypted file along with the cryptographic information that will allow the player to decrypt the file.
 
-To decrypt/encrypt the key, we used CBC, so, an IV is part of the cryptographic headers as well, even though we used streams to download the file (enabling large files to reproduce as well without the processing time of the encryptino being noticeable).
-We chose CBC because CherryPy's stream is done over TCP, that means that all data is guaranteed to treach the player. If it was done over UDP, we would probably choose CTR because there is no dependency between blocks in the encryption operation and we have random access to the file. 
+To decrypt/encrypt the key, we used CBC, so, an IV is part of the cryptographic headers as well, even though we used streams to download the file (enabling large files to reproduce as well without the processing time of the encryption being noticeable).
+We chose CBC because CherryPy's stream is done over TCP, that means that all data is guaranteed to reach the player. If it was done over UDP, we would probably choose CTR because there is no dependency between blocks in the encryption operation and we have random access to the file. 
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/fullFileDown.png}}
@@ -409,16 +417,16 @@ Logging out is a simple operation that only implies ending the session in the se
 
 \begin{figure}[H]
 \centerline{\includegraphics[width=200pt]{images/logout.png}}
-\caption{Logout interaction (Player/Webpage - Server)}
+\caption{Logout interaction (Player/Web page - Server)}
 \label{player}
 \end{figure}
 
 \chapter{TLS Socket and Certificates}
 \label{sec:certs}
-To guarantee that the communications channel is secure, we decided to the use a TLS Socket because it takes care of the channel encryption in a secure manner. This involves some criteria as well, such as the adequate generation of certificates.\\
+To guarantee the communication channel is secure, we decided to the use a TLS Socket because it takes care of the channel encryption in a secure manner. This also required an adequate generation of certificates.\\
 
 All certificates were generated using XCA.
-We have generated a Root Certificate Authority (CA) that is the issuer of all the certificates presented in this report and contains the following fields:
+We have generated a Root Certificate Authority (CA) that is the issuer of all the certificates presented in this report (this was done to prevent requesting a certificate from a CA) and contains the following fields:
 \begin{enumerate}
 \item CN - Security P3G1 Root
 \item ST - Aveiro
@@ -428,9 +436,11 @@ We have generated a Root Certificate Authority (CA) that is the issuer of all th
 \end{enumerate}
 We also thought of the URI to a CRL that isn't being used at the moment, however, can be used later on to revoke certificates.
 
+\emph{Note:} We also came across some tools that allowed to request signed certificates online, however, to prevent further complications, we have chosen to generate the certificates with a tool that was already in the practical classes.
+
 \section{Apache Rewrite}
 
-The Apache webserver is used to validate the certificates, in our system, for the following paths:
+The Apache web server is used to validate the certificates, in our system, for the following paths:
 \begin{enumerate}
 \item /api/user/login that requests a valid citizen card authentication certificate
 \item /api/valplayer that requests a valid Player certificate
@@ -440,12 +450,12 @@ All the requests validate by Apache are sent to the CherryPy server that will th
 If the certificate was extracted from the citizen card, the whole chain is verified and its validation is checked.\\
 If the path we are using is /api/user/loginchallenge, besides checking the validity of the chain of certificates, the signature of the challenge is also verified.\\
 
-CherryPy is running on port 8888 which is to where the traffic is redirected from Apache to CherryPy. Even though the proxy is running in the same machine as the server, we have decided to use SSL Sockets anyway.
+CherryPy is running on port 8888 which is to where the traffic is redirected from Apache to CherryPy. Even though the proxy is running in the same machine as the server, we have decided to use SSL Sockets which allows Apache and CherryPy to run in different machines if necessary, and to allow scalability.
 
 \section{Citizen Authentication Certificate}
 
 We are validating the citizen authentication certificate and using it to verify the signed challenge send by the user/player.
-To sign the challeng requested to the server, we are using the CITIZEN AUTHENTICATION KEY (the private key) to sign the challenge on the Player side, using the citizen card signing operation.
+To sign the challenge requested to the server, we are using the CITIZEN AUTHENTICATION KEY (the private key) to sign the challenge on the Player side, using the citizen card signing operation.
 On the server side, the certificate's public key is extracted from the certificate and the signature is verified, besides, of course, validating the chain of certificates.
 
 \section{Apache Server SSL Certificate}
@@ -454,7 +464,7 @@ For the CherryPy, a certificate issued by the Root CA had to be generated so tha
 
 \section{Players SSL Certificates}
 
-We chose to generate certificates for each player so that the player validation could be performed and associated with a Player Key. This is the reason why we needed to change the builtin SSL adapter from CherryPy, supporting like this peer validation, since the default doesn't verify anything on the client side.
+We chose to generate certificates for each player so that the player validation could be performed and associated with a Player Key. This is the reason why we needed to change the builtin SSL adapter from CherryPy, enabling the support for peer validation, since the default doesn't perform validations on the client side.
 
 Being that the certificate is an optional step, if the client chooses not to use them, it cannot download files, nor request the chain of operations to derive the File Key.
 
@@ -472,7 +482,7 @@ The policy validation is performed when the player tries to download the file (o
 \end{enumerate}
 
 \chapter{Secure file storage}
-To have a secure file storage for the server media files, we decided to take the approach of the file system level security presented in the practical classes. Even though the attacker will have access to the metadata of the files and the file system structure, this information is mostly available on the WebPage for any person to browse, so, there is no need to use this step.
+To have a secure file storage for the server media files, we decided to take the approach of the file system level security presented in the practical classes. Even though the attacker will have access to the metadata of the files and the file system structure, this information is mostly available on the Web Page for any person to browse, so, there is no need to use this step.
 \newline
 To achieve this secure storage feature, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted.
 \newline
@@ -494,7 +504,7 @@ The tool \emph{encfs} requires a password to be defined when the configurations 
 
 \chapter{Confinement}
 \label{sec:docker}
-Suposing that we want to protect our server/system infrastructure where our server is running from being invaded by unwanted people, we need to create a confinment for our services to run.
+Supposing that we want to protect our server/system infrastructure where our server is running from being invaded by unwanted people, we need to create a confinement for our services to run.
 There are 3 very important services:
 \begin{enumerate}
     \item Apache webserver (that is responsible for authentication the user with the citizen card and serves as proxy for the CherryPy requests)
@@ -502,7 +512,7 @@ There are 3 very important services:
 \item PostgreSQL (our data base that holds information about users, players, devices and files)
 \end{enumerate}
 
-For the confinment of the services, we chose to use a Docker container. For this, we developped a Dockerfile that allows to install the whole system (not including the player since there was no need to include a player in the server side)\\
+For the confinement of the services, we chose to use a Docker container. For this, we developed a Dockerfile that allows to install the whole system (not including the player since there was no need to include a player in the server side)\\
 An important point must be enhanced: the first time that the Docker is created, the database is also created and populated and the files are stored in the .../server/media/ folder. However, these files are also deleted once they are stored in the encrypted file system.
 Besides the Dockerfile, we also have a script ``iecds-server\_run.sh'' that allows to execute 4 different commands on the Docker instance:
 \begin{enumerate}
@@ -514,25 +524,25 @@ Besides the Dockerfile, we also have a script ``iecds-server\_run.sh'' that allo
 
 \chapter{System vulnerabilities review}
 \section{SQL Injection}
-QL Injection is a technique where malicious users can inject SQL commands into a SQL statement via inputs.
+SQL Injection is a technique where malicious users can inject SQL commands into a SQL statement via inputs.
 \newline
 Using the developed player, the user can only enter his/her username and pin. Every other operation is performed with clicks, confining the user to the defined choices.
 \newline
-However, having the operations based on a HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
+However, having the operations based on an HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
 
 \begin{enumerate}
  \item /api/title/login: This operation is a POST to the server that includes parameters such as username however, no information is inserted into the database.
  \item /api/title/logout: Even though this operation is also a POST, there is no information attached to it. It serves only the purpose of telling the server to close the user session.
  \item /api/title/user: This is a GET that returns all the titles bought by the user. There are no parameters since the user already has a session at this stage. This represents no harm.
  \item /api/valplayer/<hash>: Here, there is a POST request that takes a parameter that is the player hash that once again inserts no information in the database. Also we have a similar GET request (/api/valplayer) that takes no parameters.
- \item /api/title/<id>: This a GET request that takes the title id as a parameter. A verification is made here to ensure that the parameter received is indeed an integer. If it is something else other than an integer, the server automatically returns an error code as we can see in figure XX. We have a similar request to this one that is a POST used by the webpage, enabling the user to buy the specified title.
+ \item /api/title/<id>: This a GET request that takes the title id as a parameter. A verification is made here to ensure that the parameter received is indeed an integer. If it is something else other than an integer, the server automatically returns an error code as we can see in figure XX. We have a similar request to this one that is a POST used by the web page, enabling the user to buy the specified title.
  \item /api/title/validate/<hash>: This POST request takes in a single parameter that is the hash the player derived so far. The only thing done here to the parameter is an encryption and it is then sent back to the player. There is no database interaction directly with the database.
  \item /api/title/user/all: This GET request takes no parameters as it only lists all the titles available to purchase.
 \end{enumerate}
 
-There is not much room for injection in our API, however, in our case, we used the SQLAlchemy toolkit for the database interactions, as mentioned before. This toolkit automatically escapes the characters used in database queries, ONLY IF the queries aren’t performed in raw form. To take advantage of this functionality we used only built in operations to INSERT, MODIFY or DELETE information from the database, never using raw built queries.
+There is not much room for injection in our API, however, in our case, we used the SQLAlchemy toolkit for the database interactions, as mentioned before. This toolkit automatically escapes the characters used in database queries, ONLY IF the queries aren't performed in raw form. To take advantage of this functionality we used only built in operations to INSERT, MODIFY or DELETE information from the database, never using raw built queries.
 \newline
-However, having the operations based on a HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
+However, having the operations based on an HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
 We have some examples of tests we performed to try and explore the vulnerabilities. (This was a simple python script that was changed with different values and ran)
 
 \begin{figure}[H]
@@ -581,18 +591,18 @@ We will go through a few problems found along the way in several versions of Pyt
  \item There are other issues that will not be addressed here that were already corrected in Python versions prior to 2.7.9.
 \end{itemize}
 
-Some of these issues, even if not solved in the versions of Python could be solved by recompiling Python’s source code with canaries in the C compiler.
+Some of these issues, even if not solved in the versions of Python could be solved by recompiling Python's source code with canaries in the C compiler.
 
 \section{Cross scripting}
 This is a serious security issue that consists of an attacker taking control of the user/website interaction.
 This issue does not expose any way to break into the server itself. 
-If the website is made mostly of static content, there isn't much the attacked could do, besides altering how a page appears to a particular user.
+If the website is made mostly of static content, there isn't much the attacker could do, besides altering how a page appears to a particular user.
 \newline
 In our system we are using Apache 2.4.12 and modifications have been made starting from Apache version 2.2.22 that prevent this sort of attacks (https://httpd.apache.org/security/vulnerabilities\_24.html).
 \newline
 Apache is serving as proxy, so is where the first line of defenses are present. Even so, after some research, we have also found nothing that indicates CherryPy as being vulnerable to this sort of attacks (the last security vulnerability was reported in 2008 but was only present until CherryPy version 3.0.2 - in our system, we are using version 3.8.0).
 \newline
-Even besides this, the interaction that is required from the user when accessing the webpage is very limited. The user cannot access the server without a session started and for this, he/she needs to be authenticated using the citizen card. After being logged in, the only accessible parameter is the titleId for when the user accesses the file and this parameter is checked in order to make sure that only contains integers and nothing else.
+Besides this, the interaction required from the user when accessing the web page is very limited. The user cannot access the server without a session started and for this, he/she needs to be authenticated using the citizen card. After being logged in, the only accessible parameter is the titleId for when the user accesses the file and this parameter is checked in order to make sure that only contains integers and nothing else.
 
 \chapter{Installation}
 
@@ -606,7 +616,7 @@ To run the Docker, there is a script iecds-server\_run.sh that allows to perform
 
 \chapter{Conclusions}
 
-There were some problems through out the project, like the Device Key generation, or the player validation using certificates because CherryPy doesn't support client certificate validation on its builtin adaptor (which originatesd the override of the class) on the first part, although it we changed the server on the second part for Apache2 and redirected all the traffic to the CherryPy.\\
+There were some problems through out the project, like the Device Key generation, or the player validation using certificates because CherryPy doesn't support client certificate validation on its builtin adaptor (which originated the override of the class) on the first part, although it we changed the server on the second part for Apache2 and redirected all the traffic to the CherryPy.\\
 
 However these problems were solved after some work and the final goal was reached. 
 
