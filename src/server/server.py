@@ -249,7 +249,7 @@ class Title(object):
                 dataEncrypted = aes.encrypt(data)
                 yield dataEncrypted
                 data = f.read(channel_fragmentation)
-            encfs.unmount_encrypted_file(filename)
+            #encfs.unmount_encrypted_file(filename)
         return content()
     GET._cp_config = {'response.stream': True}
 
