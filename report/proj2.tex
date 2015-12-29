@@ -456,14 +456,13 @@ To have a secure file storage for the server media files, we decided to take the
 \newline
 To achieve this secure storage feature, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted.
 \newline
-It was our goal to automate this whole process and so, we created a script in \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}.
+It was our goal to automate this whole process and so, we created a script using \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}, that script is inside src/server/database/encfs.exp, it is used to create an encfs for a specific file.
 \newline
 We defined the structure of our file system taking into account that each user should have access what he/she needs, and nothing more.
 \newline
-For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required.
+For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required, it will mount the specific file using \emph{encfs} and after 1 minute of inactivity it will unmount by itself, allowing multiple users requesting and using the same file at the same time.
 \newline
 The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server.
-
 
 \chapter{Confinement}
 
