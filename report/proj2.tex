@@ -451,23 +451,63 @@ The policy validation is performed when the player tries to download the file (o
 \end{enumerate}
 
 \chapter{Secure file storage}
-To have a secure file storage for the server stored in the server side, we decided to take the approach of the file system level security presented in the practical classes. Even though the attacker will have access to the metadata of the files and the file system structure, this information is mostly available on the WebPage for any person to browse, so, there is no need to use this step.
+To have a secure file storage for the server media files, we decided to take the approach of the file system level security presented in the practical classes. Even though the attacker will have access to the metadata of the files and the file system structure, this information is mostly available on the WebPage for any person to browse, so, there is no need to use this step.
 \newline
-To achieve this secure storage, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted on unmount.
+To achieve this secure storage feature, we used the \emph{encfs} command that creates a mount point to where the files are sent and are then encrypted.
 \newline
 It was our goal to automate this whole process and so, we created a script in \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}.
-
-\section{Structure}
+\newline
 We defined the structure of our file system taking into account that each user should have access what he/she needs, and nothing more.
 \newline
-For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only this file is decrypted when the access to it is required.
+For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required.
+\newline
+The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server.
 
-\section{Files}
 
 \chapter{Confinment}
 
 \chapter{System vulnerabilities review}
 \section{SQL Injection}
+QL Injection is a technique where malicious users can inject SQL commands into a SQL statement via inputs.
+\newline
+Using the developed player, the user can only enter his/her username and pin. Every other operation is performed with clicks, confining the user to the defined choices.
+\newline
+However, having the operations based on a HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
+
+\begin{enumerate}
+ \item /api/title/login: This operation is a POST to the server that includes parameters such as username however, no information is inserted into the database.
+ \item /api/title/logout: Even though this operation is also a POST, there is no information attached to it. It serves only the purpose of telling the server to close the user session.
+ \item /api/title/user: This is a GET that returns all the titles bought by the user. There are no parameters since the user already has a session at this stage. This represents no harm.
+ \item /api/valplayer/<hash>: Here, there is a POST request that takes a parameter that is the player hash that once again inserts no information in the database. Also we have a similar GET request (/api/valplayer) that takes no parameters.
+ \item /api/title/<id>: This a GET request that takes the title id as a parameter. A verification is made here to ensure that the parameter received is indeed an integer. If it is something else other than an integer, the server automatically returns an error code as we can see in figure XX. We have a similar request to this one that is a POST used by the webpage, enabling the user to buy the specified title.
+ \item /api/title/validate/<hash>: This POST request takes in a single parameter that is the hash the player derived so far. The only thing done here to the parameter is an encryption and it is then sent back to the player. There is no database interaction directly with the database.
+ \item /api/title/user/all: This GET request takes no parameters as it only lists all the titles available to purchase.
+\end{enumerate}
+
+There is not much room for injection in our API, however, in our case, we used the SQLAlchemy toolkit for the database interactions, as mentioned before. This toolkit automatically escapes the characters used in database queries, ONLY IF the queries aren’t performed in raw form. To take advantage of this functionality we used only built in operations to INSERT, MODIFY or DELETE information from the database, never using raw built queries.
+
+\newline
+However, having the operations based on a HTTP Rest API, the user can still try to interact with the interface through command line or similar. We will then revisit the details of the REST API used:
+We have some examples of tests we performed to try and explore the vulnerabilities. (This was a simple python script that was changed with different values and ran)
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/loginTest.png}}
+\caption{This was a login attempt. The first result was a successful login, with an existing user, which results in a 200 response code (status OK). In the next attempt, we try to create a table by sending a CREATE SQL command. This produces a 400 status response (BAD REQUEST status), which means that the server did not find the user we tried. In the three next attempts, we try to force the login, however, the response is the same BAD REQUEST status.}
+\label{player}
+\end{figure}
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/escapedChar.png}}
+\caption{In this figure we have the server information displayed when it tries to search for the user ‘; create table xpto (id numeric); -- . We can see here that the character that finishes the string to start the command is escaped with a \ by SQLAlchemy (underlined with a small red line), and so the whole command is treated as a simple string.}
+\label{player}
+\end{figure}
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/requestTitleTest.png}}
+\caption{In this example, we tried to inject code through the title request, considering that we are already logged in. So, for the login, we had a successful request, however, if the title is not a integer, we receive a 500 (INTERNAL ERROR) status code in the response, as it is trying to convert the string to an integer.}
+\label{player}
+\end{figure}
+
 \section{Buffer Overflow}
 \section{Cross scripting}
 
