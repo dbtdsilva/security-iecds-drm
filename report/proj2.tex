@@ -285,9 +285,10 @@ All pre-validations of the services are in the \emph{checker.py} file that imple
 \subsection{Player - Server}
 The server-player interaction takes advantage of 7 different types of requests to the server:
 \begin{enumerate}
-\item GET /api/user/loginchallenge allows the player to get a challenge to initiate a session in the server, logging in the user. The server generates a random byte array and returns it to the user to be signed, confirming the user's identity.
-\item POST  /api/user/loginchallenge is sent with the following payload in json format: user PEM certificate, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
-    After the certificate is validated, this information will be associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides these parameters, the player also sends the Device Key that it calculated.
+\item GET /api/user/loginchallenge allows the player to get a challenge to initiate a session in the server, logging in the user. The server generates a random byte array and returns it to the user to be signed, confirming the user's identity. It requires the portuguese citizen to be able to use this function.
+\item POST  /api/user/loginchallenge is sent with the following payload in json format: portuguese citizen auhentication certificate in PEM format, the challenge signed with the user's private key, authentication certificate common name and certificate root common name. 
+    After the certificate is validated, this information will be associated with the current user session\_id, allowing us to keep a record of the login during the whole interaction/session. Besides these parameters, the player also sends the Device Key that it calculated.\\
+    If the user fails to validate the challenge, it will need to request a new challenge.
 \item POST  /api/user/logout that removes any association in the server to the session\_id (this operation requires a previous login, that is, the username must be associated with a session\_id before hand).
 \item GET   /api/title/user/ that lists all the titles that the user purchased earlier (this operation also and only requires that the user is logged).
 \item GET   /api/valplayer/ that returns a SALT which allows the server to perform the player's integrity validation.
@@ -464,7 +465,24 @@ For this, we divided the files in different folders and create a mount point for
 The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server.
 
 
-\chapter{Confinment}
+\chapter{Confinement}
+
+Supondo que queremos proteger o nosso servidor/estrutura onde o nosso serviço está instalado caso seja invadido, existe a necessidade de criar um confinamento para os nossos serviços, neste caso existe 3 serviços bastante importantes:
+\begin{enumerate}
+\item Apache (que é responsável por autenticar com o cartão de cidadão e servir de proxy para o CherryPy)
+\item CherryPy (servidor web)
+\item PostgreSQL (base de dados)
+\end{enumerate}
+
+Para o confinamento optou-se por um container Docker, sendo que foi desenvolvido um Dockerfile que permite instalar todo o sistema (não inclui o player, não fazia sentido incluir o player num servidor).\\
+Convém referir também que o Docker quando é criado pela primeira vez cria a base de dados com os ficheiros na pasta server/media, no entanto também os elimina logo após estarem no disco encriptado.\\
+Para além do Dockerfile, ainda é disponibilizado um script ``iecds-server\_run.sh'' que permite executar 4 comandos distintos sobre a instancia do docker:
+\begin{enumerate}
+\item start - Este comando inicia a instância do Docker caso ainda não esteja a correr
+\item stop - Pára a instância do Docker caso esteja a correr
+\item status - Permite verificar o estado actual do Docker
+\item reset - Permite criar a instância novamente, sendo que a base de dados é eliminada e criada novamente aqui
+\end{enumerate}
 
 \chapter{System vulnerabilities review}
 \section{SQL Injection}
