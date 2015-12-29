@@ -479,10 +479,18 @@ To achieve this secure storage feature, we used the \emph{encfs} command that cr
 It was our goal to automate this whole process and so, we created a script using \emph{expect} (tool to automate interactive applications such as telnet, ftp,...) that allowed us to simulate the interaction needed to configure \emph{encfs}, that script is inside src/server/database/encfs.exp, it is used to create an encfs for a specific file.
 \newline
 We defined the structure of our file system taking into account that each user should have access what he/she needs, and nothing more.
+\begin{figure}[H]
+\centerline{\includegraphics[width=200pt]{images/matrix.png}}
+\caption{Visual representation of file system organization example}
+\medskip
+\small
+In grey we can see the files that are mounted, and in white, the files that are not. Each fie is only mounted when it is needed.
+\label{player}
+\end{figure}
+
+As such, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required. The server will mount the specific file using \emph{encfs} and after 1 minute of inactivity it will unmount by itself, allowing multiple users to request and access the same file at the same time.
 \newline
-For this, we divided the files in different folders and create a mount point for each file that we are accessing. Only the needed file is decrypted when the access to it is required, it will mount the specific file using \emph{encfs} and after 1 minute of inactivity it will unmount by itself, allowing multiple users requesting and using the same file at the same time.
-\newline
-The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server.
+The tool \emph{encfs} requires a password to be defined when the configurations are performed. Since each file is encrypted in a separate directory, we decided to gather the information present in the database concerning the file and add a random array that is hardcoded in the server (we used a mixture of the author of the file, server hardcoded password and file title inside an hash).
 
 \chapter{Confinement}
 \label{sec:docker}
@@ -579,6 +587,12 @@ Some of these issues, even if not solved in the versions of Python could be solv
 This is a serious security issue that consists of an attacker taking control of the user/website interaction.
 This issue does not expose any way to break into the server itself. 
 If the website is made mostly of static content, there isn't much the attacked could do, besides altering how a page appears to a particular user.
+\newline
+In our system we are using Apache 2.4.12 and modifications have been made starting from Apache version 2.2.22 that prevent this sort of attacks (https://httpd.apache.org/security/vulnerabilities\_24.html).
+\newline
+Apache is serving as proxy, so is where the first line of defenses are present. Even so, after some research, we have also found nothing that indicates CherryPy as being vulnerable to this sort of attacks (the last security vulnerability was reported in 2008 but was only present until CherryPy version 3.0.2 - in our system, we are using version 3.8.0).
+\newline
+Even besides this, the interaction that is required from the user when accessing the webpage is very limited. The user cannot access the server without a session started and for this, he/she needs to be authenticated using the citizen card. After being logged in, the only accessible parameter is the titleId for when the user accesses the file and this parameter is checked in order to make sure that only contains integers and nothing else.
 
 \chapter{Installation}
 
