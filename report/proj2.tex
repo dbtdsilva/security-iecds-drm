@@ -608,11 +608,14 @@ Besides this, the interaction required from the user when accessing the web page
 
 There is an install script available (install.sh) in the root folder of the repository that was done in Ubuntu 15.10 (it was tested inside a VM with 20 GB with default options).\\
 
-A clone of a VM image was generated, however it is bigger than 4 GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.\\
+A clone of a VM image was generated, however it has 8.9 GB (non zipped), with this being said, we chose not the upload it to the repository. Either way, it can be available to the teacher if problems are encountered.\\
 
 After installing the whole system, if the next step is the deploy of the system, the apache2 service must be stopped if it is already running in the VM (it was installed only for tests if needed) because the Docker will expose port 443 to the outside world, enabling Docker to receive requests and send responses.\\
 
 To run the Docker, there is a script iecds-server\_run.sh that allows to perform start/stop/status/reset operations like we mentioned in \autoref{sec:docker}. 
+There's another script iecds-server\_locally\_non\_docker.sh that allows to run all the project without using the docker.\\
+
+Mind that the PostgreSQL takes a bit time to load (~4 minutes inside the docker of VM, ~2 minutes inside the VM). There's a script used to populate the database with some files inside src/database/storage\_api.py, it is pretty easy to add more entries editing the file. When inserting a file there's a parameter called path, it is used to load the file that must be in the folder src/media.\\
 
 \chapter{Conclusions}
 
